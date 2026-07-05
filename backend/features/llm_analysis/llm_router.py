@@ -1,4 +1,5 @@
 """Multi-provider LLM routing for CommitIQ narratives."""
+
 from __future__ import annotations
 
 import asyncio
@@ -76,7 +77,9 @@ async def stream_narrative(
         except Exception as exc:
             logger.error("Gemini fallback failed: %s", exc)
 
-    raise RuntimeError("All LLM providers unavailable. Configure ANTHROPIC_API_KEY or GEMINI_API_KEY.")
+    raise RuntimeError(
+        "All LLM providers unavailable. Configure ANTHROPIC_API_KEY or GEMINI_API_KEY."
+    )
 
 
 async def _stream_anthropic(prompt: str, max_tokens: int) -> AsyncGenerator[str, None]:
@@ -127,7 +130,9 @@ async def _stream_gemini(prompt: str, max_tokens: int) -> AsyncGenerator[str, No
             yield text
 
 
-async def get_narrative_non_streaming(prompt: str, max_tokens: int = 600) -> tuple[str, LLMProvider]:
+async def get_narrative_non_streaming(
+    prompt: str, max_tokens: int = 600
+) -> tuple[str, LLMProvider]:
     full_text: list[str] = []
     provider_used = LLMProvider.NONE
     async for token, provider in stream_narrative(prompt, max_tokens):

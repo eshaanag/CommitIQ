@@ -60,14 +60,9 @@ async def _execute_statement(conn, statement: str, *, is_sqlite: bool = _IS_SQLI
 def _migration_statements(migration_sql: str) -> list[str]:
     migration_lines = migration_sql.splitlines()
     uncommented_sql = "\n".join(
-        line for line in migration_lines
-        if not line.lstrip().startswith("--")
+        line for line in migration_lines if not line.lstrip().startswith("--")
     )
-    return [
-        statement.strip()
-        for statement in uncommented_sql.split(";")
-        if statement.strip()
-    ]
+    return [statement.strip() for statement in uncommented_sql.split(";") if statement.strip()]
 
 
 async def _ensure_migration_table(conn) -> None:

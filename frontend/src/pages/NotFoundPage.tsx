@@ -12,14 +12,19 @@ export default function NotFoundPage() {
           <HelpCircle className="w-6 h-6 text-purple-400" />
         </div>
 
-        <h1 className="font-head text-[56px] font-extralight text-white tracking-tight Outfit leading-none">404</h1>
-        <h2 className="font-head text-[18px] font-semibold text-white tracking-tight mt-3 mb-2">Workspace Lost in Space</h2>
+        <h1 className="font-head text-[56px] font-extralight text-white tracking-tight Outfit leading-none">
+          404
+        </h1>
+        <h2 className="font-head text-[18px] font-semibold text-white tracking-tight mt-3 mb-2">
+          Workspace Lost in Space
+        </h2>
         <p className="text-slate-400 text-xs leading-relaxed mb-8">
-          The requested coordinate snapshot index was not compiled or does not exist in the active computing grid.
+          The requested coordinate snapshot index was not compiled or does not exist in the active
+          computing grid.
         </p>
 
-        <button 
-          onClick={() => navigate('/')} 
+        <button
+          onClick={() => navigate('/')}
           className="liquid-button px-6 py-3 rounded-full text-xs font-bold text-white tracking-wide shadow-lg w-full flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />

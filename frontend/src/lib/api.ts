@@ -68,7 +68,7 @@ export async function getHealthTimeline(repoId: string | number): Promise<Health
 
 export async function getCommitDetail(
   repoId: string | number,
-  sha: string,
+  sha: string
 ): Promise<CommitDetailResponse> {
   return request<CommitDetailResponse>(client.get(`/repos/${repoId}/commit/${sha}`))
 }
@@ -86,7 +86,7 @@ export async function getBusFactor(repoId: string | number): Promise<BusFactorWr
 export async function getGraphDiff(
   repoId: string | number,
   shaBefore: string,
-  shaAfter: string,
+  shaAfter: string
 ): Promise<GraphDiffResponse> {
   return request<GraphDiffResponse>(
     client.get(`/repos/${repoId}/graph/diff`, {
@@ -135,7 +135,7 @@ export async function cancelIngest(repoId: string | number): Promise<IngestStatu
 export async function streamNarrative(
   repoId: string | number,
   sha: string,
-  onChunk: (chunk: NarrativeStreamChunk) => void,
+  onChunk: (chunk: NarrativeStreamChunk) => void
 ): Promise<void> {
   const response = await fetch(`${API_ROOT}/explain/stream`, {
     method: 'POST',
