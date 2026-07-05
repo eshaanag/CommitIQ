@@ -59,13 +59,17 @@ vi.mock('./components/HealthTimeline', () => ({
 
 vi.mock('./components/HotspotMap', () => ({
   HotspotMap: ({ repoId, sha }: { repoId: number; sha: string | null }) => (
-    <div data-testid="hotspots">hotspots {repoId}:{sha ?? 'none'}</div>
+    <div data-testid="hotspots">
+      hotspots {repoId}:{sha ?? 'none'}
+    </div>
   ),
 }))
 
 vi.mock('./components/NarrativeCard', () => ({
   NarrativeCard: ({ repoId, commitSha }: { repoId: number; commitSha: string }) => (
-    <div data-testid="narrative-card">narrative {repoId}:{commitSha}</div>
+    <div data-testid="narrative-card">
+      narrative {repoId}:{commitSha}
+    </div>
   ),
 }))
 
@@ -141,7 +145,7 @@ function renderApp() {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0, revalidateOnFocus: false }}>
       <App />
-    </SWRConfig>,
+    </SWRConfig>
   )
 }
 

@@ -2,9 +2,18 @@ from backend.config import _cors_origins, _normalize_database_url, _parse_bool, 
 
 
 def test_normalize_database_url_uses_asyncpg_for_postgres_urls():
-    assert _normalize_database_url("postgres://user:pass@host/db") == "postgresql+asyncpg://user:pass@host/db"
-    assert _normalize_database_url("postgresql://user:pass@host/db") == "postgresql+asyncpg://user:pass@host/db"
-    assert _normalize_database_url("sqlite+aiosqlite:///./commitiq.db") == "sqlite+aiosqlite:///./commitiq.db"
+    assert (
+        _normalize_database_url("postgres://user:pass@host/db")
+        == "postgresql+asyncpg://user:pass@host/db"
+    )
+    assert (
+        _normalize_database_url("postgresql://user:pass@host/db")
+        == "postgresql+asyncpg://user:pass@host/db"
+    )
+    assert (
+        _normalize_database_url("sqlite+aiosqlite:///./commitiq.db")
+        == "sqlite+aiosqlite:///./commitiq.db"
+    )
 
 
 def test_parse_csv_trims_empty_values():

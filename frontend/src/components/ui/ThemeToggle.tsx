@@ -31,7 +31,7 @@ export function ThemeToggle() {
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
   }
 
   return (
@@ -50,21 +50,45 @@ export function ThemeToggle() {
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
           </svg>
         ) : (
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth="2.5"
+          >
             <circle cx="12" cy="12" r="5" fill="currentColor" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            />
           </svg>
         )}
       </div>
 
-      <span className={`absolute left-1 transition-opacity duration-300 flex items-center justify-center w-5 h-5 ${theme === 'light' ? 'opacity-0' : 'opacity-40 group-hover:opacity-60'}`}>
-        <svg className="w-3.5 h-3.5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <span
+        className={`absolute left-1 transition-opacity duration-300 flex items-center justify-center w-5 h-5 ${theme === 'light' ? 'opacity-0' : 'opacity-40 group-hover:opacity-60'}`}
+      >
+        <svg
+          className="w-3.5 h-3.5 text-secondary"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth="2"
+        >
           <circle cx="12" cy="12" r="5" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+          />
         </svg>
       </span>
 
-      <span className={`absolute right-1 transition-opacity duration-300 flex items-center justify-center w-5 h-5 ${theme === 'dark' ? 'opacity-0' : 'opacity-40 group-hover:opacity-60'}`}>
+      <span
+        className={`absolute right-1 transition-opacity duration-300 flex items-center justify-center w-5 h-5 ${theme === 'dark' ? 'opacity-0' : 'opacity-40 group-hover:opacity-60'}`}
+      >
         <svg className="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 20 20">
           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>

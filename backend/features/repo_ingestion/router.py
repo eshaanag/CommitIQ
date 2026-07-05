@@ -136,7 +136,7 @@ def _hotspot_files(
     current_index: int,
     file_metrics_map: dict,
 ) -> list[str]:
-    recent_commits = commit_history[max(0, current_index - 4):current_index + 1]
+    recent_commits = commit_history[max(0, current_index - 4) : current_index + 1]
     churn_counts: dict[str, int] = {}
     for commit_data in recent_commits:
         for fpath in set(commit_data.get("files_list", [])):
@@ -154,7 +154,7 @@ def _persistent_hotspots(
     file_metrics_map: dict,
     min_recent_commits: int = 3,
 ) -> list[dict]:
-    recent_commits = commit_history[max(0, current_index - 5):current_index + 1]
+    recent_commits = commit_history[max(0, current_index - 5) : current_index + 1]
     churn_counts: dict[str, int] = {}
     for commit_data in recent_commits:
         for fpath in set(commit_data.get("files_list", [])):
@@ -166,12 +166,14 @@ def _persistent_hotspots(
         avg_complexity = float(metrics.get("avg_complexity", 0.0))
         if recent_count < min_recent_commits or avg_complexity <= 5.0:
             continue
-        hotspots.append({
-            "path": fpath,
-            "recent_commit_count": recent_count,
-            "complexity": round(avg_complexity, 2),
-            "loc": int(metrics.get("loc", 0)),
-        })
+        hotspots.append(
+            {
+                "path": fpath,
+                "recent_commit_count": recent_count,
+                "complexity": round(avg_complexity, 2),
+                "loc": int(metrics.get("loc", 0)),
+            }
+        )
     return sorted(
         hotspots,
         key=lambda item: (item["recent_commit_count"], item["complexity"], item["loc"]),
@@ -259,10 +261,14 @@ async def _graph_payload(db: AsyncSession, repo_id: int, commit: Commit) -> dict
         if fallback_commit:
             commit = fallback_commit
             nodes_result = await db.execute(
-                select(GraphNode).where(GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id)
+                select(GraphNode).where(
+                    GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id
+                )
             )
             edges_result = await db.execute(
-                select(GraphEdge).where(GraphEdge.repo_id == repo_id, GraphEdge.commit_id == commit.id)
+                select(GraphEdge).where(
+                    GraphEdge.repo_id == repo_id, GraphEdge.commit_id == commit.id
+                )
             )
             nodes = nodes_result.scalars().all()
             edges = edges_result.scalars().all()
@@ -323,7 +329,9 @@ async def _bus_factor_payload(db: AsyncSession, repo_id: int) -> dict:
     }
 
 
-async def _commit_graph_rows(db: AsyncSession, repo_id: int, sha: str) -> tuple[list[GraphNode], list[GraphEdge], Commit]:
+async def _commit_graph_rows(
+    db: AsyncSession, repo_id: int, sha: str
+) -> tuple[list[GraphNode], list[GraphEdge], Commit]:
     commit = await _find_commit(db, repo_id, sha)
     if not commit:
         raise _http_error(404, "Commit not found.", "commit_not_found")
@@ -354,7 +362,10 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
 
 async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
     from backend.database import AsyncSessionLocal
-    from backend.features.repo_ingestion.metrics_extractor import checkout_commit, extract_commit_metrics
+    from backend.features.repo_ingestion.metrics_extractor import (
+        checkout_commit,
+        extract_commit_metrics,
+    )
 
     async with AsyncSessionLocal() as db:
         repo = await db.get(Repo, repo_id)
@@ -363,7 +374,9 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
         job = await db.get(AnalysisJob, job_id)
         if not job or job.repo_id != repo_id:
-            logger.warning("Skipping ingestion for repo_id=%s because job_id=%s was not found", repo_id, job_id)
+            logger.warning(
+                "Skipping ingestion for repo_id=%s because job_id=%s was not found", repo_id, job_id
+            )
             return
 
         clone_path = None
@@ -397,7 +410,9 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
             await _clear_repo_data(db, repo_id)
             await _raise_if_cancelled(db, job)
-            await _update_job(db, job, status="computing_bus_factor", current_stage="Computing bus factor")
+            await _update_job(
+                db, job, status="computing_bus_factor", current_stage="Computing bus factor"
+            )
             await _raise_if_cancelled(db, job)
             checkout_commit(clone_path, commit_history[-1]["full_sha"])
             bus_entries = compute_bus_factor_from_history(commit_history, clone_path)
@@ -420,7 +435,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
                 file_metrics_map = extract_commit_metrics(clone_path, commit_data)
                 top_files = list(file_metrics_map.keys())[:50]
                 import_edges = build_import_edges(clone_path, top_files)
-                cochange_edges = build_cochange_edges(commit_history[:idx + 1])
+                cochange_edges = build_cochange_edges(commit_history[: idx + 1])
                 top_set = set(top_files)
                 filtered_edges = []
                 seen_edges = set()
@@ -470,33 +485,39 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
                 for fpath in top_files:
                     metrics = file_metrics_map.get(fpath, {})
-                    db.add(GraphNode(
-                        repo_id=repo_id,
-                        commit_id=commit_obj.id,
-                        full_sha=commit_obj.full_sha,
-                        file_path=fpath,
-                        module_name=Path(fpath).name,
-                        loc=metrics.get("loc", 0),
-                        avg_complexity=metrics.get("avg_complexity", 0.0),
-                        health_color=assign_health_color(metrics.get("avg_complexity", 0.0)),
-                        is_entry_point=Path(fpath).stem in {"index", "main", "app", "server"},
-                        semantic_drift_score=metrics.get("semantic_drift_score", 0.0),
-                        drift_method=metrics.get("drift_method", "none"),
-                    ))
+                    db.add(
+                        GraphNode(
+                            repo_id=repo_id,
+                            commit_id=commit_obj.id,
+                            full_sha=commit_obj.full_sha,
+                            file_path=fpath,
+                            module_name=Path(fpath).name,
+                            loc=metrics.get("loc", 0),
+                            avg_complexity=metrics.get("avg_complexity", 0.0),
+                            health_color=assign_health_color(metrics.get("avg_complexity", 0.0)),
+                            is_entry_point=Path(fpath).stem in {"index", "main", "app", "server"},
+                            semantic_drift_score=metrics.get("semantic_drift_score", 0.0),
+                            drift_method=metrics.get("drift_method", "none"),
+                        )
+                    )
 
                 for edge in filtered_edges:
-                    db.add(GraphEdge(
-                        repo_id=repo_id,
-                        commit_id=commit_obj.id,
-                        full_sha=commit_obj.full_sha,
-                        **edge,
-                    ))
+                    db.add(
+                        GraphEdge(
+                            repo_id=repo_id,
+                            commit_id=commit_obj.id,
+                            full_sha=commit_obj.full_sha,
+                            **edge,
+                        )
+                    )
 
                 prev_health = snapshot_data["health_score"]
                 prev_avg_complexity = snapshot_data["avg_complexity"]
                 await db.commit()
 
-            await _update_job(db, job, status="computing_bus_factor", current_stage="Computing bus factor")
+            await _update_job(
+                db, job, status="computing_bus_factor", current_stage="Computing bus factor"
+            )
             for entry in bus_entries:
                 db.add(BusFactor(repo_id=repo_id, **entry))
 
@@ -739,13 +760,17 @@ async def get_commit_detail(repo_id: int, sha: str, db: AsyncSession = Depends(g
     if not commit:
         raise _http_error(404, "Commit not found.", "commit_not_found")
 
-    snap_result = await db.execute(select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id))
+    snap_result = await db.execute(
+        select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id)
+    )
     snapshot = snap_result.scalar_one_or_none()
     if not snapshot:
         raise _http_error(404, "Health snapshot not found for commit.", "snapshot_not_found")
 
     narrative_key = make_cache_key(repo_id, commit.full_sha, "explain_drop")
-    narrative_result = await db.execute(select(LLMNarrative).where(LLMNarrative.cache_key == narrative_key))
+    narrative_result = await db.execute(
+        select(LLMNarrative).where(LLMNarrative.cache_key == narrative_key)
+    )
     narrative = narrative_result.scalar_one_or_none()
 
     narrative_payload = None
@@ -804,14 +829,18 @@ async def get_graph_diff(
         if before_cx > 0:
             delta_pct = (after_cx - before_cx) / before_cx
             if abs(delta_pct) > 0.10:
-                nodes_changed.append({
-                    "file": fpath,
-                    "before_complexity": round(before_cx, 2),
-                    "after_complexity": round(after_cx, 2),
-                    "delta_pct": round(delta_pct * 100.0, 1),
-                })
+                nodes_changed.append(
+                    {
+                        "file": fpath,
+                        "before_complexity": round(before_cx, 2),
+                        "after_complexity": round(after_cx, 2),
+                        "delta_pct": round(delta_pct * 100.0, 1),
+                    }
+                )
 
-    before_edge_set = {(edge.source_file, edge.target_file, edge.edge_type) for edge in before_edges}
+    before_edge_set = {
+        (edge.source_file, edge.target_file, edge.edge_type) for edge in before_edges
+    }
     after_edge_set = {(edge.source_file, edge.target_file, edge.edge_type) for edge in after_edges}
     added_edges = sorted(after_edge_set - before_edge_set)
     removed_edges = sorted(before_edge_set - after_edge_set)
@@ -828,7 +857,9 @@ async def get_graph_diff(
         },
         "nodes_added": nodes_added,
         "nodes_removed": nodes_removed,
-        "nodes_changed": sorted(nodes_changed, key=lambda item: abs(item["delta_pct"]), reverse=True)[:20],
+        "nodes_changed": sorted(
+            nodes_changed, key=lambda item: abs(item["delta_pct"]), reverse=True
+        )[:20],
         "edges_added": [
             {"source": source, "target": target, "type": edge_type}
             for source, target, edge_type in added_edges[:30]
@@ -855,8 +886,11 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
         raise _http_error(404, "Commit not found.", "commit_not_found")
 
     nodes_result = await db.execute(
-        select(GraphNode)
-        .where(GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id, GraphNode.avg_complexity > 5.0)
+        select(GraphNode).where(
+            GraphNode.repo_id == repo_id,
+            GraphNode.commit_id == commit.id,
+            GraphNode.avg_complexity > 5.0,
+        )
     )
     nodes = nodes_result.scalars().all()
     if not nodes:
@@ -864,14 +898,19 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
 
     file_paths = [node.file_path for node in nodes]
     commits_result = await db.execute(
-        select(Commit).where(Commit.repo_id == repo_id).order_by(desc(Commit.committed_at)).limit(20)
+        select(Commit)
+        .where(Commit.repo_id == repo_id)
+        .order_by(desc(Commit.committed_at))
+        .limit(20)
     )
     recent_commits = commits_result.scalars().all()
     churn_counts = {fpath: 0 for fpath in file_paths}
     for recent in recent_commits:
         # Querying full historical file lists is not stored; approximate churn by graph node presence.
         node_result = await db.execute(
-            select(GraphNode.file_path).where(GraphNode.repo_id == repo_id, GraphNode.commit_id == recent.id)
+            select(GraphNode.file_path).where(
+                GraphNode.repo_id == repo_id, GraphNode.commit_id == recent.id
+            )
         )
         recent_paths = set(node_result.scalars().all())
         for fpath in file_paths:
@@ -884,12 +923,14 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
         if churn_count <= 2:
             continue
         risk_score = min(100.0, node.avg_complexity * 8.0 + churn_count * 6.0)
-        hotspots.append({
-            "file": node.file_path,
-            "complexity": round(node.avg_complexity, 2),
-            "churn_count": churn_count,
-            "risk_score": round(risk_score, 1),
-        })
+        hotspots.append(
+            {
+                "file": node.file_path,
+                "complexity": round(node.avg_complexity, 2),
+                "churn_count": churn_count,
+                "risk_score": round(risk_score, 1),
+            }
+        )
 
     return {
         "repo_id": repo_id,

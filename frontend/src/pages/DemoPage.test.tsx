@@ -15,7 +15,7 @@ function renderDemoPage() {
   return render(
     <MemoryRouter>
       <DemoPage />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 

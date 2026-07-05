@@ -8,30 +8,30 @@
 @layer base {
   :root {
     /* Brand Spatial Global Tokens */
-    --color-brand-50:   #F3F4F6;
-    --color-brand-100:  #E5E7EB;
-    --color-brand-200:  #D1D5DB;
-    --color-brand-300:  #9CA3AF;
-    --color-brand-400:  #A78BFA;
-    --color-brand-500:  #8B5CF6;
-    --color-brand-600:  #7C3AED;
-    --color-brand-700:  #6D28D9;
-    --color-brand-800:  #5B21B6;
-    --color-brand-900:  #4C1D95;
+    --color-brand-50: #f3f4f6;
+    --color-brand-100: #e5e7eb;
+    --color-brand-200: #d1d5db;
+    --color-brand-300: #9ca3af;
+    --color-brand-400: #a78bfa;
+    --color-brand-500: #8b5cf6;
+    --color-brand-600: #7c3aed;
+    --color-brand-700: #6d28d9;
+    --color-brand-800: #5b21b6;
+    --color-brand-900: #4c1d95;
 
     /* Status Tokens */
-    --color-healthy:       #34D399; /* Emerald */
-    --color-healthy-500:   #10B981;
-    --color-warning:       #FBBF24; /* Amber */
-    --color-warning-500:   #F59E0B;
-    --color-critical:      #F87171; /* Coral Red */
-    --color-critical-500:  #EF4444;
-    --color-info:          #60A5FA; /* Soft Icy Blue */
+    --color-healthy: #34d399; /* Emerald */
+    --color-healthy-500: #10b981;
+    --color-warning: #fbbf24; /* Amber */
+    --color-warning-500: #f59e0b;
+    --color-critical: #f87171; /* Coral Red */
+    --color-critical-500: #ef4444;
+    --color-info: #60a5fa; /* Soft Icy Blue */
 
     /* Typography Hierarchy */
     --font-display: 'Outfit', -apple-system, system-ui, sans-serif;
-    --font-body:    'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
-    --font-mono:    'JetBrains Mono', monospace;
+    --font-body: 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 
     /* Radii consistent with Apple Spatial UI */
     --radius-sm: 8px;
@@ -42,76 +42,86 @@
     --radius-pill: 9999px;
 
     /* Base Layout Colors (Frosted Silver/White Light Theme by Default) */
-    --color-base:          #F4F5F8;
-    --color-surface:       rgba(255, 255, 255, 0.45);
-    --color-elevated:      rgba(255, 255, 255, 0.7);
-    --color-border:        rgba(0, 0, 0, 0.06);
+    --color-base: #f4f5f8;
+    --color-surface: rgba(255, 255, 255, 0.45);
+    --color-elevated: rgba(255, 255, 255, 0.7);
+    --color-border: rgba(0, 0, 0, 0.06);
     --color-border-subtle: rgba(0, 0, 0, 0.03);
 
-    --color-primary:       #111827; /* Near Black */
-    --color-secondary:     #374151; /* Dark Gray */
-    --color-muted:         #6B7280; /* System Gray */
-    --color-mono:          #4B5563;
-    --color-disabled:      rgba(0, 0, 0, 0.02);
+    --color-primary: #111827; /* Near Black */
+    --color-secondary: #374151; /* Dark Gray */
+    --color-muted: #6b7280; /* System Gray */
+    --color-mono: #4b5563;
+    --color-disabled: rgba(0, 0, 0, 0.02);
 
-    --color-brand:         #7C3AED; /* Vibrant Violet Accent */
+    --color-brand: #7c3aed; /* Vibrant Violet Accent */
 
     /* Glassmorphism Variables (Light Mode) */
-    --glass-bg:            rgba(255, 255, 255, 0.45);
-    --glass-bg-hover:      rgba(255, 255, 255, 0.65);
-    --glass-border:        rgba(0, 0, 0, 0.06);
-    --glass-border-hover:  rgba(0, 0, 0, 0.12);
-    --glass-shadow:        0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.8);
-    --glass-shadow-hover:  0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.95), 0 0 20px rgba(124, 58, 237, 0.06);
+    --glass-bg: rgba(255, 255, 255, 0.45);
+    --glass-bg-hover: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(0, 0, 0, 0.06);
+    --glass-border-hover: rgba(0, 0, 0, 0.12);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    --glass-shadow-hover:
+      0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px rgba(255, 255, 255, 0.95),
+      0 0 20px rgba(124, 58, 237, 0.06);
 
-    --glass-bg-bright:     rgba(255, 255, 255, 0.75);
+    --glass-bg-bright: rgba(255, 255, 255, 0.75);
     --glass-border-bright: rgba(0, 0, 0, 0.09);
-    --glass-shadow-bright: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
+    --glass-shadow-bright:
+      0 8px 32px rgba(0, 0, 0, 0.04), inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
 
-    --glass-bg-dark:       rgba(255, 255, 255, 0.85);
-    --glass-border-dark:   rgba(0, 0, 0, 0.05);
-    --glass-shadow-dark:   0 12px 48px rgba(0, 0, 0, 0.06), inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
+    --glass-bg-dark: rgba(255, 255, 255, 0.85);
+    --glass-border-dark: rgba(0, 0, 0, 0.05);
+    --glass-shadow-dark:
+      0 12px 48px rgba(0, 0, 0, 0.06), inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
 
-    --liquid-btn-bg:           rgba(0, 0, 0, 0.03);
-    --liquid-btn-bg-hover:     rgba(0, 0, 0, 0.06);
-    --liquid-btn-border:       rgba(0, 0, 0, 0.06);
+    --liquid-btn-bg: rgba(0, 0, 0, 0.03);
+    --liquid-btn-bg-hover: rgba(0, 0, 0, 0.06);
+    --liquid-btn-border: rgba(0, 0, 0, 0.06);
     --liquid-btn-border-hover: rgba(0, 0, 0, 0.12);
   }
 
   .dark {
-    --color-base:          #0A0B10;
-    --color-surface:       rgba(255, 255, 255, 0.035);
-    --color-elevated:      rgba(255, 255, 255, 0.07);
-    --color-border:        rgba(255, 255, 255, 0.08);
+    --color-base: #0a0b10;
+    --color-surface: rgba(255, 255, 255, 0.035);
+    --color-elevated: rgba(255, 255, 255, 0.07);
+    --color-border: rgba(255, 255, 255, 0.08);
     --color-border-subtle: rgba(255, 255, 255, 0.05);
 
-    --color-primary:       #F9FAFB;
-    --color-secondary:     #E5E7EB;
-    --color-muted:         #9CA3AF;
-    --color-mono:          #D1D5DB;
-    --color-disabled:      rgba(255, 255, 255, 0.02);
+    --color-primary: #f9fafb;
+    --color-secondary: #e5e7eb;
+    --color-muted: #9ca3af;
+    --color-mono: #d1d5db;
+    --color-disabled: rgba(255, 255, 255, 0.02);
 
-    --color-brand:         #A78BFA;
+    --color-brand: #a78bfa;
 
     /* Glassmorphism Variables (Dark Mode) */
-    --glass-bg:            rgba(255, 255, 255, 0.035);
-    --glass-bg-hover:      rgba(255, 255, 255, 0.06);
-    --glass-border:        rgba(255, 255, 255, 0.08);
-    --glass-border-hover:  rgba(255, 255, 255, 0.13);
-    --glass-shadow:        0 4px 30px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.06), inset 0 -1px 1px rgba(0, 0, 0, 0.2);
-    --glass-shadow-hover:  0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.12), 0 0 20px rgba(167, 139, 250, 0.05);
+    --glass-bg: rgba(255, 255, 255, 0.035);
+    --glass-bg-hover: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-hover: rgba(255, 255, 255, 0.13);
+    --glass-shadow:
+      0 4px 30px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.06),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+    --glass-shadow-hover:
+      0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.12),
+      0 0 20px rgba(167, 139, 250, 0.05);
 
-    --glass-bg-bright:     rgba(255, 255, 255, 0.08);
+    --glass-bg-bright: rgba(255, 255, 255, 0.08);
     --glass-border-bright: rgba(255, 255, 255, 0.14);
-    --glass-shadow-bright: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.12);
+    --glass-shadow-bright:
+      0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 1.5px rgba(255, 255, 255, 0.12);
 
-    --glass-bg-dark:       rgba(10, 11, 16, 0.6);
-    --glass-border-dark:   rgba(255, 255, 255, 0.05);
-    --glass-shadow-dark:   0 12px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0.5px rgba(255, 255, 255, 0.03);
+    --glass-bg-dark: rgba(10, 11, 16, 0.6);
+    --glass-border-dark: rgba(255, 255, 255, 0.05);
+    --glass-shadow-dark:
+      0 12px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0.5px rgba(255, 255, 255, 0.03);
 
-    --liquid-btn-bg:           rgba(255, 255, 255, 0.06);
-    --liquid-btn-bg-hover:     rgba(255, 255, 255, 0.12);
-    --liquid-btn-border:       rgba(255, 255, 255, 0.08);
+    --liquid-btn-bg: rgba(255, 255, 255, 0.06);
+    --liquid-btn-bg-hover: rgba(255, 255, 255, 0.12);
+    --liquid-btn-border: rgba(255, 255, 255, 0.08);
     --liquid-btn-border-hover: rgba(255, 255, 255, 0.18);
   }
 
@@ -121,7 +131,9 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   body {
@@ -129,7 +141,9 @@
     color: var(--color-primary);
     font-family: var(--font-body);
     overflow-x: hidden;
-    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   * {
@@ -142,16 +156,16 @@
     width: 6px;
     height: 6px;
   }
-  ::-webkit-scrollbar-track { 
-    background: transparent; 
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
-  ::-webkit-scrollbar-thumb { 
-    background: rgba(255, 255, 255, 0.08); 
-    border-radius: 99px; 
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
     transition: background-color 0.3s ease;
   }
-  ::-webkit-scrollbar-thumb:hover { 
-    background: rgba(255, 255, 255, 0.18); 
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
   }
 
   /* Override default tailwind colors to support light mode dynamically */
@@ -195,7 +209,7 @@
   html:not(.dark) .bg-white\/\[0\.06\] {
     background-color: rgba(0, 0, 0, 0.06) !important;
   }
-  
+
   html:not(.dark) .border-white\/5 {
     border-color: rgba(0, 0, 0, 0.05) !important;
   }
@@ -205,13 +219,13 @@
   html:not(.dark) .border-white\/15 {
     border-color: rgba(0, 0, 0, 0.12) !important;
   }
-  
-  html:not(.dark) aside, 
+
+  html:not(.dark) aside,
   html:not(.dark) .bg-\[\#0a0b10\]\/40 {
     background-color: rgba(255, 255, 255, 0.5) !important;
     border-color: rgba(0, 0, 0, 0.06) !important;
   }
-  
+
   html:not(.dark) .bg-\[\#07080d\] {
     background-color: var(--color-base) !important;
   }
@@ -219,7 +233,7 @@
   html:not(.dark) .bg-\[\#05060b\] {
     background-color: var(--color-surface) !important;
   }
-  
+
   html:not(.dark) .text-white\/10 {
     color: rgba(0, 0, 0, 0.09) !important;
   }
@@ -242,7 +256,10 @@
     -webkit-backdrop-filter: blur(28px) saturate(120%);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
-    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+      background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .glass-panel:hover {
@@ -265,16 +282,16 @@
     backdrop-filter: blur(20px) saturate(140%);
     -webkit-backdrop-filter: blur(20px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 
-      0 12px 40px rgba(0, 0, 0, 0.75), 
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.75),
       inset 0 1px 1px rgba(255, 255, 255, 0.1),
       0 0 25px rgba(167, 139, 250, 0.15);
   }
   html:not(.dark) .glass-tooltip {
     background: rgba(255, 255, 255, 0.95) !important;
     border-color: rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 
-      0 12px 40px rgba(0, 0, 0, 0.08), 
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.08),
       inset 0 1px 1px rgba(255, 255, 255, 0.9),
       0 0 25px rgba(124, 58, 237, 0.06);
   }
@@ -293,7 +310,7 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--liquid-btn-border);
-    box-shadow: 
+    box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.2),
       inset 0 1px 0.5px rgba(255, 255, 255, 0.1);
     color: var(--color-primary);
@@ -304,7 +321,7 @@
     background: var(--liquid-btn-bg-hover);
     border-color: var(--liquid-btn-border-hover);
     transform: translateY(-1px);
-    box-shadow: 
+    box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.3),
       inset 0 1px 1px rgba(255, 255, 255, 0.15);
   }
@@ -346,18 +363,32 @@
   }
 
   @keyframes floatSlow {
-    0% { transform: translateY(0) scale(1); }
-    100% { transform: translateY(-18px) scale(1.03); }
+    0% {
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      transform: translateY(-18px) scale(1.03);
+    }
   }
 
   @keyframes floatMedium {
-    0% { transform: translate(0, 0) scale(1.02); }
-    100% { transform: translate(25px, -20px) scale(0.97); }
+    0% {
+      transform: translate(0, 0) scale(1.02);
+    }
+    100% {
+      transform: translate(25px, -20px) scale(0.97);
+    }
   }
 
   @keyframes glowPulse {
-    0% { opacity: 0.35; filter: brightness(0.9); }
-    100% { opacity: 0.75; filter: brightness(1.2); }
+    0% {
+      opacity: 0.35;
+      filter: brightness(0.9);
+    }
+    100% {
+      opacity: 0.75;
+      filter: brightness(1.2);
+    }
   }
 }
 
@@ -370,9 +401,8 @@
 }
 
 /* Ensure the force graph tooltips sit below floating sidebar components and don't capture pointer events */
-.graph-tooltip, .scene-tooltip {
+.graph-tooltip,
+.scene-tooltip {
   z-index: 30 !important;
   pointer-events: none !important;
 }
-
-
