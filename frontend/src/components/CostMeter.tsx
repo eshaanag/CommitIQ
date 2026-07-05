@@ -22,9 +22,7 @@ export function CostMeter({ usage, loading, error }: CostMeterProps) {
 
   if (!usage) {
     return (
-      <div className="text-slate-500 text-xs py-2">
-        No active resource tracking established.
-      </div>
+      <div className="text-slate-500 text-xs py-2">No active resource tracking established.</div>
     )
   }
 
@@ -40,10 +38,10 @@ export function CostMeter({ usage, loading, error }: CostMeterProps) {
             API Allocation
           </span>
         </div>
-        <span 
+        <span
           className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
-            warning 
-              ? 'text-rose-400 bg-rose-500/10 border border-rose-500/10' 
+            warning
+              ? 'text-rose-400 bg-rose-500/10 border border-rose-500/10'
               : 'text-slate-300 bg-white/5 border border-white/5'
           }`}
         >
@@ -52,13 +50,13 @@ export function CostMeter({ usage, loading, error }: CostMeterProps) {
       </div>
 
       <div className="h-2.5 bg-white/10 rounded-full overflow-hidden border border-white/5 p-0.5">
-        <div 
+        <div
           className={`h-full rounded-full transition-all duration-700 ${
-            warning 
-              ? 'bg-gradient-to-r from-rose-500 to-orange-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]' 
+            warning
+              ? 'bg-gradient-to-r from-rose-500 to-orange-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]'
               : 'bg-gradient-to-r from-purple-500 via-indigo-400 to-cyan-400 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
-          }`} 
-          style={{ width: `${Math.min(usedPct, 100)}%` }} 
+          }`}
+          style={{ width: `${Math.min(usedPct, 100)}%` }}
         />
       </div>
 
