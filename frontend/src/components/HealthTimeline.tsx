@@ -89,6 +89,13 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
 }
 
 export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit }: HealthTimelineProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Listen to ArrowLeft/ArrowRight to cycle commits
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [commits]);
   const navigate = useNavigate()
   const [visibleLines, setVisibleLines] = useState({
     complexity_drift: false,
