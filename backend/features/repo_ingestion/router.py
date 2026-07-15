@@ -352,6 +352,10 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
     return result.scalar_one_or_none()
 
 
+async def notify_webhooks(repo_id: int, score: float):
+    # Webhook mock dispatcher
+    pass
+
 async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
     from backend.database import AsyncSessionLocal
     from backend.features.repo_ingestion.metrics_extractor import checkout_commit, extract_commit_metrics
