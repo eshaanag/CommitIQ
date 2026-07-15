@@ -2,6 +2,9 @@
 line-length = 100
 target-version = ['py311']
 
+[tool.license_scanner]
+allowed_licenses = ["MIT", "Apache-2.0", "BSD-3-Clause"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
