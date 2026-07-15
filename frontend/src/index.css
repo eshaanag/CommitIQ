@@ -1,4 +1,15 @@
 /* frontend/src/index.css */
+/* Force Graph container z-index wrapper */
+.force-graph-container {
+  position: relative;
+  z-index: 1 !important;
+}
+
+/* Nav dropdown overlay safety */
+header, nav, [role="navigation"], .dropdown-menu, .tooltip {
+  position: relative;
+  z-index: 50 !important;
+}
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
