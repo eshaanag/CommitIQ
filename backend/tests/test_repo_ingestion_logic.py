@@ -249,3 +249,8 @@ def test_compute_full_snapshot_aggregates_metric_and_semantic_inputs():
         "persistent_hotspots",
     }
     assert json.loads(snapshot["persistent_hotspots_json"]) == persistent_hotspots
+
+def test_semantic_analyzer_fallback():
+    # Verify fallback levenshtein behavior
+    res = semantic_analyzer.compute_semantic_drift("a = 1", "a = 2")
+    assert res["method"] == "fallback_levenshtein"
