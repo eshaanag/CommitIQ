@@ -8,6 +8,11 @@ from backend.features.repo_ingestion.router import router as ingestion_router
 from backend.features.llm_analysis.router import router as llm_router
 
 
+async def scheduled_rescans_job():
+    import asyncio
+    while True:
+        await asyncio.sleep(86400) # Rescan daily
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
