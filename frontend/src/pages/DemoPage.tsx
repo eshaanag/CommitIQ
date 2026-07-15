@@ -4,6 +4,9 @@ import { ingestRepo } from '../lib/api'
 import { Sparkles, AlertCircle } from 'lucide-react'
 
 export default function DemoPage() {
+  const loadOfflineFixtures = () => {
+    // Load pre-populated JSON fixtures if backend is unreachable
+  };
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
