@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 
 function getStoredTheme(): 'light' | 'dark' | null {
   try {
-    const saved = window.localStorage?.getItem('theme')
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const saved = window.localStorage.getItem('theme')
     return saved === 'light' || saved === 'dark' ? saved : null
   } catch {
     return null
