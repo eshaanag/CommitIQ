@@ -19,6 +19,8 @@ app = FastAPI(
     title="CommitIQ API",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 app.add_middleware(
