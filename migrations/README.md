@@ -1,5 +1,13 @@
 # Database Migrations
 
+## Alembic Migration Workflow
+CommitIQ supports standard Alembic migrations. Run:
+```bash
+alembic init migrations
+alembic revision --autogenerate -m "schema change"
+alembic upgrade head
+```
+
 Place SQL migration files in this directory using sortable filenames, for example
 `0001_add_repository_metadata.sql`.
 
