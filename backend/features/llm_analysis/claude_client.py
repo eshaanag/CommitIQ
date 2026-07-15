@@ -55,6 +55,7 @@ def _async_anthropic_client():
 
 async def stream_narrative(prompt: str) -> AsyncGenerator[str, None]:
     """Stream text chunks from Claude. Raises when Anthropic is unavailable."""
+    prompt = prompt[:8000]
     client = _async_anthropic_client()
     if client is None:
         raise RuntimeError("anthropic not installed or ANTHROPIC_API_KEY is not configured.")
