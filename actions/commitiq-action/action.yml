@@ -1,0 +1,5 @@
+name: CommitIQ Action
+description: Run CommitIQ analysis on pull requests
+runs:
+  using: docker
+  image: Dockerfile
