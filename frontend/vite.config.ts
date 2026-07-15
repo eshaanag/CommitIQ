@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => {
             '/api': {
               target: devApiProxyTarget,
               changeOrigin: true,
+              buffer: false,
+              headers: {
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive'
+              }
             },
           },
         }
