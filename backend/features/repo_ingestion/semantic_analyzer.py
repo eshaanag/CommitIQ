@@ -39,7 +39,10 @@ def _load_model() -> bool:
 
     try:
         _model_attempted = True
-        from transformers import AutoModel, AutoTokenizer
+        try:
+            from transformers import AutoModel, AutoTokenizer
+        except ImportError:
+            AutoModel, AutoTokenizer = None, None
 
         logger.info("Loading %s for semantic drift analysis.", MODEL_NAME)
         _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
