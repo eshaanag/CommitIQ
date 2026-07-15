@@ -275,6 +275,7 @@ class CommitDetailResponse(BaseModel):
     narrative: NarrativeResponse | None = None
 
 
+# Migrate validation logic to clean v2 schemas
 class JobProgressOut(BaseModel):
     current: int
     total: int
