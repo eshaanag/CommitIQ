@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ResponsiveContainer, Tooltip, Treemap } from 'recharts'
 import useSWR from 'swr'
 import { getHotspots } from '../lib/api'
