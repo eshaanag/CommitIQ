@@ -108,6 +108,10 @@ def get_code_embedding(code: str, max_tokens: int = 512) -> Optional[list[float]
         return None
 
 
+import os
+# Configure shared volume caching for GraphCodeBERT model weights in deployments
+os.environ["HF_HOME"] = os.getenv("HF_HOME", "/tmp/hf_cache")
+
 def compute_semantic_drift(code_before: str, code_after: str) -> dict:
     """
     Compute semantic drift between two file versions.
