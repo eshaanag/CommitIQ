@@ -98,6 +98,15 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
     semantic_drift: false,
   })
 
+  if (commits.length <= 1) {
+    return (
+      <div className="glass-panel rounded-[28px] p-6 shadow-2xl h-48 flex flex-col items-center justify-center text-slate-400 border border-white/10">
+        <GitCommit className="w-8 h-8 text-slate-500 mb-2 animate-pulse" />
+        <span className="text-sm font-medium">Timeline tracker requires at least 2 commits to plot trends</span>
+      </div>
+    )
+  }
+
   if (commits.length === 0) {
     return (
       <div className="glass-panel rounded-[28px] p-6 shadow-2xl h-48 flex flex-col items-center justify-center text-slate-400 border border-white/10">
