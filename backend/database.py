@@ -16,6 +16,18 @@ engine = create_async_engine(
     echo=False,
 )
 
+from sqlalchemy import event
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if _IS_SQLITE:
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+        except Exception:
+            pass
+        finally:
+            cursor.close()
+
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
