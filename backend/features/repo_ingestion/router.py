@@ -613,6 +613,9 @@ async def ingest_repo(
     )
 
 
+# Track subproceses globally to cancel on demand
+active_subprocesses = {}
+
 @router.post("/ingest/cancel/{repo_id}", response_model=JobProgressOut)
 async def cancel_ingestion(repo_id: int, db: AsyncSession = Depends(get_db)):
     repo = await db.get(Repo, repo_id)
