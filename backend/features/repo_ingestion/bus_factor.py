@@ -95,8 +95,8 @@ def compute_bus_factor_from_history(
     fallback_counts: dict[str, dict[tuple[str, str | None], int]] = defaultdict(lambda: defaultdict(int))
 
     for commit in commit_history:
-        author = commit.get("author_name") or "unknown"
-        email = commit.get("author_email")
+        author = (commit.get("author_name") or "unknown").strip().lower()
+        email = (commit.get("author_email") or "").strip().lower() or None
         for fpath in commit.get("files_list", []):
             if not is_code_file(fpath):
                 continue
