@@ -39,6 +39,13 @@ def _get_genai():
         return None
 
 
+def _get_openai():
+    try:
+        import openai
+        return openai
+    except ImportError:
+        return None
+
 def _sync_anthropic_client():
     anthropic = _get_anthropic()
     if not anthropic or not ANTHROPIC_API_KEY:
