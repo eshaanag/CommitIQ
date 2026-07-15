@@ -273,6 +273,37 @@ def compute_full_snapshot(
     hotspot_files: list[str] | None = None,
     persistent_hotspots: list[dict] | None = None,
 ) -> dict:
+    if not commit_data.get("files_list", []):
+        return {
+            "full_sha": commit_data["full_sha"],
+            "health_score": 100.0,
+            "avg_complexity": 0.0,
+            "max_complexity": 0.0,
+            "total_loc": 0,
+            "churn_rate": 0.0,
+            "num_files_changed": 0,
+            "bus_factor_min": bus_factor_min,
+            "health_delta": 0.0,
+            "cc_score": 100.0,
+            "churn_score": 100.0,
+            "bus_score": 100.0,
+            "loc_score": 100.0,
+            "complexity_drift_score": 100.0,
+            "churn_risk_score": 100.0,
+            "bus_factor_risk_score": 100.0,
+            "dependency_health_score": 100.0,
+            "avg_semantic_drift": 0.0,
+            "semantic_health_score": 100.0,
+            "high_drift_files": 0,
+            "semantic_drift_method": "none",
+            "risk_reasons_json": "[]",
+            "hotspot_persistence_score": 0.0,
+            "persistent_hotspots_json": "[]",
+            "dependency_density": 0.0,
+            "has_cycles": False,
+            "hotspot_count": 0,
+            "top_files_json": "[]",
+        }
     hotspot_files = hotspot_files or []
     persistent_hotspots = persistent_hotspots or []
     files_list = commit_data.get("files_list", [])
