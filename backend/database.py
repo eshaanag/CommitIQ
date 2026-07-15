@@ -124,6 +124,14 @@ async def apply_sql_migrations(
     return applied_now
 
 
+def utc_normalize(dt):
+    import datetime
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+    return dt
+
 async def init_db():
     """Initialize database schema for local SQLite and hosted Postgres."""
     from backend.shared import models  # noqa: F401
