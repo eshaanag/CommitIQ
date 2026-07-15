@@ -112,7 +112,8 @@ async def apply_sql_migrations(
         if version in applied:
             continue
 
-        for statement in _migration_statements(migration_path.read_text(encoding="utf-8")):
+        content = await asyncio.to_thread(migration_path.read_text, encoding="utf-8")
+        for statement in _migration_statements(content):
             if not is_sqlite and statement.upper().startswith("PRAGMA"):
                 continue
             await _execute_statement(conn, statement, is_sqlite=is_sqlite)
