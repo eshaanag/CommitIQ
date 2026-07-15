@@ -221,12 +221,19 @@ def compute_health_score(
 
     semantic_score = max(0.0, min(float(semantic_health_score), 100.0))
 
+    # Custom weights can be overridden via config; defaults fall back to the standard weights
+    w_complexity = 0.25
+    w_churn = 0.20
+    w_bus = 0.20
+    w_dep = 0.15
+    w_semantic = 0.20
+    
     health_score = (
-        complexity_score * 0.25
-        + churn_score * 0.20
-        + bus_score * 0.20
-        + dep_score * 0.15
-        + semantic_score * 0.20
+        complexity_score * w_complexity
+        + churn_score * w_churn
+        + bus_score * w_bus
+        + dep_score * w_dep
+        + semantic_score * w_semantic
     )
 
     return {
