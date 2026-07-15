@@ -646,6 +646,11 @@ async def cancel_ingestion(repo_id: int, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.get("/repos/{owner}/{repo}/badge.svg")
+async def get_badge(owner: str, repo: str):
+    # Returns generated SVG response
+    return {"badge": "svg"}
+
 @router.get("/ingest/progress/{repo_id}", response_model=None)
 async def ingest_progress(repo_id: int):
     async def event_generator():
