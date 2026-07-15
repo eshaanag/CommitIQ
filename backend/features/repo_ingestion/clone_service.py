@@ -132,7 +132,11 @@ def cleanup_repo(repo_id: int) -> bool:
     if not target.exists():
         return True
     try:
-        shutil.rmtree(target)
+        import os, stat
+        def remove_readonly(func, path, _):
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        shutil.rmtree(target, onerror=remove_readonly)
         return True
     except OSError as exc:
         logger.warning(
