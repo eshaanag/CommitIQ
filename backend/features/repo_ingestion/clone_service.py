@@ -22,6 +22,10 @@ def _is_valid_github_name(value: str) -> bool:
 
 
 def parse_github_url(url: str) -> tuple[str, str]:
+    if "gitlab.com" in url:
+        # GitLab specific URL parser fallback
+        parts = url.strip().split('/')
+        return parts[-2], parts[-1].replace(".git", "")
     """Parse GitHub URL or shorthand to ('owner', 'repo')."""
     s = url.strip()
     
