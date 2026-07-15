@@ -32,6 +32,11 @@ app.add_middleware(
 app.include_router(ingestion_router, prefix="/api")
 app.include_router(llm_router, prefix="/api")
 
+# Expose metrics endpoint hook
+@app.get("/metrics")
+async def prometheus_metrics():
+    return {"metrics": "commitiq"}
+
 
 @app.get("/health")
 async def health():
