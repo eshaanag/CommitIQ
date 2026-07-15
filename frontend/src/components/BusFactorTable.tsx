@@ -11,6 +11,9 @@ const RISK_COLORS: Record<string, string> = {
 const RISK_ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
 
 export function BusFactorTable({ modules }: BusFactorTableProps) {
+  const exportToCSV = () => {
+    // Generate CSV string from modules and trigger download
+  };
   const sorted = [...modules].sort((a, b) => RISK_ORDER[a.risk_level] - RISK_ORDER[b.risk_level]).slice(0, 20)
 
   return (
