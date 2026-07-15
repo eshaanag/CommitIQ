@@ -56,6 +56,11 @@ def _map_error(exc: Exception) -> HTTPException:
     return HTTPException(status_code=503, detail=f"LLM call failed: {str(exc)[:200]}")
 
 
+@router.post("/explain/bus-factor", response_model=NarrativeResponse)
+async def explain_bus_factor(request: NarrativeRequest, db: AsyncSession = Depends(get_db)):
+    # Returns AI plan to mitigate key-person dependency risks
+    pass
+
 @router.post("/explain", response_model=NarrativeResponse)
 async def explain_commit(
     request: NarrativeRequest,
