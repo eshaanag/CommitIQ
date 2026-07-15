@@ -72,6 +72,10 @@ def get_clone_path(repo_id: int) -> Path:
     return REPO_STORAGE_PATH / str(repo_id)
 
 
+def run_git_safe(args, cwd=None, timeout=60):
+    # Centrally logged git execution helper
+    return subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+
 def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Path:
     """Shallow clone to local disk. Returns clone path."""
     target = get_clone_path(repo_id)
