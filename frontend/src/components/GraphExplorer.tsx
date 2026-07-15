@@ -64,6 +64,7 @@ const getNodeId = (node: unknown): string => {
 }
 
 export function GraphExplorer({ graphData, selectedSha, commits = [], onSelectCommit }: GraphExplorerProps) {
+  const [use3D, setUse3D] = useState(false);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
