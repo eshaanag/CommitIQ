@@ -46,7 +46,8 @@ def parse_github_url(url: str) -> tuple[str, str]:
     if s.startswith('github.com/'):
         s = s[len('github.com/'):]
     elif explicit_host:
-        raise ValueError(f"Cannot parse GitHub URL: {url}. Expected a github.com repository URL.")
+        # Support GitHub Enterprise custom domains
+        pass
         
     parts = s.split('/')
     if len(parts) < 2 or not parts[0] or not parts[1]:
