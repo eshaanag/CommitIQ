@@ -2,7 +2,6 @@ import subprocess
 from collections import defaultdict
 from pathlib import Path
 
-
 EXCLUDE_PATTERNS = (
     ".github/",
     "ISSUE_TEMPLATE",
@@ -92,7 +91,9 @@ def compute_bus_factor_from_history(
     Falls back to commit authorship counts if a file no longer exists at HEAD.
     """
     touched_files: dict[str, str | None] = {}
-    fallback_counts: dict[str, dict[tuple[str, str | None], int]] = defaultdict(lambda: defaultdict(int))
+    fallback_counts: dict[str, dict[tuple[str, str | None], int]] = defaultdict(
+        lambda: defaultdict(int)
+    )
 
     for commit in commit_history:
         author = commit.get("author_name") or "unknown"
@@ -118,15 +119,17 @@ def compute_bus_factor_from_history(
         top_pct = top_count / total
         contributor_count = len(ranked)
 
-        entries.append({
-            "module_path": module_path,
-            "contributor_count": contributor_count,
-            "top_contributor": top_author,
-            "top_contributor_email": top_email,
-            "top_contributor_pct": round(top_pct, 4),
-            "total_commits_to_module": sum(fallback_counts[module_path].values()),
-            "risk_level": _risk_level(contributor_count, top_pct),
-            "last_commit_sha": touched_files[module_path],
-        })
+        entries.append(
+            {
+                "module_path": module_path,
+                "contributor_count": contributor_count,
+                "top_contributor": top_author,
+                "top_contributor_email": top_email,
+                "top_contributor_pct": round(top_pct, 4),
+                "total_commits_to_module": sum(fallback_counts[module_path].values()),
+                "risk_level": _risk_level(contributor_count, top_pct),
+                "last_commit_sha": touched_files[module_path],
+            }
+        )
 
     return entries

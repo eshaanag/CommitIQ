@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.config import MAX_COMMITS
+from backend.features.repo_ingestion import semantic_analyzer
 from backend.features.repo_ingestion.bus_factor import is_code_file
 from backend.features.repo_ingestion.clone_service import (
     cleanup_repo,
@@ -19,7 +20,6 @@ from backend.features.repo_ingestion.graph_builder import (
     resolve_import_to_file,
 )
 from backend.features.repo_ingestion.health_scorer import compute_full_snapshot
-from backend.features.repo_ingestion import semantic_analyzer
 from backend.shared.schemas import IngestRequest
 
 
@@ -109,15 +109,13 @@ def test_import_extractors_and_resolver_cover_common_python_and_ts_patterns():
     assert "os" in python_imports
     assert "package.module" in python_imports
 
-    js_imports = extract_js_imports(
-        """
+    js_imports = extract_js_imports("""
         import type { User } from './types'
         export { Button } from './Button'
         import './polyfill'
         const mod = require('../lib/mod')
         const lazy = import('./lazy')
-        """
-    )
+        """)
     assert js_imports == ["./types", "./Button", "./polyfill", "../lib/mod", "./lazy"]
 
     files = [
@@ -187,7 +185,9 @@ def test_semantic_drift_uses_fallback_without_graphcodebert(monkeypatch):
     monkeypatch.setattr(semantic_analyzer, "ENABLE_GRAPHCODEBERT", False)
     monkeypatch.setattr(semantic_analyzer, "_load_model", fail_if_model_loads)
 
-    result = semantic_analyzer.compute_semantic_drift("def value():\n    return 1\n", "def value():\n    return 2\n")
+    result = semantic_analyzer.compute_semantic_drift(
+        "def value():\n    return 1\n", "def value():\n    return 2\n"
+    )
 
     assert result["method"] == "fallback_levenshtein"
     assert result["model"] == "difflib.SequenceMatcher"

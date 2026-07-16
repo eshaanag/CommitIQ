@@ -44,11 +44,17 @@ export default function AnalyzePage() {
       setProgress(data)
       if (data.status === 'ready') {
         source.close()
-        getRepo(repoId).then((repo) => {
-          navigate(`/dashboard/${repo.repo_slug}`, { replace: true })
-        }).catch((err) => {
-          setError(err instanceof Error ? err.message : 'Analysis completed, but repository metadata could not load.')
-        })
+        getRepo(repoId)
+          .then((repo) => {
+            navigate(`/dashboard/${repo.repo_slug}`, { replace: true })
+          })
+          .catch((err) => {
+            setError(
+              err instanceof Error
+                ? err.message
+                : 'Analysis completed, but repository metadata could not load.'
+            )
+          })
       }
       if (data.status === 'error') {
         source.close()
@@ -67,7 +73,9 @@ export default function AnalyzePage() {
   }, [repoId, navigate])
 
   const currentStageIdx = progress.status === 'queued' ? 0 : stageIndex(progress.status)
-  const canCancel = Boolean(repoId && !error && !['ready', 'error', 'cancelled'].includes(progress.status))
+  const canCancel = Boolean(
+    repoId && !error && !['ready', 'error', 'cancelled'].includes(progress.status)
+  )
 
   async function handleCancel() {
     if (!repoId || isCancelling) return
@@ -92,12 +100,24 @@ export default function AnalyzePage() {
           <div className="mb-10 text-center">
             <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 relative">
               <div className="absolute inset-1 rounded-full border-2 border-t-purple-400 border-r-indigo-400 border-b-transparent border-l-transparent animate-spin" />
-              <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+              <svg
+                className="w-6 h-6 text-purple-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"
+                />
               </svg>
             </div>
 
-            <h1 className="font-head text-[28px] font-semibold text-white tracking-tight mb-2">Analyzing Repository</h1>
+            <h1 className="font-head text-[28px] font-semibold text-white tracking-tight mb-2">
+              Analyzing Repository
+            </h1>
             <div className="inline-block bg-white/5 border border-white/5 px-4 py-1.5 rounded-full max-w-full">
               <p className="text-slate-300 font-mono text-xs truncate">{repoName}</p>
             </div>
@@ -108,8 +128,8 @@ export default function AnalyzePage() {
               const isDone = currentStageIdx > index || progress.status === 'ready'
               const isActive = currentStageIdx === index && progress.status !== 'ready' && !error
               return (
-                <div 
-                  key={stage.key} 
+                <div
+                  key={stage.key}
                   className={`flex items-start gap-4 transition-opacity duration-300 ${
                     isActive ? 'opacity-100' : isDone ? 'opacity-80' : 'opacity-40'
                   }`}
@@ -130,7 +150,9 @@ export default function AnalyzePage() {
 
                   <div className="flex-1">
                     <div className="flex justify-between items-center mb-2">
-                      <span className={`text-sm font-medium ${isActive ? 'text-white font-semibold' : 'text-slate-300'}`}>
+                      <span
+                        className={`text-sm font-medium ${isActive ? 'text-white font-semibold' : 'text-slate-300'}`}
+                      >
                         {isDone ? stage.done : stage.label}
                       </span>
                       {isActive && progress.current > 0 && progress.total > 0 && (
@@ -142,13 +164,13 @@ export default function AnalyzePage() {
 
                     {(isActive || isDone) && (
                       <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                        <div 
+                        <div
                           className={`h-full rounded-full transition-all duration-300 bg-gradient-to-r ${
-                            isDone 
-                              ? 'from-emerald-500 to-emerald-400' 
+                            isDone
+                              ? 'from-emerald-500 to-emerald-400'
                               : 'from-purple-500 via-indigo-400 to-cyan-400'
-                          }`} 
-                          style={{ width: isDone ? '100%' : `${progress.progress_pct}%` }} 
+                          }`}
+                          style={{ width: isDone ? '100%' : `${progress.progress_pct}%` }}
                         />
                       </div>
                     )}
@@ -161,7 +183,9 @@ export default function AnalyzePage() {
           {progress.current_sha && (
             <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-500 font-mono">
               <span>ACTIVE SNAPSHOT</span>
-              <span className="text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">{progress.current_sha}</span>
+              <span className="text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                {progress.current_sha}
+              </span>
             </div>
           )}
 
@@ -181,8 +205,8 @@ export default function AnalyzePage() {
           {error && (
             <div className="mt-8 pt-6 border-t border-rose-500/20 text-center">
               <p className="text-rose-400 text-sm mb-4 leading-relaxed">{error}</p>
-              <button 
-                onClick={() => navigate('/')} 
+              <button
+                onClick={() => navigate('/')}
                 className="px-6 py-2 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-sm font-semibold transition-all duration-300"
               >
                 Return & Retry

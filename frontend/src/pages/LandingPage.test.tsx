@@ -15,7 +15,7 @@ function renderLandingPage() {
   return render(
     <MemoryRouter>
       <LandingPage />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 
@@ -69,7 +69,10 @@ describe('LandingPage', () => {
     })
     renderLandingPage()
 
-    await user.type(screen.getByPlaceholderText(/search or enter/i), 'http://github.com/owner/repo.git/')
+    await user.type(
+      screen.getByPlaceholderText(/search or enter/i),
+      'http://github.com/owner/repo.git/'
+    )
     await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
