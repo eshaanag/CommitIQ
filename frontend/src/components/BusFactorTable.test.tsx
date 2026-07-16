@@ -24,14 +24,14 @@ describe('BusFactorTable', () => {
             last_commit_sha: 'abc123',
           },
         ]}
-      />,
+      />
     )
 
     expect(screen.getByText('src/core/risky.ts')).toBeInTheDocument()
     expect(consoleError).not.toHaveBeenCalledWith(
       expect.stringContaining('validateDOMNesting'),
       expect.anything(),
-      expect.anything(),
+      expect.anything()
     )
   })
 })

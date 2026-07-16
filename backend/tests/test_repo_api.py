@@ -1,6 +1,6 @@
+import json
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
-import json
 
 import pytest
 from fastapi import HTTPException
@@ -15,10 +15,10 @@ from backend.features.repo_ingestion.router import (
     get_bus_factor,
     get_commit_detail,
     get_graph,
-    ingest_progress,
     get_llm_usage,
     get_repo_by_slug,
     get_timeline,
+    ingest_progress,
     ingest_repo,
     list_repos,
     run_ingestion,
@@ -179,120 +179,124 @@ def _seed_repo(session: Session) -> None:
     session.add_all([first_commit, second_commit])
     session.flush()
 
-    session.add_all([
-        HealthSnapshot(
-            repo_id=repo.id,
-            commit_id=first_commit.id,
-            full_sha=first_commit.full_sha,
-            health_score=82.0,
-            avg_complexity=2.0,
-            max_complexity=3.0,
-            total_loc=120,
-            churn_rate=0.2,
-            num_files_changed=1,
-            bus_factor_min=2,
-            health_delta=None,
-            cc_score=90,
-            churn_score=80,
-            bus_score=40,
-            loc_score=85,
-            complexity_drift_score=90,
-            churn_risk_score=80,
-            bus_factor_risk_score=40,
-            dependency_health_score=85,
-            top_files_json='[{"path":"src/app.py","complexity":2.0,"loc":120}]',
-        ),
-        HealthSnapshot(
-            repo_id=repo.id,
-            commit_id=second_commit.id,
-            full_sha=second_commit.full_sha,
-            health_score=68.5,
-            avg_complexity=7.25,
-            max_complexity=12.0,
-            total_loc=240,
-            churn_rate=0.35,
-            num_files_changed=2,
-            bus_factor_min=1,
-            health_delta=-13.5,
-            cc_score=63.8,
-            churn_score=65,
-            bus_score=20,
-            loc_score=80,
-            complexity_drift_score=63.8,
-            churn_risk_score=65,
-            bus_factor_risk_score=20,
-            dependency_health_score=80,
-            dependency_density=0.5,
-            avg_semantic_drift=0.12,
-            semantic_health_score=88,
-            high_drift_files=0,
-            semantic_drift_method="fallback_levenshtein",
-            risk_reasons_json='[{"code":"single_owner","severity":"critical","label":"Single-owner risk","detail":"At least one critical module has only one active contributor.","impact":30.0}]',
-            hotspot_persistence_score=37.5,
-            persistent_hotspots_json='[{"path":"src/service.py","recent_commit_count":3,"complexity":7.25,"loc":160}]',
-            top_files_json='[{"path":"src/service.py","complexity":7.25,"loc":160}]',
-        ),
-    ])
+    session.add_all(
+        [
+            HealthSnapshot(
+                repo_id=repo.id,
+                commit_id=first_commit.id,
+                full_sha=first_commit.full_sha,
+                health_score=82.0,
+                avg_complexity=2.0,
+                max_complexity=3.0,
+                total_loc=120,
+                churn_rate=0.2,
+                num_files_changed=1,
+                bus_factor_min=2,
+                health_delta=None,
+                cc_score=90,
+                churn_score=80,
+                bus_score=40,
+                loc_score=85,
+                complexity_drift_score=90,
+                churn_risk_score=80,
+                bus_factor_risk_score=40,
+                dependency_health_score=85,
+                top_files_json='[{"path":"src/app.py","complexity":2.0,"loc":120}]',
+            ),
+            HealthSnapshot(
+                repo_id=repo.id,
+                commit_id=second_commit.id,
+                full_sha=second_commit.full_sha,
+                health_score=68.5,
+                avg_complexity=7.25,
+                max_complexity=12.0,
+                total_loc=240,
+                churn_rate=0.35,
+                num_files_changed=2,
+                bus_factor_min=1,
+                health_delta=-13.5,
+                cc_score=63.8,
+                churn_score=65,
+                bus_score=20,
+                loc_score=80,
+                complexity_drift_score=63.8,
+                churn_risk_score=65,
+                bus_factor_risk_score=20,
+                dependency_health_score=80,
+                dependency_density=0.5,
+                avg_semantic_drift=0.12,
+                semantic_health_score=88,
+                high_drift_files=0,
+                semantic_drift_method="fallback_levenshtein",
+                risk_reasons_json='[{"code":"single_owner","severity":"critical","label":"Single-owner risk","detail":"At least one critical module has only one active contributor.","impact":30.0}]',
+                hotspot_persistence_score=37.5,
+                persistent_hotspots_json='[{"path":"src/service.py","recent_commit_count":3,"complexity":7.25,"loc":160}]',
+                top_files_json='[{"path":"src/service.py","complexity":7.25,"loc":160}]',
+            ),
+        ]
+    )
 
-    session.add_all([
-        GraphNode(
-            repo_id=repo.id,
-            commit_id=second_commit.id,
-            full_sha=second_commit.full_sha,
-            file_path="src/service.py",
-            module_name="service.py",
-            loc=160,
-            avg_complexity=7.25,
-            health_color="yellow",
-            is_entry_point=False,
-            semantic_drift_score=0.12,
-            drift_method="fallback_levenshtein",
-        ),
-        GraphNode(
-            repo_id=repo.id,
-            commit_id=second_commit.id,
-            full_sha=second_commit.full_sha,
-            file_path="src/app.py",
-            module_name="app.py",
-            loc=80,
-            avg_complexity=2.0,
-            health_color="green",
-            is_entry_point=True,
-        ),
-        GraphEdge(
-            repo_id=repo.id,
-            commit_id=second_commit.id,
-            full_sha=second_commit.full_sha,
-            source_file="src/app.py",
-            target_file="src/service.py",
-            edge_type="import",
-            weight=1,
-        ),
-        BusFactor(
-            repo_id=repo.id,
-            module_path="src/service.py",
-            contributor_count=1,
-            top_contributor="Noor",
-            top_contributor_email="noor@example.com",
-            top_contributor_pct=1.0,
-            total_commits_to_module=2,
-            risk_level="critical",
-            last_commit_sha=second_commit.sha,
-        ),
-        LLMNarrative(
-            repo_id=repo.id,
-            commit_id=second_commit.id,
-            full_sha=second_commit.full_sha,
-            prompt_type="explain_drop",
-            cache_key=make_cache_key(repo.id, second_commit.full_sha, "explain_drop"),
-            prompt_input="{}",
-            response_text="Complexity increased in the service layer.",
-            tokens_input=10,
-            tokens_output=8,
-            cost_usd=0.00015,
-            model_used="claude-3-5-sonnet-20241022",
-        ),
-    ])
+    session.add_all(
+        [
+            GraphNode(
+                repo_id=repo.id,
+                commit_id=second_commit.id,
+                full_sha=second_commit.full_sha,
+                file_path="src/service.py",
+                module_name="service.py",
+                loc=160,
+                avg_complexity=7.25,
+                health_color="yellow",
+                is_entry_point=False,
+                semantic_drift_score=0.12,
+                drift_method="fallback_levenshtein",
+            ),
+            GraphNode(
+                repo_id=repo.id,
+                commit_id=second_commit.id,
+                full_sha=second_commit.full_sha,
+                file_path="src/app.py",
+                module_name="app.py",
+                loc=80,
+                avg_complexity=2.0,
+                health_color="green",
+                is_entry_point=True,
+            ),
+            GraphEdge(
+                repo_id=repo.id,
+                commit_id=second_commit.id,
+                full_sha=second_commit.full_sha,
+                source_file="src/app.py",
+                target_file="src/service.py",
+                edge_type="import",
+                weight=1,
+            ),
+            BusFactor(
+                repo_id=repo.id,
+                module_path="src/service.py",
+                contributor_count=1,
+                top_contributor="Noor",
+                top_contributor_email="noor@example.com",
+                top_contributor_pct=1.0,
+                total_commits_to_module=2,
+                risk_level="critical",
+                last_commit_sha=second_commit.sha,
+            ),
+            LLMNarrative(
+                repo_id=repo.id,
+                commit_id=second_commit.id,
+                full_sha=second_commit.full_sha,
+                prompt_type="explain_drop",
+                cache_key=make_cache_key(repo.id, second_commit.full_sha, "explain_drop"),
+                prompt_input="{}",
+                response_text="Complexity increased in the service layer.",
+                tokens_input=10,
+                tokens_output=8,
+                cost_usd=0.00015,
+                model_used="claude-3-5-sonnet-20241022",
+            ),
+        ]
+    )
     session.commit()
 
 
@@ -341,7 +345,9 @@ async def test_timeline_returns_snapshot_payloads(db_session: AsyncSessionAdapte
     assert payload["commits"][1]["persistent_hotspots"][0]["path"] == "src/service.py"
 
 
-async def test_graph_bus_factor_and_usage_endpoints_return_seeded_data(db_session: AsyncSessionAdapter):
+async def test_graph_bus_factor_and_usage_endpoints_return_seeded_data(
+    db_session: AsyncSessionAdapter,
+):
     graph = await get_graph(repo_id=1, sha="def456", db=db_session)
     assert graph["commit_sha"] == "def456abc123"
     assert {node["file"] for node in graph["nodes"]} == {"src/app.py", "src/service.py"}
@@ -365,7 +371,9 @@ async def test_graph_bus_factor_and_usage_endpoints_return_seeded_data(db_sessio
     assert usage["total_tokens"] == 18
 
 
-async def test_commit_detail_includes_nested_snapshot_graph_and_cached_narrative(db_session: AsyncSessionAdapter):
+async def test_commit_detail_includes_nested_snapshot_graph_and_cached_narrative(
+    db_session: AsyncSessionAdapter,
+):
     detail = await get_commit_detail(repo_id=1, sha="def456", db=db_session)
 
     assert detail["repo"].repo_slug == "example-project"
@@ -378,7 +386,9 @@ async def test_commit_detail_includes_nested_snapshot_graph_and_cached_narrative
     assert detail["narrative"]["explanation"] == "Complexity increased in the service layer."
 
 
-async def test_streaming_narrative_falls_back_to_demo_mode(db_session: AsyncSessionAdapter, monkeypatch):
+async def test_streaming_narrative_falls_back_to_demo_mode(
+    db_session: AsyncSessionAdapter, monkeypatch
+):
     async def failing_stream(prompt: str):
         raise RuntimeError("provider keys missing")
         yield prompt, None
@@ -399,15 +409,21 @@ async def test_streaming_narrative_falls_back_to_demo_mode(db_session: AsyncSess
     assert "DEMO MODE" in final_payload["explanation"]
     assert "error" not in final_payload
 
-    cached = db_session.session.query(LLMNarrative).filter(
-        LLMNarrative.cache_key
-        == make_cache_key(1, "abc123def4567890abc123def4567890abc123de", "explain_drop")
-    ).one()
+    cached = (
+        db_session.session.query(LLMNarrative)
+        .filter(
+            LLMNarrative.cache_key
+            == make_cache_key(1, "abc123def4567890abc123def4567890abc123de", "explain_drop")
+        )
+        .one()
+    )
     assert cached.model_used == "demo-mode"
     assert cached.cost_usd == 0.0
 
 
-async def test_ingest_repo_reuses_active_job_without_scheduling_duplicate(db_session: AsyncSessionAdapter):
+async def test_ingest_repo_reuses_active_job_without_scheduling_duplicate(
+    db_session: AsyncSessionAdapter,
+):
     active_job = AnalysisJob(
         repo_id=1,
         status="analyzing",
@@ -435,7 +451,9 @@ async def test_ingest_repo_reuses_active_job_without_scheduling_duplicate(db_ses
     assert background_tasks.tasks == []
 
 
-async def test_ingest_repo_schedules_created_job_by_id(db_session: AsyncSessionAdapter, monkeypatch):
+async def test_ingest_repo_schedules_created_job_by_id(
+    db_session: AsyncSessionAdapter, monkeypatch
+):
     async def fake_fetch_github_metadata(owner: str, repo: str):
         return {
             "github_stars": 0,
@@ -570,27 +588,30 @@ async def test_ingest_progress_stream_picks_up_cancelled_job_updates(monkeypatch
     async def skip_sleep(seconds: float):
         return None
 
-    db = _mock_progress_db(monkeypatch, [
-        AnalysisJob(
-            repo_id=1,
-            status="queued",
-            total_commits=5,
-            processed_commits=0,
-            current_stage="Queued",
-            progress_pct=0.0,
-            triggered_by="user",
-        ),
-        AnalysisJob(
-            repo_id=1,
-            status="cancelled",
-            total_commits=5,
-            processed_commits=0,
-            current_stage="Cancelled",
-            progress_pct=0.0,
-            error_message="Ingestion cancelled by user.",
-            triggered_by="user",
-        ),
-    ])
+    db = _mock_progress_db(
+        monkeypatch,
+        [
+            AnalysisJob(
+                repo_id=1,
+                status="queued",
+                total_commits=5,
+                processed_commits=0,
+                current_stage="Queued",
+                progress_pct=0.0,
+                triggered_by="user",
+            ),
+            AnalysisJob(
+                repo_id=1,
+                status="cancelled",
+                total_commits=5,
+                processed_commits=0,
+                current_stage="Cancelled",
+                progress_pct=0.0,
+                error_message="Ingestion cancelled by user.",
+                triggered_by="user",
+            ),
+        ],
+    )
     monkeypatch.setattr("backend.features.repo_ingestion.router.asyncio.sleep", skip_sleep)
 
     response = await ingest_progress(repo_id=1)

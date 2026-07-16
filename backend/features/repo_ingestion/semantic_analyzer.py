@@ -4,6 +4,7 @@ GraphCodeBERT-based semantic drift detection.
 Runs during ingestion only. Request handlers should read the stored drift
 scores from SQLite rather than invoking this module.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -162,7 +163,11 @@ def compute_repo_semantic_health(file_drifts: list[dict]) -> dict:
     scores = [float(item.get("semantic_drift_score", 0.0)) for item in file_drifts]
     avg_drift = sum(scores) / max(len(scores), 1)
     max_drift = max(scores)
-    method = "graphcodebert" if any(item.get("method") == "graphcodebert" for item in file_drifts) else file_drifts[0].get("method", "none")
+    method = (
+        "graphcodebert"
+        if any(item.get("method") == "graphcodebert" for item in file_drifts)
+        else file_drifts[0].get("method", "none")
+    )
 
     return {
         "avg_semantic_drift": round(avg_drift, 4),
