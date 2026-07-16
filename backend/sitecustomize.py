@@ -4,6 +4,7 @@ Several hackathon scripts run Python with the current directory set to
 `backend/`, while the application imports use the package name `backend`.
 Adding the project root to sys.path keeps both invocation styles working.
 """
+
 from __future__ import annotations
 
 import sys

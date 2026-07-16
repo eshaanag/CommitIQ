@@ -1,8 +1,9 @@
-import git
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
+
+import git
 
 
 def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
@@ -13,7 +14,7 @@ def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
     Metrics are computed from git stats, not file inspection.
     """
     repo = git.Repo(repo_path)
-    commits = list(repo.iter_commits('HEAD', max_count=limit))
+    commits = list(repo.iter_commits("HEAD", max_count=limit))
     commits.reverse()  # oldest → newest for timeline
 
     total = len(commits)
@@ -23,8 +24,8 @@ def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
         try:
             stats = commit.stats
             files_changed = list(stats.files.keys())
-            insertions = stats.total.get('insertions', 0)
-            deletions = stats.total.get('deletions', 0)
+            insertions = stats.total.get("insertions", 0)
+            deletions = stats.total.get("deletions", 0)
         except Exception:
             # Fallback for shallow clone boundary commits where parent object is missing
             files_changed = []
@@ -32,9 +33,13 @@ def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
             deletions = 0
             try:
                 cmd = ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit.hexsha]
-                res = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, errors="replace")
+                res = subprocess.run(
+                    cmd, cwd=repo_path, capture_output=True, text=True, errors="replace"
+                )
                 if res.returncode == 0:
-                    files_changed = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+                    files_changed = [
+                        line.strip() for line in res.stdout.splitlines() if line.strip()
+                    ]
                 # Set dummy insertions/deletions as proxy to avoid zero metrics division issues
                 insertions = len(files_changed) * 15
                 deletions = 5
@@ -42,19 +47,19 @@ def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
                 pass
 
         yield {
-            "sha":           commit.hexsha[:12],
-            "full_sha":      commit.hexsha,
-            "message":       commit.message.strip()[:500],
-            "author_name":   commit.author.name,
-            "author_email":  commit.author.email,
-            "committed_at":  datetime.fromtimestamp(
-                                 commit.committed_date, tz=timezone.utc
-                             ).isoformat(),
-            "insertions":    insertions,
-            "deletions":     deletions,
+            "sha": commit.hexsha[:12],
+            "full_sha": commit.hexsha,
+            "message": commit.message.strip()[:500],
+            "author_name": commit.author.name,
+            "author_email": commit.author.email,
+            "committed_at": datetime.fromtimestamp(
+                commit.committed_date, tz=timezone.utc
+            ).isoformat(),
+            "insertions": insertions,
+            "deletions": deletions,
             "files_changed": len(files_changed),
-            "files_list":    files_changed[:100],  # cap to 100 for storage
-            "parent_sha":    parent_sha,
-            "index":         idx,
-            "total":         total,
+            "files_list": files_changed[:100],  # cap to 100 for storage
+            "parent_sha": parent_sha,
+            "index": idx,
+            "total": total,
         }

@@ -31,9 +31,17 @@ def _build_demo_narrative(
     before: dict,
     after: dict,
 ) -> str:
-    health_delta = float(after.get("health_score", 0) or 0) - float(before.get("health_score", 0) or 0)
-    complexity_delta = float(after.get("avg_complexity", 0) or 0) - float(before.get("avg_complexity", 0) or 0)
-    risk_level = "High" if health_delta <= -15 or after.get("bus_factor_min", 1) <= 1 else "Medium" if health_delta < 0 else "Low"
+    health_delta = float(after.get("health_score", 0) or 0) - float(
+        before.get("health_score", 0) or 0
+    )
+    complexity_delta = float(after.get("avg_complexity", 0) or 0) - float(
+        before.get("avg_complexity", 0) or 0
+    )
+    risk_level = (
+        "High"
+        if health_delta <= -15 or after.get("bus_factor_min", 1) <= 1
+        else "Medium" if health_delta < 0 else "Low"
+    )
     top_files = after.get("top_files_json") or "[]"
 
     return (
@@ -94,19 +102,24 @@ async def explain_commit_stream(
     db: AsyncSession = Depends(get_db),
 ):
     commit_result = await db.execute(
-        select(Commit).where(
+        select(Commit)
+        .where(
             Commit.repo_id == request.repo_id,
             (Commit.sha == request.commit_sha[:12]) | (Commit.full_sha == request.commit_sha),
-        ).limit(1)
+        )
+        .limit(1)
     )
     commit = commit_result.scalar_one_or_none()
     if not commit:
         raise HTTPException(status_code=404, detail=f"Commit {request.commit_sha} not found")
 
     cache_key = make_cache_key(request.repo_id, commit.full_sha, request.prompt_type)
-    cached_result = await db.execute(select(LLMNarrative).where(LLMNarrative.cache_key == cache_key))
+    cached_result = await db.execute(
+        select(LLMNarrative).where(LLMNarrative.cache_key == cache_key)
+    )
     cached = cached_result.scalar_one_or_none()
     if cached:
+
         async def replay_cache():
             for word in cached.response_text.split(" "):
                 yield f"data: {json.dumps({'token': word + ' ', 'done': False})}\n\n"
@@ -120,9 +133,13 @@ async def explain_commit_stream(
         )
 
     if not await check_budget(request.repo_id, db):
-        raise HTTPException(status_code=429, detail="LLM budget exceeded for this repo. Cache will be used.")
+        raise HTTPException(
+            status_code=429, detail="LLM budget exceeded for this repo. Cache will be used."
+        )
 
-    snapshot_result = await db.execute(select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id))
+    snapshot_result = await db.execute(
+        select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id)
+    )
     snapshot = snapshot_result.scalar_one_or_none()
     if not snapshot:
         raise HTTPException(status_code=404, detail="Health snapshot not found")

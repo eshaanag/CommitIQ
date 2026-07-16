@@ -19,17 +19,25 @@ function StatChip({ label, value }: { label: string; value: number }) {
 export function GraphDiffPanel({ repoId, commitSha, previousSha }: GraphDiffPanelProps) {
   const diffState = useSWR(
     previousSha ? ['graph-diff', repoId, previousSha, commitSha] : null,
-    () => getGraphDiff(repoId, previousSha as string, commitSha),
+    () => getGraphDiff(repoId, previousSha as string, commitSha)
   )
 
   if (!previousSha) return null
 
   if (diffState.isLoading) {
-    return <div className="bg-surface border border-border rounded-panel p-5 shadow-panel text-muted">Loading structural diff...</div>
+    return (
+      <div className="bg-surface border border-border rounded-panel p-5 shadow-panel text-muted">
+        Loading structural diff...
+      </div>
+    )
   }
 
   if (diffState.error || !diffState.data) {
-    return <div className="bg-surface border border-border rounded-panel p-5 shadow-panel text-health-critical">Could not load structural diff.</div>
+    return (
+      <div className="bg-surface border border-border rounded-panel p-5 shadow-panel text-health-critical">
+        Could not load structural diff.
+      </div>
+    )
   }
 
   const diff = diffState.data
@@ -47,13 +55,25 @@ export function GraphDiffPanel({ repoId, commitSha, previousSha }: GraphDiffPane
 
       {diff.nodes_changed.length > 0 ? (
         <div>
-          <p className="text-xs text-muted mb-2 uppercase tracking-wider font-semibold">Biggest Complexity Shifts</p>
+          <p className="text-xs text-muted mb-2 uppercase tracking-wider font-semibold">
+            Biggest Complexity Shifts
+          </p>
           <div className="space-y-2">
             {diff.nodes_changed.slice(0, 5).map((node) => (
-              <div key={node.file} className="flex items-center justify-between gap-4 text-small border-b border-border/60 pb-2 last:border-b-0">
+              <div
+                key={node.file}
+                className="flex items-center justify-between gap-4 text-small border-b border-border/60 pb-2 last:border-b-0"
+              >
                 <span className="text-secondary truncate font-mono">{node.file}</span>
-                <span className={node.delta_pct > 0 ? 'text-health-critical font-mono' : 'text-health-good font-mono'}>
-                  {node.delta_pct > 0 ? '+' : ''}{node.delta_pct}%
+                <span
+                  className={
+                    node.delta_pct > 0
+                      ? 'text-health-critical font-mono'
+                      : 'text-health-good font-mono'
+                  }
+                >
+                  {node.delta_pct > 0 ? '+' : ''}
+                  {node.delta_pct}%
                 </span>
               </div>
             ))}

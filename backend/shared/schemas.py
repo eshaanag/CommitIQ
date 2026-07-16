@@ -2,12 +2,21 @@ import re
 from datetime import datetime
 from typing import Literal
 
-from backend.config import MAX_COMMITS
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from backend.config import MAX_COMMITS
 
 RepoStatus = Literal["pending", "processing", "ready", "error"]
-JobStatus = Literal["queued", "cloning", "analyzing", "building_graph", "computing_bus_factor", "ready", "error", "cancelled"]
+JobStatus = Literal[
+    "queued",
+    "cloning",
+    "analyzing",
+    "building_graph",
+    "computing_bus_factor",
+    "ready",
+    "error",
+    "cancelled",
+]
 PromptType = Literal["explain_drop", "predict_merge"]
 RiskLevel = Literal["low", "medium", "high", "critical"]
 GraphEdgeType = Literal["import", "co_change"]
