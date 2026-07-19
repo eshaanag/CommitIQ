@@ -24,7 +24,7 @@
     "react-force-graph-2d": "1.25.7",
     "react-markdown": "9.0.3",
     "react-router-dom": "6.30.4",
-    "recharts": "2.12.7",
+    "recharts": "3.9.2",
     "swr": "2.2.5"
   },
   "devDependencies": {
