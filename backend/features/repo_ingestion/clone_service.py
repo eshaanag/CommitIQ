@@ -163,8 +163,18 @@ def cleanup_repo(repo_id: int) -> bool:
     target = get_clone_path(repo_id)
     if not target.exists():
         return True
+        
+    def remove_readonly(func, path, _):
+        import os
+        import stat
+        try:
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        except Exception:
+            pass
+
     try:
-        shutil.rmtree(target)
+        shutil.rmtree(target, onerror=remove_readonly)
         return True
     except OSError as exc:
         logger.warning(
