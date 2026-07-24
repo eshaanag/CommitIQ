@@ -1,8 +1,24 @@
 import git
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
+
+
+def sanitize_commit_message(message: str | None) -> str:
+    """
+    Sanitizes commit messages to strip unsafe HTML tags and escape < / > characters.
+    """
+    if not message:
+        return ""
+    msg = re.sub(r'<script[\s\S]*?>[\s\S]*?</script>', '', message, flags=re.IGNORECASE)
+    msg = re.sub(r'<style[\s\S]*?>[\s\S]*?</style>', '', msg, flags=re.IGNORECASE)
+    msg = re.sub(r'<iframe[\s\S]*?>[\s\S]*?</iframe>', '', msg, flags=re.IGNORECASE)
+    msg = re.sub(r'<[a-zA-Z/!][^>]*>', '', msg)
+    msg = msg.replace('<', '&lt;').replace('>', '&gt;')
+    return msg.strip()[:500]
+
 
 
 def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
@@ -44,8 +60,9 @@ def walk_commits(repo_path: Path, limit: int = 150) -> Iterator[dict]:
         yield {
             "sha":           commit.hexsha[:12],
             "full_sha":      commit.hexsha,
-            "message":       commit.message.strip()[:500],
+            "message":       sanitize_commit_message(commit.message),
             "author_name":   commit.author.name,
+
             "author_email":  commit.author.email,
             "committed_at":  datetime.fromtimestamp(
                                  commit.committed_date, tz=timezone.utc

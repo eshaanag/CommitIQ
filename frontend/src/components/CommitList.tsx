@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { CommitListProps } from '../types'
 import { formatSha, getHealthColor } from '../types'
 import { GitCommit, ExternalLink } from 'lucide-react'
+import { sanitizeCommitMessage } from '../lib/utils'
 
 export function CommitList({ commits, repoSlug, selectedSha, onSelect }: CommitListProps) {
   const recent = [...commits].reverse().slice(0, 30)
@@ -57,7 +58,7 @@ export function CommitList({ commits, repoSlug, selectedSha, onSelect }: CommitL
                 </span>
                 
                 <span className="flex-1 text-slate-300 text-xs truncate font-medium group-hover:text-white transition-colors pr-1">
-                  {commit.message || 'No commit message'}
+                  {sanitizeCommitMessage(commit.message)}
                 </span>
                 
                 <span 

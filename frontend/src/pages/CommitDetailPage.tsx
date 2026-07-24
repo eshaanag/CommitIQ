@@ -6,6 +6,7 @@ import { GraphDiffPanel } from '../components/GraphDiffPanel'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { NarrativeCard } from '../components/NarrativeCard'
 import { getHealthColor } from '../types'
+import { sanitizeCommitMessage } from '../lib/utils'
 import { Sparkles, User, Calendar, ArrowLeft, GitCommit, Cpu, Flame, Users } from 'lucide-react'
 
 export default function CommitDetailPage() {
@@ -74,7 +75,7 @@ export default function CommitDetailPage() {
           </div>
 
           <h1 className="font-head text-[22px] sm:text-[26px] font-bold text-white tracking-tight mt-3 break-words leading-snug">
-            {detail.commit.message || 'No commit message'}
+            {sanitizeCommitMessage(detail.commit.message)}
           </h1>
           
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-4 border-t border-white/5 text-xs text-slate-400 font-medium">

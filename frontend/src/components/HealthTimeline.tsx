@@ -13,7 +13,7 @@ import {
 } from 'recharts'
 import type { AreaDotProps, ChartClickState, ChartTooltipProps, HealthTimelineProps } from '../types'
 import { formatSha, getHealthColor } from '../types'
-import { formatDateShort } from '../lib/utils'
+import { formatDateShort, sanitizeCommitMessage } from '../lib/utils'
 import { GitCommit, TrendingUp, Cpu, Flame } from 'lucide-react'
 
 function CommitTooltip({ active, payload }: ChartTooltipProps) {
@@ -35,7 +35,7 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
       </div>
       
       <div className="text-white text-xs font-medium mb-3 line-clamp-2 max-w-[220px] font-sans">
-        {data.message || 'No commit message'}
+        {sanitizeCommitMessage(data.message)}
       </div>
 
       <div className="space-y-2 pt-1">

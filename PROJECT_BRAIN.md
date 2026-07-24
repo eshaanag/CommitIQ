@@ -213,6 +213,5 @@ Missing but obviously needed:
 - docs: update project brain after repository governance. Recorded the governance decision and updated CI/deployment-risk notes.
 - test: add real-browser landing-to-dashboard coverage. Added Playwright Chromium configuration, deterministic REST/SSE interception, CI execution, and non-fatal theme storage handling.
 - docs: update project brain after browser e2e coverage. Recorded the closed browser testing gap and current quality-gate status.
-- fix: stabilize local scan and narrative flows. Added the missing backend async DB runtime dependency, fixed Vite proxy env loading, made ingestion progress streams use independent DB sessions, handled SQLite naive timestamps, reset stale dashboard commit selections after rescans, hardened storage/markup edge cases, and made streaming narratives fall back to cached demo-mode output when LLM providers are unavailable.
-- feat: add pagination to repo list endpoint. Added `limit`/`offset` query parameters to `list_repos` with defaults of 20/0 and a max limit of 100, plus backend integration tests for pagination behavior.
-- docs: update project brain after repo list pagination. Recorded the pagination decision and updated backend API test coverage.
+- fix: sanitize commit messages to prevent unsafe HTML tags and XSS (#221). Added commit message sanitization helpers on both backend ingestion and frontend rendering components, along with comprehensive unit tests.
+

@@ -360,3 +360,16 @@ def test_compute_full_snapshot_with_zero_code_files():
     assert snapshot["churn_rate"] == 0.0
     assert json.loads(snapshot["risk_reasons_json"]) == []
 
+
+def test_sanitize_commit_message():
+    from backend.features.repo_ingestion.commit_walker import sanitize_commit_message
+
+    assert sanitize_commit_message(None) == ""
+    assert sanitize_commit_message("") == ""
+    assert sanitize_commit_message("  ") == ""
+    assert sanitize_commit_message("fix: normal commit") == "fix: normal commit"
+    assert sanitize_commit_message("<script>alert('xss')</script> Fix issue") == "Fix issue"
+    assert sanitize_commit_message("fix: update <Header /> component") == "fix: update  component"
+    assert sanitize_commit_message("feat: value < 100") == "feat: value &lt; 100"
+
+

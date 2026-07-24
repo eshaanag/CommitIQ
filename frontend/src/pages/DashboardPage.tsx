@@ -13,6 +13,7 @@ import { NarrativeCard } from '../components/NarrativeCard'
 import { HealthBadge } from '../components/ui/HealthBadge'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { Layers, Compass, BarChart2, Activity, GitBranch } from 'lucide-react'
+import { sanitizeCommitMessage } from '../lib/utils'
 
 export default function DashboardPage() {
   const { repoSlug = '' } = useParams<{ repoSlug: string }>()
@@ -203,7 +204,7 @@ export default function DashboardPage() {
                   <span className="font-mono text-[10px] font-bold text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/15">
                     {selected.sha.slice(0, 12)}
                   </span>
-                  <h3 className="font-head text-[18px] font-semibold text-white tracking-tight truncate mt-2">{selected.message || 'No commit message'}</h3>
+                  <h3 className="font-head text-[18px] font-semibold text-white tracking-tight truncate mt-2">{sanitizeCommitMessage(selected.message)}</h3>
                 </div>
                 <button 
                   onClick={() => navigate(`/dashboard/${repo.repo_slug}/commit/${selected.sha}`)} 
