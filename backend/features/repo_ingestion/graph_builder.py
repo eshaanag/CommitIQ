@@ -17,8 +17,8 @@ def extract_python_imports(file_content: str) -> list[str]:
             if isinstance(node, ast.Import):
                 imports.extend(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.append(node.module)
+                if node.module or node.level:
+                    imports.append(("." * node.level) + (node.module or ""))
         return imports
     except SyntaxError:
         return []

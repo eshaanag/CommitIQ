@@ -1,4 +1,8 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 def assign_health_color(avg_complexity: float) -> str:
@@ -190,6 +194,14 @@ def build_risk_reasons(
     return sorted(reasons, key=lambda item: item["impact"], reverse=True)[:6]
 
 
+def calculate_average_metrics(total_complexity: float, total_code_files: int) -> float:
+    """Calculate average cyclomatic complexity safely without ZeroDivisionError."""
+    if total_code_files <= 0:
+        logger.info("Repository contains no code files (total_code_files=0). Returning neutral average complexity 0.0.")
+        return 0.0
+    return round(total_complexity / total_code_files, 2)
+
+
 def compute_health_score(
     avg_complexity: float,
     prev_avg_complexity: float,
@@ -200,8 +212,34 @@ def compute_health_score(
     hotspot_files: list[str],
     semantic_health_score: float = 100.0,
     hotspot_persistence_score: float = 0.0,
+    total_code_files: int | None = None,
 ) -> dict:
     """Compute CommitIQ's five-subscore repo health model."""
+    if total_code_files == 0:
+        logger.info("Repository contains zero code files. Assigning neutral health score of 100.0.")
+        return {
+            "health_score": 100.0,
+            "subscores": {
+                "complexity_drift": 100.0,
+                "churn_risk": 100.0,
+                "bus_factor_risk": 100.0,
+                "dependency_health": 100.0,
+                "semantic_drift": 100.0,
+            },
+            "breakdown": {
+                "avg_complexity": 0.0,
+                "churn_rate": 0.0,
+                "bus_factor_min": bus_factor_min,
+                "dependency_density": 0.0,
+                "has_cycles": False,
+                "hotspot_count": 0,
+                "semantic_health_score": 100.0,
+                "hotspot_persistence_score": 0.0,
+                "total_code_files": 0,
+            },
+            "risk_reasons": [],
+        }
+
     complexity_score = max(0.0, 100.0 - min(avg_complexity * 5.0, 100.0))
     if prev_avg_complexity > 0:
         drift_pct = (avg_complexity - prev_avg_complexity) / prev_avg_complexity
@@ -279,6 +317,7 @@ def compute_full_snapshot(
     metrics = [file_metrics_map[fpath] for fpath in files_list if fpath in file_metrics_map]
     semantic_health = file_metrics_map.get("__semantic_health__", {})
 
+    total_code_files = len(metrics)
     total_loc = sum(item.get("loc", 0) for item in metrics)
     complexities = [
         item.get("avg_complexity", 0.0)
@@ -287,10 +326,17 @@ def compute_full_snapshot(
     ]
     max_complexities = [item.get("max_complexity", 0.0) for item in metrics]
 
-    avg_cc = round(sum(complexities) / len(complexities), 2) if complexities else 0.0
-    max_cc = round(max(max_complexities), 2) if max_complexities else 0.0
-    lines_changed = commit_data["insertions"] + commit_data["deletions"]
-    churn_rate = round(min(1.0, lines_changed / max(total_loc, lines_changed, 1)), 4)
+    if total_code_files == 0:
+        logger.info("Repository snapshot contains 0 valid code files. Using neutral metrics.")
+        avg_cc = 0.0
+        max_cc = 0.0
+        churn_rate = 0.0
+    else:
+        avg_cc = calculate_average_metrics(sum(complexities), total_code_files)
+        max_cc = round(max(max_complexities), 2) if max_complexities else 0.0
+        lines_changed = commit_data.get("insertions", 0) + commit_data.get("deletions", 0)
+        churn_rate = round(min(1.0, lines_changed / max(total_loc, lines_changed, 1)), 4)
+
     hotspot_persistence_score = round(
         min(100.0, sum(float(item.get("recent_commit_count", 0)) * 12.5 for item in persistent_hotspots)),
         1,
@@ -306,6 +352,7 @@ def compute_full_snapshot(
         hotspot_files=hotspot_files,
         semantic_health_score=semantic_health.get("semantic_health_score", 100.0),
         hotspot_persistence_score=hotspot_persistence_score,
+        total_code_files=total_code_files,
     )
     subscores = score["subscores"]
     health = score["health_score"]

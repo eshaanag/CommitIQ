@@ -114,6 +114,28 @@ def test_import_extractors_and_resolver_cover_common_python_and_ts_patterns():
     assert "os" in python_imports
     assert "package.module" in python_imports
 
+
+def test_extract_python_imports_preserves_relative_import_levels():
+    source = "\n".join([
+        "from .database import get_db",
+        "from ..shared.utils import helper",
+        "from ...config import settings",
+        "from . import models",
+        "from .. import api",
+        "import os",
+        "import pathlib",
+        "from collections import defaultdict",
+    ])
+    python_imports = extract_python_imports(source)
+    assert ".database" in python_imports
+    assert "..shared.utils" in python_imports
+    assert "...config" in python_imports
+    assert "." in python_imports
+    assert ".." in python_imports
+    assert "os" in python_imports
+    assert "pathlib" in python_imports
+    assert "collections" in python_imports
+
     js_imports = extract_js_imports(
         """
         import type { User } from './types'
@@ -298,3 +320,43 @@ async def test_clone_repo_allows_when_under_quota(monkeypatch, tmp_path):
     # Storage is empty, so quota check should pass; it will fail at git clone instead
     with pytest.raises(RuntimeError):
         await clone_repo("https://github.com/test/nonexistent-repo-12345", repo_id=999, max_commits=10)
+
+
+def test_calculate_average_metrics_zero_code_files():
+    from backend.features.repo_ingestion.health_scorer import calculate_average_metrics
+
+    assert calculate_average_metrics(0.0, 0) == 0.0
+    assert calculate_average_metrics(10.0, 0) == 0.0
+    assert calculate_average_metrics(10.0, 2) == 5.0
+
+
+def test_compute_full_snapshot_with_zero_code_files():
+    commit_data = {
+        "full_sha": "def456",
+        "insertions": 15,
+        "deletions": 2,
+        "files_list": ["README.md", ".gitignore"],
+    }
+    file_metrics_map = {
+        "__semantic_health__": {
+            "avg_semantic_drift": 0.0,
+            "semantic_health_score": 100.0,
+            "high_drift_files": 0,
+            "semantic_drift_method": "none",
+        }
+    }
+
+    snapshot = compute_full_snapshot(
+        commit_data=commit_data,
+        file_metrics_map=file_metrics_map,
+        bus_factor_min=1,
+        prev_health=None,
+    )
+
+    assert snapshot["health_score"] == 100.0
+    assert snapshot["avg_complexity"] == 0.0
+    assert snapshot["max_complexity"] == 0.0
+    assert snapshot["total_loc"] == 0
+    assert snapshot["churn_rate"] == 0.0
+    assert json.loads(snapshot["risk_reasons_json"]) == []
+
