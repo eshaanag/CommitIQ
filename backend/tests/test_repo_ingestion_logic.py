@@ -75,7 +75,7 @@ def test_cleanup_repo_does_not_mask_cleanup_failures(monkeypatch, tmp_path):
     clone_path = get_clone_path(42)
     clone_path.mkdir()
 
-    def fail_rmtree(path):
+    def fail_rmtree(path, **kwargs):
         raise OSError("permission denied")
 
     monkeypatch.setattr("backend.features.repo_ingestion.clone_service.shutil.rmtree", fail_rmtree)

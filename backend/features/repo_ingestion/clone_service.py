@@ -2,6 +2,8 @@ import logging
 import asyncio
 from pathlib import Path
 import shutil
+import os
+import stat
 from backend.config import REPO_STORAGE_PATH, GITHUB_TOKEN
 import httpx
 import re
@@ -158,13 +160,21 @@ async def count_available_commits(repo_path: Path) -> int:
         return 0
 
 
+def remove_readonly(func, path, _):
+    """Clear the readonly bit and reattempt the removal."""
+    try:
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    except Exception as exc:
+        logger.warning(f"Failed to remove readonly file {path}: {exc}")
+
 def cleanup_repo(repo_id: int) -> bool:
     """Delete cloned repo after ingestion to reclaim disk space."""
     target = get_clone_path(repo_id)
     if not target.exists():
         return True
     try:
-        shutil.rmtree(target)
+        shutil.rmtree(target, onerror=remove_readonly)
         return True
     except OSError as exc:
         logger.warning(

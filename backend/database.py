@@ -147,7 +147,7 @@ async def mark_stale_jobs_as_error() -> None:
     """
     from backend.shared.models import AnalysisJob
     from backend.features.repo_ingestion.router import ACTIVE_JOB_STATUSES
-    from backend.features.repo_ingestion.clone_service import cleanup_repo, REPO_STORAGE_PATH
+    from backend.features.repo_ingestion.clone_service import cleanup_repo, REPO_STORAGE_PATH, remove_readonly
     import shutil
     from sqlalchemy import select
 
@@ -182,7 +182,7 @@ async def mark_stale_jobs_as_error() -> None:
                 try:
                     job_dir = REPO_STORAGE_PATH / str(job.id)
                     if job_dir.exists():
-                        shutil.rmtree(job_dir)
+                        shutil.rmtree(job_dir, onerror=remove_readonly)
                 except Exception as exc:
                     logger.warning(
                         f"Failed to clean up job directory for job_id={job.id} during startup: {exc}"
