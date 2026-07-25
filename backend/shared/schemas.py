@@ -23,6 +23,7 @@ class ApiError(BaseModel):
 class IngestRequest(BaseModel):
     repo_url: str = Field(..., min_length=3, max_length=300)
     max_commits: int = Field(default=MAX_COMMITS, ge=1, le=MAX_COMMITS)
+    pat: str | None = None
 
     @field_validator("repo_url")
     @classmethod
@@ -86,6 +87,8 @@ class RepoOut(BaseModel):
     github_stars: int | None
     github_language: str | None
     github_description: str | None
+    total_file_count: int
+    total_repo_loc: int
 
 
 class CommitOut(BaseModel):

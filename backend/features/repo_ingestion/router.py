@@ -352,9 +352,9 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
     return result.scalar_one_or_none()
 
 
-async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
+async def run_ingestion(repo_id: int, job_id: int, max_commits: int, pat: str | None = None) -> None:
     from backend.database import AsyncSessionLocal
-    from backend.features.repo_ingestion.metrics_extractor import checkout_commit, extract_commit_metrics
+    from backend.features.repo_ingestion.metrics_extractor import checkout_commit, extract_commit_metrics, count_repo_files_and_loc
 
     async with AsyncSessionLocal() as db:
         repo = await db.get(Repo, repo_id)
@@ -379,7 +379,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
             repo.error_message = None
             await db.commit()
 
-            clone_path = clone_repo(repo.url, repo_id, max_commits)
+            clone_path = clone_repo(repo.url, repo_id, max_commits, pat)
             await _raise_if_cancelled(db, job)
             available_commits = count_available_commits(clone_path)
             if available_commits < 1:
@@ -402,6 +402,10 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
             checkout_commit(clone_path, commit_history[-1]["full_sha"])
             bus_entries = compute_bus_factor_from_history(commit_history, clone_path)
             min_bus_factor = min((entry["contributor_count"] for entry in bus_entries), default=1)
+
+            file_count, repo_loc = count_repo_files_and_loc(clone_path)
+            repo.total_file_count = file_count
+            repo.total_repo_loc = repo_loc
 
             prev_health = None
             prev_avg_complexity = 0.0
@@ -539,7 +543,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
             )
             await db.commit()
         finally:
-            cleanup_repo(repo_id)
+            pass
 
 
 @router.post("/ingest", response_model=IngestResponse, status_code=202)
@@ -572,7 +576,7 @@ async def ingest_repo(
             )
 
     if not repo:
-        metadata = await fetch_github_metadata(owner, repo_name)
+        metadata = await fetch_github_metadata(owner, repo_name, pat=request.pat)
         repo = Repo(
             url=url,
             name=f"{owner}/{repo_name}",
@@ -603,7 +607,7 @@ async def ingest_repo(
     await db.refresh(repo)
     await db.refresh(job)
 
-    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c)
+    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c, request.pat)
     return IngestResponse(
         repo_id=repo.id,
         repo_slug=repo.repo_slug,

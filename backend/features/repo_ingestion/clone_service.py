@@ -68,20 +68,22 @@ def make_repo_slug(owner: str, repo: str) -> str:
     return slug
 
 
-def get_clone_path(repo_id: int) -> Path:
-    return REPO_STORAGE_PATH / str(repo_id)
+def get_clone_path(repo_url: str) -> Path:
+    owner, repo = parse_github_url(repo_url)
+    slug = make_repo_slug(owner, repo)
+    return REPO_STORAGE_PATH / slug
 
 
-def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Path:
+def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150, pat: str | None = None) -> Path:
     """Shallow clone to local disk. Returns clone path."""
-    target = get_clone_path(repo_id)
-    if target.exists():
-        if not cleanup_repo(repo_id):
-            raise RuntimeError(f"Could not clean existing clone directory for repo_id={repo_id}")
-    target.mkdir(parents=True, exist_ok=True)
-
-    # Use git clone via HTTPS — never uses GitHub REST API, no rate limits
-    if GITHUB_TOKEN:
+    target = get_clone_path(repo_url)
+    
+    if pat:
+        auth_url = repo_url.replace(
+            'https://github.com/',
+            f'https://{pat}@github.com/'
+        )
+    elif GITHUB_TOKEN:
         # This only speeds up clone for large repos — not required for public
         auth_url = repo_url.replace(
             'https://github.com/',
@@ -90,21 +92,53 @@ def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Path:
     else:
         auth_url = repo_url
 
-    result = subprocess.run(
-        [
-            "git", "clone",
-            "--depth", str(max_commits),
-            "--single-branch",
-            auth_url,
-            str(target)
-        ],
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
+    if target.exists():
+        # Cache hit: Fetch latest and reset
+        result = subprocess.run(
+            ["git", "remote", "set-url", "origin", auth_url],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode == 0:
+            result = subprocess.run(
+                ["git", "fetch", "--depth", str(max_commits), "origin"],
+                cwd=target,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+        if result.returncode == 0:
+            result = subprocess.run(
+                ["git", "reset", "--hard", "origin/HEAD"],
+                cwd=target,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        if result.returncode != 0:
+            # Fallback to wipe and re-clone
+            if not cleanup_repo(repo_url):
+                raise RuntimeError(f"Could not clean existing clone directory for {repo_url}")
+            target.mkdir(parents=True, exist_ok=True)
+            result = subprocess.run(
+                ["git", "clone", "--depth", str(max_commits), "--single-branch", auth_url, str(target)],
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+    else:
+        target.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            ["git", "clone", "--depth", str(max_commits), "--single-branch", auth_url, str(target)],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
 
     if result.returncode != 0:
-        cleanup_repo(repo_id)
+        cleanup_repo(repo_url)
         raise RuntimeError(f"git clone failed: {_redact_secret(result.stderr)[:500]}")
 
     return target
@@ -126,9 +160,13 @@ def count_available_commits(repo_path: Path) -> int:
         return 0
 
 
-def cleanup_repo(repo_id: int) -> bool:
-    """Delete cloned repo after ingestion to reclaim disk space."""
-    target = get_clone_path(repo_id)
+def cleanup_repo(repo_identifier: str | int) -> bool:
+    """Delete cloned repo. Now optionally skipped to cache."""
+    if isinstance(repo_identifier, int):
+        target = REPO_STORAGE_PATH / str(repo_identifier)
+    else:
+        target = get_clone_path(repo_identifier)
+        
     if not target.exists():
         return True
     try:
@@ -137,15 +175,17 @@ def cleanup_repo(repo_id: int) -> bool:
     except OSError as exc:
         logger.warning(
             "Could not clean cloned repo directory",
-            extra={"repo_id": repo_id, "path": str(target), "error": str(exc)},
+            extra={"path": str(target), "error": str(exc)},
         )
         return False
 
 
-async def fetch_github_metadata(owner: str, repo: str) -> dict:
+async def fetch_github_metadata(owner: str, repo: str, pat: str | None = None) -> dict:
     """Optional metadata fetch — cosmetic only, skipped on rate limit."""
     headers = {"Accept": "application/vnd.github+json"}
-    if GITHUB_TOKEN:
+    if pat:
+        headers["Authorization"] = f"token {pat}"
+    elif GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
     try:
