@@ -58,6 +58,7 @@ Incomplete or fragile:
 - UI maintainability drift: Tailwind token configuration and one browser e2e now exist, but heavy one-off styling still makes visual regressions likely without broader route-level visual coverage.
 
 ## Discovered issues
+- Medium: shutil.rmtree raised PermissionError on Windows when deleting read-only .git files; it now uses a custom onerror handler to clear the readonly bit.
 - High: clone_service and router used synchronous subprocesses that blocked the FastAPI event loop; they are now fully asynchronous.
 - High: no deployment health gate; CI now exists for unit/e2e tests, lint, build, and repository hygiene checks on pushes and pull requests.
 - High: npm audit previously reported 9 frontend dependency vulnerabilities; dependency upgrades now leave `npm audit --audit-level=moderate` clean as of 2026-06-04.
