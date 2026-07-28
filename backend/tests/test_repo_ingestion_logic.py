@@ -249,3 +249,17 @@ def test_compute_full_snapshot_aggregates_metric_and_semantic_inputs():
         "persistent_hotspots",
     }
     assert json.loads(snapshot["persistent_hotspots_json"]) == persistent_hotspots
+
+def test_is_code_file_allows_license_named_source_files():
+    assert is_code_file("src/hooks/useLicense.ts")
+    assert is_code_file("src/components/LicenseGate.tsx")
+
+
+def test_is_code_file_allows_changelog_named_source_files():
+    assert is_code_file("src/services/changelog.go")
+
+
+def test_is_code_file_excludes_documentation_files():
+    assert not is_code_file("LICENSE")
+    assert not is_code_file("README.md")
+    assert not is_code_file("CHANGELOG.md") 

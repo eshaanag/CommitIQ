@@ -40,10 +40,37 @@ CODE_EXTENSIONS = {
 
 def is_code_file(path: str) -> bool:
     normalized = path.replace("\\", "/")
-    upper_path = normalized.upper()
-    if any(pattern in normalized or pattern in upper_path for pattern in EXCLUDE_PATTERNS):
+
+    file_name = Path(normalized).name
+    upper_name = normalized.upper()
+    if ".github/" in normalized:
         return False
-    return Path(normalized).suffix.lower() in CODE_EXTENSIONS
+
+    if upper_name in {
+        "ISSUE_TEMPLATE",
+        "PULL_REQUEST_TEMPLATE",
+    }:
+        return False 
+
+    if upper_name == "README":
+        return False
+
+    if upper_name == "LICENSE":
+        return False 
+
+    if upper_name.startswith("CHANGELOG"):
+        return False
+
+    if Path(file_name).suffix.lower() in {
+        ".md",
+        ".txt",
+        ".json",
+        ".yml",
+        ".yaml",
+    }:
+        return False 
+
+    return Path(file_name).suffix.lower() in CODE_EXTENSIONS
 
 
 def _risk_level(contributor_count: int, top_pct: float) -> str:
