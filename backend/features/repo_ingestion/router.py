@@ -369,7 +369,7 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
     return result.scalar_one_or_none()
 
 
-async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
+async def run_ingestion(repo_id: int, job_id: int, max_commits: int, pat: str | None = None) -> None:
     from backend.database import AsyncSessionLocal
     from backend.features.repo_ingestion.metrics_extractor import (
         checkout_commit,
@@ -403,7 +403,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
     clone_path = None
     try:
-        clone_path = await clone_repo(repo_url, repo_id, max_commits)
+        clone_path = await clone_repo(repo_url, repo_id, max_commits, pat)
         await _raise_if_cancelled(job_id)
         available_commits = await count_available_commits(clone_path)
         if available_commits < 1:
@@ -619,7 +619,7 @@ async def ingest_repo(
             )
 
     if not repo:
-        metadata = await fetch_github_metadata(owner, repo_name)
+        metadata = await fetch_github_metadata(owner, repo_name, pat=request.pat)
         repo = Repo(
             url=url,
             name=f"{owner}/{repo_name}",
@@ -650,7 +650,7 @@ async def ingest_repo(
     await db.refresh(repo)
     await db.refresh(job)
 
-    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c)
+    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c, request.pat)
     return IngestResponse(
         repo_id=repo.id,
         repo_slug=repo.repo_slug,

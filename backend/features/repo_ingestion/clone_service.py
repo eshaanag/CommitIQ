@@ -85,7 +85,7 @@ def get_clone_path(repo_id: int) -> Path:
     return REPO_STORAGE_PATH / str(repo_id)
 
 
-async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Path:
+async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150, pat: str | None = None) -> Path:
     """Shallow clone to local disk. Returns clone path."""
     target = get_clone_path(repo_id)
     if target.exists():
@@ -102,7 +102,12 @@ async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Pat
     target.mkdir(parents=True, exist_ok=True)
 
     # Use git clone via HTTPS — never uses GitHub REST API, no rate limits
-    if GITHUB_TOKEN:
+    if pat:
+        auth_url = repo_url.replace(
+            'https://github.com/',
+            f'https://{pat}@github.com/'
+        )
+    elif GITHUB_TOKEN:
         # This only speeds up clone for large repos — not required for public
         auth_url = repo_url.replace(
             'https://github.com/',
@@ -174,10 +179,12 @@ def cleanup_repo(repo_id: int) -> bool:
         return False
 
 
-async def fetch_github_metadata(owner: str, repo: str) -> dict:
+async def fetch_github_metadata(owner: str, repo: str, pat: str | None = None) -> dict:
     """Optional metadata fetch — cosmetic only, skipped on rate limit."""
     headers = {"Accept": "application/vnd.github+json"}
-    if GITHUB_TOKEN:
+    if pat:
+        headers["Authorization"] = f"token {pat}"
+    elif GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
     try:
