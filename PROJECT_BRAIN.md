@@ -28,6 +28,7 @@ Working well:
 - Backend has structured schemas/models and separates ingestion, analysis, graph, bus factor, semantic, and LLM concerns.
 - LLM cost guard and cache are already part of the domain model, which is the right production instinct.
 - The UI has loading/error/empty states in many places and exposes high-value analysis concepts rather than raw tables only.
+- Removed dead compute_health_score function from metrics_extractor.py; health scoring now lives exclusively in health_scorer.py, eliminating duplicate logic.
 
 Incomplete or fragile:
 - Test runner config, focused backend/frontend tests, a real-browser frontend e2e, a frontend lockfile, and CI quality gates now exist; backend dependency locking is still absent.
@@ -57,6 +58,7 @@ Incomplete or fragile:
 - UI maintainability drift: Tailwind token configuration and one browser e2e now exist, but heavy one-off styling still makes visual regressions likely without broader route-level visual coverage.
 
 ## Discovered issues
+- High: clone_service and router used synchronous subprocesses that blocked the FastAPI event loop; they are now fully asynchronous.
 - High: no deployment health gate; CI now exists for unit/e2e tests, lint, build, and repository hygiene checks on pushes and pull requests.
 - High: npm audit previously reported 9 frontend dependency vulnerabilities; dependency upgrades now leave `npm audit --audit-level=moderate` clean as of 2026-06-04.
 - High: migration workflow now exists, but no model-changing migration files have been needed or authored yet.
@@ -141,10 +143,12 @@ Missing but obviously needed:
 - 2026-06-07: Fixed local end-to-end scan regressions after browser testing exposed proxy env loading, a missing SQLAlchemy `greenlet` runtime dependency, SQLite naive timestamp duration math, stale dashboard commit selections after rescans, invalid bus-factor table markup, and progress-stream disconnect errors.
 - 2026-06-07: Made streaming LLM narratives match the non-streaming demo fallback, because a no-key local/demo environment should still show a useful static-metrics explanation instead of a failure card.
 - 2026-06-07: Opted into React Router v7 future flags to remove route deprecation warnings in development; remaining Recharts dev warnings come from the installed `recharts@2.12.7` internals.
+- 2026-07-21: Added pagination to the repo list endpoint with `limit` (default 20, max 100) and `offset` (default 0) query parameters, because unbounded list responses degrade as repositories accumulate.
+- 2026-07-21: Fixed Python import parsing to preserve relative import levels by using `ast.ImportFrom.level`, because dot-prefix context was being dropped and breaking dependency resolution for relative imports.
 
 ## Test coverage status
 - Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults, boolean env parsing, repo URL parsing/validation, max-commit cap validation, slug generation, clone cleanup success/failure, import extraction/resolution, co-change edge generation, top-file frequency, bus-factor file filtering, semantic fallback behavior, health snapshot aggregation, risk reasons/hotspot persistence, LLM cache keys, provider mapping, cost estimation, usage/budget accounting, and prompt builders.
-- Backend integration/API tests: database-backed coverage exists for repo listing/lookup, timeline payloads including risk reasons and persistent hotspots, graph payloads, bus factor payloads, LLM usage payloads, commit detail composition, active ingestion job reuse, background job scheduling arguments, ingestion cancellation, SQLite-safe duration math, ingestion progress SSE payloads for missing/terminal/polled jobs, and streaming narrative demo fallback.
+- Backend integration/API tests: database-backed coverage exists for repo listing/lookup with pagination, timeline payloads including risk reasons and persistent hotspots, graph payloads, bus factor payloads, LLM usage payloads, commit detail composition, active ingestion job reuse, background job scheduling arguments, ingestion cancellation, SQLite-safe duration math, ingestion progress SSE payloads for missing/terminal/polled jobs, and streaming narrative demo fallback.
 - Backend migration tests: coverage exists for sorted SQL migration application, applied-file tracking, skip-on-reapply behavior, and SQLite duplicate-column protection.
 - Frontend unit/component tests: Vitest coverage exists for health status/formatting helpers, `HealthBadge`, restricted-storage `ThemeToggle` behavior, valid bus-factor table markup, `streamNarrative` success/error parsing, and `NarrativeCard` disabled/streaming/done/error states, including same-origin `/api` stream URL behavior.
 - Frontend route/smoke tests: landing-page repository validation/submission coverage, analyze-page cancellation/completion coverage, demo-page bounded-analysis coverage, dashboard repository error/latest-commit/empty-timeline/detail-navigation/risk-reason rendering coverage, and app-level landing-to-dashboard navigation coverage exist with mocked API/SSE calls.
@@ -210,3 +214,5 @@ Missing but obviously needed:
 - test: add real-browser landing-to-dashboard coverage. Added Playwright Chromium configuration, deterministic REST/SSE interception, CI execution, and non-fatal theme storage handling.
 - docs: update project brain after browser e2e coverage. Recorded the closed browser testing gap and current quality-gate status.
 - fix: stabilize local scan and narrative flows. Added the missing backend async DB runtime dependency, fixed Vite proxy env loading, made ingestion progress streams use independent DB sessions, handled SQLite naive timestamps, reset stale dashboard commit selections after rescans, hardened storage/markup edge cases, and made streaming narratives fall back to cached demo-mode output when LLM providers are unavailable.
+- feat: add pagination to repo list endpoint. Added `limit`/`offset` query parameters to `list_repos` with defaults of 20/0 and a max limit of 100, plus backend integration tests for pagination behavior.
+- docs: update project brain after repo list pagination. Recorded the pagination decision and updated backend API test coverage.

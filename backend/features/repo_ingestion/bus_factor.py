@@ -1,6 +1,9 @@
+import logging
 import subprocess
 from collections import defaultdict
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 EXCLUDE_PATTERNS = (
@@ -84,14 +87,18 @@ def _risk_level(contributor_count: int, top_pct: float) -> str:
 
 
 def _blame_authors(repo_path: Path, file_path: str) -> dict[tuple[str, str | None], int]:
-    result = subprocess.run(
-        ["git", "blame", "--line-porcelain", "--", file_path],
-        cwd=repo_path,
-        capture_output=True,
-        text=True,
-        errors="replace",
-        timeout=60,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "blame", "--line-porcelain", "--", file_path],
+            cwd=repo_path,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        logger.warning("git blame timed out for %s in %s", file_path, repo_path)
+        return {}
     if result.returncode != 0:
         return {}
 

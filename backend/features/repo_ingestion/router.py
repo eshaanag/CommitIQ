@@ -3,8 +3,9 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, desc, select
 from sqlalchemy.exc import IntegrityError
@@ -61,16 +62,25 @@ class IngestionCancelled(RuntimeError):
     pass
 
 
-async def _update_job(db: AsyncSession, job: AnalysisJob, **kwargs) -> None:
-    for key, value in kwargs.items():
-        setattr(job, key, value)
-    await db.commit()
+async def _update_job(job_id: int, **kwargs) -> None:
+    from backend.database import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as session:
+        job = await session.get(AnalysisJob, job_id)
+        if job:
+            for key, value in kwargs.items():
+                setattr(job, key, value)
+            await session.commit()
 
 
-async def _raise_if_cancelled(db: AsyncSession, job: AnalysisJob) -> None:
-    await db.refresh(job)
-    if job.status == "cancelled":
-        raise IngestionCancelled(CANCELLED_MESSAGE)
+async def _raise_if_cancelled(job_id: int) -> None:
+    from backend.database import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(AnalysisJob.status).where(AnalysisJob.id == job_id))
+        status = result.scalar_one_or_none()
+        if status == "cancelled":
+            raise IngestionCancelled(CANCELLED_MESSAGE)
 
 
 def _parse_top_files(raw: str | None) -> list[dict]:
@@ -136,7 +146,7 @@ def _hotspot_files(
     current_index: int,
     file_metrics_map: dict,
 ) -> list[str]:
-    recent_commits = commit_history[max(0, current_index - 4):current_index + 1]
+    recent_commits = commit_history[max(0, current_index - 4) : current_index + 1]
     churn_counts: dict[str, int] = {}
     for commit_data in recent_commits:
         for fpath in set(commit_data.get("files_list", [])):
@@ -154,7 +164,7 @@ def _persistent_hotspots(
     file_metrics_map: dict,
     min_recent_commits: int = 3,
 ) -> list[dict]:
-    recent_commits = commit_history[max(0, current_index - 5):current_index + 1]
+    recent_commits = commit_history[max(0, current_index - 5) : current_index + 1]
     churn_counts: dict[str, int] = {}
     for commit_data in recent_commits:
         for fpath in set(commit_data.get("files_list", [])):
@@ -166,12 +176,14 @@ def _persistent_hotspots(
         avg_complexity = float(metrics.get("avg_complexity", 0.0))
         if recent_count < min_recent_commits or avg_complexity <= 5.0:
             continue
-        hotspots.append({
-            "path": fpath,
-            "recent_commit_count": recent_count,
-            "complexity": round(avg_complexity, 2),
-            "loc": int(metrics.get("loc", 0)),
-        })
+        hotspots.append(
+            {
+                "path": fpath,
+                "recent_commit_count": recent_count,
+                "complexity": round(avg_complexity, 2),
+                "loc": int(metrics.get("loc", 0)),
+            }
+        )
     return sorted(
         hotspots,
         key=lambda item: (item["recent_commit_count"], item["complexity"], item["loc"]),
@@ -259,10 +271,14 @@ async def _graph_payload(db: AsyncSession, repo_id: int, commit: Commit) -> dict
         if fallback_commit:
             commit = fallback_commit
             nodes_result = await db.execute(
-                select(GraphNode).where(GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id)
+                select(GraphNode).where(
+                    GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id
+                )
             )
             edges_result = await db.execute(
-                select(GraphEdge).where(GraphEdge.repo_id == repo_id, GraphEdge.commit_id == commit.id)
+                select(GraphEdge).where(
+                    GraphEdge.repo_id == repo_id, GraphEdge.commit_id == commit.id
+                )
             )
             nodes = nodes_result.scalars().all()
             edges = edges_result.scalars().all()
@@ -323,7 +339,9 @@ async def _bus_factor_payload(db: AsyncSession, repo_id: int) -> dict:
     }
 
 
-async def _commit_graph_rows(db: AsyncSession, repo_id: int, sha: str) -> tuple[list[GraphNode], list[GraphEdge], Commit]:
+async def _commit_graph_rows(
+    db: AsyncSession, repo_id: int, sha: str
+) -> tuple[list[GraphNode], list[GraphEdge], Commit]:
     commit = await _find_commit(db, repo_id, sha)
     if not commit:
         raise _http_error(404, "Commit not found.", "commit_not_found")
@@ -339,7 +357,6 @@ async def _commit_graph_rows(db: AsyncSession, repo_id: int, sha: str) -> tuple[
 async def _clear_repo_data(db: AsyncSession, repo_id: int) -> None:
     for model in (LLMNarrative, GraphEdge, GraphNode, HealthSnapshot, Commit, BusFactor):
         await db.execute(delete(model).where(model.repo_id == repo_id))
-    await db.commit()
 
 
 async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | None:
@@ -354,8 +371,12 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
 
 async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
     from backend.database import AsyncSessionLocal
-    from backend.features.repo_ingestion.metrics_extractor import checkout_commit, extract_commit_metrics
+    from backend.features.repo_ingestion.metrics_extractor import (
+        checkout_commit,
+        extract_commit_metrics,
+    )
 
+    # --- early validation (own session, committed immediately) ---
     async with AsyncSessionLocal() as db:
         repo = await db.get(Repo, repo_id)
         if not repo:
@@ -363,53 +384,60 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
         job = await db.get(AnalysisJob, job_id)
         if not job or job.repo_id != repo_id:
-            logger.warning("Skipping ingestion for repo_id=%s because job_id=%s was not found", repo_id, job_id)
+            logger.warning(
+                "Skipping ingestion for repo_id=%s because job_id=%s was not found", repo_id, job_id
+            )
             return
 
-        clone_path = None
-        try:
-            await _update_job(
-                db,
-                job,
-                status="cloning",
-                current_stage="Cloning repository",
-                started_at=datetime.now(tz=timezone.utc),
+        repo_url = repo.url  # snapshot immutable fields for later use
+
+        await _update_job(
+            job_id,
+            status="cloning",
+            current_stage="Cloning repository",
+            started_at=datetime.now(tz=timezone.utc),
+        )
+        repo.status = "processing"
+        repo.error_message = None
+        await db.commit()
+
+    clone_path = None
+    try:
+        clone_path = await clone_repo(repo_url, repo_id, max_commits)
+        await _raise_if_cancelled(job_id)
+        available_commits = await count_available_commits(clone_path)
+        if available_commits < 1:
+            raise RuntimeError(
+                f"Repository must have at least 1 commit for CommitIQ analysis; found {available_commits}."
             )
-            repo.status = "processing"
-            repo.error_message = None
-            await db.commit()
 
-            clone_path = clone_repo(repo.url, repo_id, max_commits)
-            await _raise_if_cancelled(db, job)
-            available_commits = count_available_commits(clone_path)
-            if available_commits < 1:
-                raise RuntimeError(
-                    f"Repository must have at least 1 commit for CommitIQ analysis; found {available_commits}."
-                )
+        await _update_job(job_id, status="analyzing", current_stage="Walking commit history")
+        await _raise_if_cancelled(job_id)
+        commit_history = list(walk_commits(clone_path, max_commits))
+        if not commit_history:
+            raise RuntimeError("No commits were found in this repository.")
+        await _update_job(job_id, total_commits=len(commit_history))
+        await _raise_if_cancelled(job_id)
 
-            await _update_job(db, job, status="analyzing", current_stage="Walking commit history")
-            await _raise_if_cancelled(db, job)
-            commit_history = list(walk_commits(clone_path, max_commits))
-            if not commit_history:
-                raise RuntimeError("No commits were found in this repository.")
-            await _update_job(db, job, total_commits=len(commit_history))
-            await _raise_if_cancelled(db, job)
+        await _update_job(
+            job_id, status="computing_bus_factor", current_stage="Computing bus factor"
+        )
+        await _raise_if_cancelled(job_id)
+        checkout_commit(clone_path, commit_history[-1]["full_sha"])
+        bus_entries = compute_bus_factor_from_history(commit_history, clone_path)
+        min_bus_factor = min((entry["contributor_count"] for entry in bus_entries), default=1)
 
+        # --- single atomic transaction: clear old data + write all new data ---
+        async with AsyncSessionLocal() as db:
             await _clear_repo_data(db, repo_id)
-            await _raise_if_cancelled(db, job)
-            await _update_job(db, job, status="computing_bus_factor", current_stage="Computing bus factor")
-            await _raise_if_cancelled(db, job)
-            checkout_commit(clone_path, commit_history[-1]["full_sha"])
-            bus_entries = compute_bus_factor_from_history(commit_history, clone_path)
-            min_bus_factor = min((entry["contributor_count"] for entry in bus_entries), default=1)
+            await _raise_if_cancelled(job_id)
 
             prev_health = None
             prev_avg_complexity = 0.0
             for idx, commit_data in enumerate(commit_history):
-                await _raise_if_cancelled(db, job)
+                await _raise_if_cancelled(job_id)
                 await _update_job(
-                    db,
-                    job,
+                    job_id,
                     status="analyzing",
                     current_stage=f"Analyzing commit {idx + 1}/{len(commit_history)}",
                     processed_commits=idx,
@@ -420,7 +448,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
                 file_metrics_map = extract_commit_metrics(clone_path, commit_data)
                 top_files = list(file_metrics_map.keys())[:50]
                 import_edges = build_import_edges(clone_path, top_files)
-                cochange_edges = build_cochange_edges(commit_history[:idx + 1])
+                cochange_edges = build_cochange_edges(commit_history[: idx + 1])
                 top_set = set(top_files)
                 filtered_edges = []
                 seen_edges = set()
@@ -470,76 +498,95 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
                 for fpath in top_files:
                     metrics = file_metrics_map.get(fpath, {})
-                    db.add(GraphNode(
-                        repo_id=repo_id,
-                        commit_id=commit_obj.id,
-                        full_sha=commit_obj.full_sha,
-                        file_path=fpath,
-                        module_name=Path(fpath).name,
-                        loc=metrics.get("loc", 0),
-                        avg_complexity=metrics.get("avg_complexity", 0.0),
-                        health_color=assign_health_color(metrics.get("avg_complexity", 0.0)),
-                        is_entry_point=Path(fpath).stem in {"index", "main", "app", "server"},
-                        semantic_drift_score=metrics.get("semantic_drift_score", 0.0),
-                        drift_method=metrics.get("drift_method", "none"),
-                    ))
+                    db.add(
+                        GraphNode(
+                            repo_id=repo_id,
+                            commit_id=commit_obj.id,
+                            full_sha=commit_obj.full_sha,
+                            file_path=fpath,
+                            module_name=Path(fpath).name,
+                            loc=metrics.get("loc", 0),
+                            avg_complexity=metrics.get("avg_complexity", 0.0),
+                            health_color=assign_health_color(metrics.get("avg_complexity", 0.0)),
+                            is_entry_point=Path(fpath).stem in {"index", "main", "app", "server"},
+                            semantic_drift_score=metrics.get("semantic_drift_score", 0.0),
+                            drift_method=metrics.get("drift_method", "none"),
+                        )
+                    )
 
                 for edge in filtered_edges:
-                    db.add(GraphEdge(
-                        repo_id=repo_id,
-                        commit_id=commit_obj.id,
-                        full_sha=commit_obj.full_sha,
-                        **edge,
-                    ))
+                    db.add(
+                        GraphEdge(
+                            repo_id=repo_id,
+                            commit_id=commit_obj.id,
+                            full_sha=commit_obj.full_sha,
+                            **edge,
+                        )
+                    )
 
                 prev_health = snapshot_data["health_score"]
                 prev_avg_complexity = snapshot_data["avg_complexity"]
-                await db.commit()
 
-            await _update_job(db, job, status="computing_bus_factor", current_stage="Computing bus factor")
+            await _update_job(
+                job_id, status="computing_bus_factor", current_stage="Computing bus factor"
+            )
             for entry in bus_entries:
                 db.add(BusFactor(repo_id=repo_id, **entry))
 
-            repo.status = "ready"
-            repo.analyzed_commits = len(commit_history)
-            repo.total_commits = available_commits
-            repo.last_updated_at = datetime.now(tz=timezone.utc)
+            # Single commit for all data writes (clear + inserts)
+            await db.commit()
 
-            completed = datetime.now(tz=timezone.utc)
-            await _update_job(
-                db,
-                job,
-                status="ready",
-                current_stage="Complete",
-                processed_commits=len(commit_history),
-                progress_pct=100.0,
-                completed_at=completed,
-                duration_seconds=_duration_seconds(job.started_at, completed),
-            )
-            await db.commit()
-        except IngestionCancelled:
-            logger.info("Repository ingestion cancelled for repo_id=%s job_id=%s", repo_id, job_id)
-            repo.status = "pending"
-            repo.error_message = CANCELLED_MESSAGE
-            job.current_stage = "Cancelled"
-            job.error_message = CANCELLED_MESSAGE
-            if not job.completed_at:
-                job.completed_at = datetime.now(tz=timezone.utc)
-            await db.commit()
-        except Exception as exc:
-            logger.exception("Repository ingestion failed for repo_id=%s", repo_id)
-            repo.status = "error"
-            repo.error_message = str(exc)[:500]
-            await _update_job(
-                db,
-                job,
-                status="error",
-                current_stage="Error",
-                error_message=repo.error_message,
-            )
-            await db.commit()
-        finally:
-            cleanup_repo(repo_id)
+        # --- mark repo as ready (own session) ---
+        async with AsyncSessionLocal() as db:
+            repo = await db.get(Repo, repo_id)
+            if repo:
+                repo.status = "ready"
+                repo.analyzed_commits = len(commit_history)
+                repo.total_commits = available_commits
+                repo.last_updated_at = datetime.now(tz=timezone.utc)
+                await db.commit()
+
+        completed = datetime.now(tz=timezone.utc)
+        await _update_job(
+            job_id,
+            status="ready",
+            current_stage="Complete",
+            processed_commits=len(commit_history),
+            progress_pct=100.0,
+            completed_at=completed,
+        )
+    except IngestionCancelled:
+        logger.info("Repository ingestion cancelled for repo_id=%s job_id=%s", repo_id, job_id)
+        async with AsyncSessionLocal() as db:
+            repo = await db.get(Repo, repo_id)
+            if repo:
+                repo.status = "pending"
+                repo.error_message = CANCELLED_MESSAGE
+                await db.commit()
+        await _update_job(
+            job_id,
+            status="cancelled",
+            current_stage="Cancelled",
+            error_message=CANCELLED_MESSAGE,
+            completed_at=datetime.now(tz=timezone.utc),
+        )
+    except Exception as exc:
+        logger.exception("Repository ingestion failed for repo_id=%s", repo_id)
+        error_msg = str(exc)[:500]
+        async with AsyncSessionLocal() as db:
+            repo = await db.get(Repo, repo_id)
+            if repo:
+                repo.status = "error"
+                repo.error_message = error_msg
+                await db.commit()
+        await _update_job(
+            job_id,
+            status="error",
+            current_stage="Error",
+            error_message=error_msg,
+        )
+    finally:
+        cleanup_repo(repo_id)
 
 
 @router.post("/ingest", response_model=IngestResponse, status_code=202)
@@ -691,11 +738,23 @@ async def ingest_progress(repo_id: int):
 
 
 @router.get("", response_model=list[RepoOut])
-async def list_repos(slug: str | None = None, db: AsyncSession = Depends(get_db)):
+async def list_repos(
+    slug: str | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    db: AsyncSession = Depends(get_db),
+):
+    if limit < 1:
+        raise _http_error(422, "limit must be >= 1", "validation_error")
+    if offset < 0:
+        raise _http_error(422, "offset must be >= 0", "validation_error")
+    if limit > 100:
+        limit = 100
     query = select(Repo)
     if slug:
         query = query.where(Repo.repo_slug == slug)
-    result = await db.execute(query.order_by(desc(Repo.ingested_at)))
+    query = query.order_by(desc(Repo.ingested_at)).limit(limit).offset(offset)
+    result = await db.execute(query)
     return result.scalars().all()
 
 
@@ -739,13 +798,17 @@ async def get_commit_detail(repo_id: int, sha: str, db: AsyncSession = Depends(g
     if not commit:
         raise _http_error(404, "Commit not found.", "commit_not_found")
 
-    snap_result = await db.execute(select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id))
+    snap_result = await db.execute(
+        select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id)
+    )
     snapshot = snap_result.scalar_one_or_none()
     if not snapshot:
         raise _http_error(404, "Health snapshot not found for commit.", "snapshot_not_found")
 
     narrative_key = make_cache_key(repo_id, commit.full_sha, "explain_drop")
-    narrative_result = await db.execute(select(LLMNarrative).where(LLMNarrative.cache_key == narrative_key))
+    narrative_result = await db.execute(
+        select(LLMNarrative).where(LLMNarrative.cache_key == narrative_key)
+    )
     narrative = narrative_result.scalar_one_or_none()
 
     narrative_payload = None
@@ -804,14 +867,18 @@ async def get_graph_diff(
         if before_cx > 0:
             delta_pct = (after_cx - before_cx) / before_cx
             if abs(delta_pct) > 0.10:
-                nodes_changed.append({
-                    "file": fpath,
-                    "before_complexity": round(before_cx, 2),
-                    "after_complexity": round(after_cx, 2),
-                    "delta_pct": round(delta_pct * 100.0, 1),
-                })
+                nodes_changed.append(
+                    {
+                        "file": fpath,
+                        "before_complexity": round(before_cx, 2),
+                        "after_complexity": round(after_cx, 2),
+                        "delta_pct": round(delta_pct * 100.0, 1),
+                    }
+                )
 
-    before_edge_set = {(edge.source_file, edge.target_file, edge.edge_type) for edge in before_edges}
+    before_edge_set = {
+        (edge.source_file, edge.target_file, edge.edge_type) for edge in before_edges
+    }
     after_edge_set = {(edge.source_file, edge.target_file, edge.edge_type) for edge in after_edges}
     added_edges = sorted(after_edge_set - before_edge_set)
     removed_edges = sorted(before_edge_set - after_edge_set)
@@ -828,7 +895,9 @@ async def get_graph_diff(
         },
         "nodes_added": nodes_added,
         "nodes_removed": nodes_removed,
-        "nodes_changed": sorted(nodes_changed, key=lambda item: abs(item["delta_pct"]), reverse=True)[:20],
+        "nodes_changed": sorted(
+            nodes_changed, key=lambda item: abs(item["delta_pct"]), reverse=True
+        )[:20],
         "edges_added": [
             {"source": source, "target": target, "type": edge_type}
             for source, target, edge_type in added_edges[:30]
@@ -855,8 +924,11 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
         raise _http_error(404, "Commit not found.", "commit_not_found")
 
     nodes_result = await db.execute(
-        select(GraphNode)
-        .where(GraphNode.repo_id == repo_id, GraphNode.commit_id == commit.id, GraphNode.avg_complexity > 5.0)
+        select(GraphNode).where(
+            GraphNode.repo_id == repo_id,
+            GraphNode.commit_id == commit.id,
+            GraphNode.avg_complexity > 5.0,
+        )
     )
     nodes = nodes_result.scalars().all()
     if not nodes:
@@ -864,14 +936,19 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
 
     file_paths = [node.file_path for node in nodes]
     commits_result = await db.execute(
-        select(Commit).where(Commit.repo_id == repo_id).order_by(desc(Commit.committed_at)).limit(20)
+        select(Commit)
+        .where(Commit.repo_id == repo_id)
+        .order_by(desc(Commit.committed_at))
+        .limit(20)
     )
     recent_commits = commits_result.scalars().all()
     churn_counts = {fpath: 0 for fpath in file_paths}
     for recent in recent_commits:
         # Querying full historical file lists is not stored; approximate churn by graph node presence.
         node_result = await db.execute(
-            select(GraphNode.file_path).where(GraphNode.repo_id == repo_id, GraphNode.commit_id == recent.id)
+            select(GraphNode.file_path).where(
+                GraphNode.repo_id == repo_id, GraphNode.commit_id == recent.id
+            )
         )
         recent_paths = set(node_result.scalars().all())
         for fpath in file_paths:
@@ -884,12 +961,14 @@ async def get_hotspots(repo_id: int, sha: str | None = None, db: AsyncSession = 
         if churn_count <= 2:
             continue
         risk_score = min(100.0, node.avg_complexity * 8.0 + churn_count * 6.0)
-        hotspots.append({
-            "file": node.file_path,
-            "complexity": round(node.avg_complexity, 2),
-            "churn_count": churn_count,
-            "risk_score": round(risk_score, 1),
-        })
+        hotspots.append(
+            {
+                "file": node.file_path,
+                "complexity": round(node.avg_complexity, 2),
+                "churn_count": churn_count,
+                "risk_score": round(risk_score, 1),
+            }
+        )
 
     return {
         "repo_id": repo_id,

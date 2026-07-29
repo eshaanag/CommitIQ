@@ -1,10 +1,15 @@
 import json
 
 import pytest
+
+@pytest.fixture()
+def anyio_backend():
+    return "asyncio"
+
 from pydantic import ValidationError
 
 from backend.config import MAX_COMMITS
-from backend.features.repo_ingestion.bus_factor import is_code_file
+from backend.features.repo_ingestion.bus_factor import is_code_file, _blame_authors
 from backend.features.repo_ingestion.clone_service import (
     cleanup_repo,
     get_clone_path,
@@ -109,6 +114,28 @@ def test_import_extractors_and_resolver_cover_common_python_and_ts_patterns():
     assert "os" in python_imports
     assert "package.module" in python_imports
 
+
+def test_extract_python_imports_preserves_relative_import_levels():
+    source = "\n".join([
+        "from .database import get_db",
+        "from ..shared.utils import helper",
+        "from ...config import settings",
+        "from . import models",
+        "from .. import api",
+        "import os",
+        "import pathlib",
+        "from collections import defaultdict",
+    ])
+    python_imports = extract_python_imports(source)
+    assert ".database" in python_imports
+    assert "..shared.utils" in python_imports
+    assert "...config" in python_imports
+    assert "." in python_imports
+    assert ".." in python_imports
+    assert "os" in python_imports
+    assert "pathlib" in python_imports
+    assert "collections" in python_imports
+
     js_imports = extract_js_imports(
         """
         import type { User } from './types'
@@ -177,6 +204,18 @@ def test_bus_factor_file_filter_keeps_code_and_ignores_docs_configs():
     assert not is_code_file("README.md")
     assert not is_code_file(".github/workflows/ci.yml")
     assert not is_code_file("package.json")
+
+
+def test_blame_authors_handles_timeout(monkeypatch, tmp_path):
+    import subprocess
+
+    def mock_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=args[0], timeout=60)
+    
+    monkeypatch.setattr("backend.features.repo_ingestion.bus_factor.subprocess.run", mock_run)
+
+    result = _blame_authors(tmp_path, "some_file.py")
+    assert result == {}
 
 
 def test_semantic_drift_uses_fallback_without_graphcodebert(monkeypatch):
