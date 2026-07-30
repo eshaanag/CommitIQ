@@ -47,9 +47,9 @@ async function request<T>(promise: Promise<{ data: T }>): Promise<T> {
   }
 }
 
-export async function ingestRepo(url: string, maxCommits?: number): Promise<IngestResponse> {
+export async function ingestRepo(url: string, maxCommits?: number,branch?: string,): Promise<IngestResponse> {
   return request<IngestResponse>(
-    client.post('/repos/ingest', { repo_url: url, max_commits: maxCommits || 500 })
+    client.post('/repos/ingest', { repo_url: url,branch, max_commits: maxCommits || 500 })
   )
 }
 
@@ -198,4 +198,4 @@ export async function streamNarrative(
   if (buffer.trim().startsWith('data: ')) {
     onChunk(JSON.parse(buffer.trim().slice(6)) as NarrativeStreamChunk)
   }
-}
+} 

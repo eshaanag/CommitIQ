@@ -369,7 +369,7 @@ async def _latest_active_job(db: AsyncSession, repo_id: int) -> AnalysisJob | No
     return result.scalar_one_or_none()
 
 
-async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
+async def run_ingestion(repo_id: int, job_id: int, max_commits: int,branch: str | None = None) -> None:
     from backend.database import AsyncSessionLocal
     from backend.features.repo_ingestion.metrics_extractor import (
         checkout_commit,
@@ -403,7 +403,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int) -> None:
 
     clone_path = None
     try:
-        clone_path = await clone_repo(repo_url, repo_id, max_commits)
+        clone_path = await clone_repo(repo_url, repo_id, max_commits,branch=request.branch,)
         await _raise_if_cancelled(job_id)
         available_commits = await count_available_commits(clone_path)
         if available_commits < 1:
@@ -650,7 +650,7 @@ async def ingest_repo(
     await db.refresh(repo)
     await db.refresh(job)
 
-    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c)
+    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c,request.branch)
     return IngestResponse(
         repo_id=repo.id,
         repo_slug=repo.repo_slug,
@@ -1004,3 +1004,4 @@ async def get_llm_usage(repo_id: int, db: AsyncSession = Depends(get_db)):
     from backend.features.llm_analysis.cost_guard import get_usage_summary
 
     return await get_usage_summary(repo_id, db)
+

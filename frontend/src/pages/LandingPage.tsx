@@ -54,6 +54,7 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null)
   const [phIdx, setPhIdx] = useState(0)
   const [maxCommits, setMaxCommits] = useState('500')
+  const [branch, setBranch] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function LandingPage() {
       }
       const normalizedUrl = `https://github.com/${parsed.owner}/${parsed.repo}`
       const commitsNum = maxCommits ? parseInt(maxCommits, 10) : 500
-      const response = await ingestRepo(normalizedUrl, isNaN(commitsNum) ? 500 : commitsNum)
+      const response = await ingestRepo(normalizedUrl, isNaN(commitsNum) ? 500 : commitsNum,branch.trim() || undefined)
       navigate(`/analyze?repo_id=${response.repo_id}&name=${encodeURIComponent(normalizedUrl)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start repository ingestion.')
@@ -196,6 +197,16 @@ export default function LandingPage() {
                   <span>Analyze</span>
                 )}
               </button>
+            </div>
+              <div className="mt-3">
+              <input
+                type="text"
+                value={branch}
+                onChange={(e) => setBranch(e.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && handleSubmit()}
+                placeholder="Branch (optional)"
+                className="w-full glass-panel rounded-xl px-4 py-3 bg-transparent text-white font-mono text-sm outline-none placeholder-slate-500 border border-white/10 focus:border-purple-500/50"
+              />
             </div>
           </div>
 

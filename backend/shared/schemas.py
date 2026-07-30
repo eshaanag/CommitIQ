@@ -22,6 +22,7 @@ class ApiError(BaseModel):
 
 class IngestRequest(BaseModel):
     repo_url: str = Field(..., min_length=3, max_length=300)
+    branch: str | None = None
     max_commits: int = Field(default=MAX_COMMITS, ge=1, le=MAX_COMMITS)
 
     @field_validator("repo_url")
