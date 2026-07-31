@@ -595,10 +595,15 @@ async def ingest_repo(
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
+    normalized_repo_url = request.repo_url.strip().lower()
+
     try:
-        owner, repo_name = parse_github_url(request.repo_url)
+        owner, repo_name = parse_github_url(normalized_repo_url)
     except ValueError as exc:
         raise _http_error(400, str(exc), "invalid_repo_url")
+
+    owner = owner.strip().lower()
+    repo_name = repo_name.strip().lower()
 
     url = f"https://github.com/{owner}/{repo_name}"
     repo_slug = make_repo_slug(owner, repo_name)

@@ -36,8 +36,9 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
     return null
   }
 
-  const owner = parts[0]
-  const repo = parts[1]
+  // Convert owner and repo to lowercase to maintain consistent URL formatting
+  const owner = parts[0].toLowerCase()
+  const repo = parts[1].toLowerCase()
 
   const nameRegex = /^[\w.-]+$/
   if (!nameRegex.test(owner) || !nameRegex.test(repo)) {

@@ -465,6 +465,38 @@ async def test_ingest_repo_schedules_created_job_by_id(db_session: AsyncSessionA
     assert job.status == "queued"
 
 
+async def test_ingest_repo_normalizes_repo_url_owner_and_name_to_lowercase(db_session: AsyncSessionAdapter, monkeypatch):
+    metadata_calls = []
+
+    async def fake_fetch_github_metadata(owner: str, repo: str):
+        metadata_calls.append((owner, repo))
+        return {
+            "github_stars": 0,
+            "github_language": None,
+            "github_description": None,
+        }
+
+    monkeypatch.setattr(
+        "backend.features.repo_ingestion.router.fetch_github_metadata",
+        fake_fetch_github_metadata,
+    )
+    background_tasks = BackgroundTaskRecorder()
+
+    response = await ingest_repo(
+        IngestRequest(repo_url="https://github.com/Example/ProjectNormalizationCase", max_commits=25),
+        background_tasks=background_tasks,
+        db=db_session,
+    )
+
+    repo = db_session.session.get(Repo, response.repo_id)
+
+    assert repo.url == "https://github.com/example/projectnormalizationcase"
+    assert repo.name == "example/projectnormalizationcase"
+    assert repo.owner == "example"
+    assert repo.repo_slug == "example-projectnormalizationcase"
+    assert metadata_calls == [("example", "projectnormalizationcase")]
+
+
 async def test_cancel_ingestion_marks_active_job_cancelled(db_session: AsyncSessionAdapter):
     active_job = AnalysisJob(
         repo_id=1,
