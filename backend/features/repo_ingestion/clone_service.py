@@ -85,10 +85,52 @@ def get_clone_path(repo_id: int) -> Path:
     return REPO_STORAGE_PATH / str(repo_id)
 
 
-async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Path:
+async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150, pat: str | None = None) -> Path:
     """Shallow clone to local disk. Returns clone path."""
     target = get_clone_path(repo_id)
+
+    # Use git clone/fetch via HTTPS
+    if pat:
+        auth_url = repo_url.replace(
+            'https://github.com/',
+            f'https://{pat}@github.com/'
+        )
+    elif GITHUB_TOKEN:
+        # This only speeds up clone for large repos — not required for public
+        auth_url = repo_url.replace(
+            'https://github.com/',
+            f'https://{GITHUB_TOKEN}@github.com/'
+        )
+    else:
+        auth_url = repo_url
+
     if target.exists():
+        try:
+            fetch_process = await asyncio.create_subprocess_exec(
+                "git", "fetch", "--depth", str(max_commits), auth_url,
+                cwd=str(target),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(fetch_process.communicate(), timeout=120)
+            if fetch_process.returncode == 0:
+                reset_process = await asyncio.create_subprocess_exec(
+                    "git", "reset", "--hard", "FETCH_HEAD",
+                    cwd=str(target),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                reset_stdout, reset_stderr = await asyncio.wait_for(reset_process.communicate(), timeout=60)
+                if reset_process.returncode == 0:
+                    return target
+                else:
+                    logger.warning(f"git reset failed for repo_id={repo_id}: {_redact_secret(reset_stderr.decode('utf-8', errors='replace'))[:500]}")
+            else:
+                logger.warning(f"git fetch failed for repo_id={repo_id}: {_redact_secret(stderr.decode('utf-8', errors='replace'))[:500]}")
+        except Exception as e:
+            logger.warning(f"Exception during clone update for repo_id={repo_id}: {e}")
+
+        # Fallback to fresh clone
         if not cleanup_repo(repo_id):
             raise RuntimeError(f"Could not clean existing clone directory for repo_id={repo_id}")
 
@@ -100,16 +142,6 @@ async def clone_repo(repo_url: str, repo_id: int, max_commits: int = 150) -> Pat
         )
 
     target.mkdir(parents=True, exist_ok=True)
-
-    # Use git clone via HTTPS — never uses GitHub REST API, no rate limits
-    if GITHUB_TOKEN:
-        # This only speeds up clone for large repos — not required for public
-        auth_url = repo_url.replace(
-            'https://github.com/',
-            f'https://{GITHUB_TOKEN}@github.com/'
-        )
-    else:
-        auth_url = repo_url
 
     process = await asyncio.create_subprocess_exec(
         "git", "clone",
