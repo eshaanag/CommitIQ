@@ -63,14 +63,17 @@ class IngestionCancelled(RuntimeError):
 
 
 async def _update_job(job_id: int, **kwargs) -> None:
-    from backend.database import AsyncSessionLocal
+    from backend.database import AsyncSessionLocal, commit_with_retry
 
-    async with AsyncSessionLocal() as session:
-        job = await session.get(AnalysisJob, job_id)
-        if job:
-            for key, value in kwargs.items():
-                setattr(job, key, value)
-            await session.commit()
+    try:
+        async with AsyncSessionLocal() as session:
+            job = await session.get(AnalysisJob, job_id)
+            if job:
+                for key, value in kwargs.items():
+                    setattr(job, key, value)
+                await commit_with_retry(session, max_retries=3)
+    except Exception as exc:
+        logger.warning("Failed to update job id=%s after 3 retry attempts: %s", job_id, exc)
 
 
 async def _raise_if_cancelled(job_id: int) -> None:

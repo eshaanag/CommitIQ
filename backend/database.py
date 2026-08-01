@@ -1,7 +1,8 @@
+import asyncio
 import logging
 from pathlib import Path
 
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -16,11 +17,42 @@ engine = create_async_engine(
     echo=False,
 )
 
+if _IS_SQLITE:
+    @event.listens_for(engine.sync_engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
+
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
+
+async def commit_with_retry(session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1) -> None:
+    """Commit an AsyncSession transaction with a 3-attempt retry loop for transient SQLite database locks."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            await session.commit()
+            return
+        except Exception as exc:
+            err_msg = str(exc).lower()
+            is_lock_error = "database is locked" in err_msg or "locked" in err_msg
+            if is_lock_error and attempt < max_retries:
+                delay = initial_delay * (2 ** (attempt - 1))
+                logger.warning(
+                    "SQLite database locked on commit (attempt %d/%d). Retrying in %.2fs...",
+                    attempt,
+                    max_retries,
+                    delay,
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise
 
 
 class Base(DeclarativeBase):
