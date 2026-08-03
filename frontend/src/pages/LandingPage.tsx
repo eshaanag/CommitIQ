@@ -89,7 +89,12 @@ export default function LandingPage() {
       }
       const normalizedUrl = `https://github.com/${parsed.owner}/${parsed.repo}`
       const commitsNum = maxCommits ? parseInt(maxCommits, 10) : 500
-      const response = await ingestRepo(normalizedUrl, isNaN(commitsNum) ? 500 : commitsNum)
+      if (isNaN(commitsNum) || commitsNum < 1 || commitsNum > 1000) {
+        setError('Max commits must be between 1 and 1000.')
+        setLoading(false)
+        return
+      }
+      const response = await ingestRepo(normalizedUrl, commitsNum)
       navigate(`/analyze?repo_id=${response.repo_id}&name=${encodeURIComponent(normalizedUrl)}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start repository ingestion.')
@@ -175,7 +180,7 @@ export default function LandingPage() {
                   onKeyDown={(event) => event.key === 'Enter' && handleSubmit()}
                   placeholder="500"
                   min="1"
-                  max="500"
+                  max="1000"
                   className="w-12 bg-transparent text-white font-mono text-xs outline-none focus:text-purple-300 transition-colors"
                 />
               </div>
