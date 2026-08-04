@@ -460,7 +460,7 @@ async def test_ingest_repo_schedules_created_job_by_id(db_session: AsyncSessionA
     job = db_session.session.get(AnalysisJob, response.job_id)
 
     assert scheduled_func is run_ingestion
-    assert args == (response.repo_id, response.job_id, 25)
+    assert args == (response.repo_id, response.job_id, 25, None)
     assert kwargs == {}
     assert job.status == "queued"
 

@@ -205,7 +205,7 @@ describe('App route flow', () => {
     await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
-      expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/example/project', 25)
+      expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/example/project', 25,undefined)
       expect(getIngestProgressMock).toHaveBeenCalledWith('17')
     })
     expect(await screen.findByText('Analyzing Repository')).toBeInTheDocument()

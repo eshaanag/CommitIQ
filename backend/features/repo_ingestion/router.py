@@ -403,8 +403,7 @@ async def run_ingestion(repo_id: int, job_id: int, max_commits: int,branch: str 
 
     clone_path = None
     try:
-        clone_path = await clone_repo(repo_url, repo_id, max_commits,branch=request.branch,)
-        await _raise_if_cancelled(job_id)
+        clone_path = await clone_repo(repo_url, repo_id, max_commits,branch=branch,)
         available_commits = await count_available_commits(clone_path)
         if available_commits < 1:
             raise RuntimeError(
@@ -650,7 +649,7 @@ async def ingest_repo(
     await db.refresh(repo)
     await db.refresh(job)
 
-    background_tasks.add_task(run_ingestion, repo.id, job.id, max_c,request.branch)
+    background_tasks.add_task(run_ingestion, repo.id, job.id, request.max_commits,request.branch,)
     return IngestResponse(
         repo_id=repo.id,
         repo_slug=repo.repo_slug,
