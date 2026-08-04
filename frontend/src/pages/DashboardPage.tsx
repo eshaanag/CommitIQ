@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import { getBusFactor, getGraph, getHealthTimeline, getLLMUsage, getRepoBySlug } from '../lib/api'
@@ -13,12 +13,14 @@ import { NarrativeCard } from '../components/NarrativeCard'
 import { TimeRangeSelector, type TimeRangePreset } from '../components/TimeRangeSelector'
 import { HealthBadge } from '../components/ui/HealthBadge'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
+import { ScrollToTop } from '../components/ui/ScrollToTop'
 import { Layers, Compass, BarChart2, Activity, GitBranch } from 'lucide-react'
 import { sanitizeCommitMessage } from '../lib/utils'
 
 export default function DashboardPage() {
   const { repoSlug = '' } = useParams<{ repoSlug: string }>()
   const navigate = useNavigate()
+  const mainRef = useRef<HTMLElement>(null)
   const [selected, setSelected] = useState<HealthSnapshot | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [timeRangePreset, setTimeRangePreset] = useState<TimeRangePreset>('all')
@@ -206,7 +208,7 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        <main className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 relative z-10">
+        <main ref={mainRef} className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 relative z-10">
           <TimeRangeSelector
             selectedPreset={timeRangePreset}
             onSelectPreset={setTimeRangePreset}
@@ -400,6 +402,7 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+      <ScrollToTop containerRef={mainRef} />
     </div>
   )
 }

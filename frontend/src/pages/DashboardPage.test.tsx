@@ -296,4 +296,11 @@ describe('DashboardPage', () => {
     expect(screen.getByLabelText('Start Date')).toBeInTheDocument()
     expect(screen.getByLabelText('End Date')).toBeInTheDocument()
   })
+
+  it('renders the floating back to top button on the dashboard', async () => {
+    renderDashboard()
+
+    expect(await screen.findByTestId('scroll-to-top')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /scroll back to top/i })).toBeInTheDocument()
+  })
 })
