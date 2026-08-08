@@ -163,57 +163,59 @@ async def explain_commit_stream(
     prompt = build_explain_prompt(before, after, commit.message or "")
 
     async def event_generator():
-        full_text: list[str] = []
-        provider_used = LLMProvider.NONE
-        try:
-            async for chunk, provider in stream_narrative(prompt):
-                full_text.append(chunk)
-                provider_used = provider
-                yield f"data: {json.dumps({'token': chunk, 'done': False})}\n\n"
-            response_text = "".join(full_text)
-            tokens_in = int(len((EXPLAIN_DROP_SYSTEM + prompt).split()) * 1.3)
-            tokens_out = int(len(response_text.split()) * 1.3)
-            provider_value = provider_used.value
-            cost = estimate_cost_usd(tokens_in, tokens_out, provider_value)
-            model_used = model_for_provider(provider_used)
-            narrative = LLMNarrative(
-                repo_id=request.repo_id,
-                commit_id=commit.id,
-                full_sha=commit.full_sha,
-                prompt_type=request.prompt_type,
-                cache_key=cache_key,
-                prompt_input=prompt,
-                response_text=response_text,
-                tokens_input=tokens_in,
-                tokens_output=tokens_out,
-                cost_usd=cost,
-                model_used=model_used,
-            )
-            db.add(narrative)
-            await db.commit()
-            yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': cost, 'cached': False, 'model': model_used, 'provider': provider_value, 'demo_mode': False})}\n\n"
-        except Exception as exc:
-            logger.warning("Narrative stream provider unavailable, using demo mode: %s", exc)
-            response_text = _build_demo_narrative(commit.message or "", before, after)
-            tokens_in = int(len((EXPLAIN_DROP_SYSTEM + prompt).split()) * 1.3)
-            tokens_out = int(len(response_text.split()) * 1.3)
-            narrative = LLMNarrative(
-                repo_id=request.repo_id,
-                commit_id=commit.id,
-                full_sha=commit.full_sha,
-                prompt_type=request.prompt_type,
-                cache_key=cache_key,
-                prompt_input=prompt,
-                response_text=response_text,
-                tokens_input=tokens_in,
-                tokens_output=tokens_out,
-                cost_usd=0.0,
-                model_used="demo-mode",
-                is_pre_cached=False,
-            )
-            db.add(narrative)
-            await db.commit()
-            yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': 0.0, 'cached': False, 'model': 'demo-mode', 'provider': LLMProvider.NONE.value, 'demo_mode': True})}\n\n"
+        from backend.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as stream_db:
+            full_text: list[str] = []
+            provider_used = LLMProvider.NONE
+            try:
+                async for chunk, provider in stream_narrative(prompt):
+                    full_text.append(chunk)
+                    provider_used = provider
+                    yield f"data: {json.dumps({'token': chunk, 'done': False})}\n\n"
+                response_text = "".join(full_text)
+                tokens_in = int(len((EXPLAIN_DROP_SYSTEM + prompt).split()) * 1.3)
+                tokens_out = int(len(response_text.split()) * 1.3)
+                provider_value = provider_used.value
+                cost = estimate_cost_usd(tokens_in, tokens_out, provider_value)
+                model_used = model_for_provider(provider_used)
+                narrative = LLMNarrative(
+                    repo_id=request.repo_id,
+                    commit_id=commit.id,
+                    full_sha=commit.full_sha,
+                    prompt_type=request.prompt_type,
+                    cache_key=cache_key,
+                    prompt_input=prompt,
+                    response_text=response_text,
+                    tokens_input=tokens_in,
+                    tokens_output=tokens_out,
+                    cost_usd=cost,
+                    model_used=model_used,
+                )
+                stream_db.add(narrative)
+                await stream_db.commit()
+                yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': cost, 'cached': False, 'model': model_used, 'provider': provider_value, 'demo_mode': False})}\n\n"
+            except Exception as exc:
+                logger.warning("Narrative stream provider unavailable, using demo mode: %s", exc)
+                response_text = _build_demo_narrative(commit.message or "", before, after)
+                tokens_in = int(len((EXPLAIN_DROP_SYSTEM + prompt).split()) * 1.3)
+                tokens_out = int(len(response_text.split()) * 1.3)
+                narrative = LLMNarrative(
+                    repo_id=request.repo_id,
+                    commit_id=commit.id,
+                    full_sha=commit.full_sha,
+                    prompt_type=request.prompt_type,
+                    cache_key=cache_key,
+                    prompt_input=prompt,
+                    response_text=response_text,
+                    tokens_input=tokens_in,
+                    tokens_output=tokens_out,
+                    cost_usd=0.0,
+                    model_used="demo-mode",
+                    is_pre_cached=False,
+                )
+                stream_db.add(narrative)
+                await stream_db.commit()
+                yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': 0.0, 'cached': False, 'model': 'demo-mode', 'provider': LLMProvider.NONE.value, 'demo_mode': True})}\n\n"
 
     return StreamingResponse(
         event_generator(),

@@ -385,6 +385,13 @@ async def test_streaming_narrative_falls_back_to_demo_mode(db_session: AsyncSess
         yield prompt, None
 
     monkeypatch.setattr("backend.features.llm_analysis.router.stream_narrative", failing_stream)
+    
+    from contextlib import asynccontextmanager
+    @asynccontextmanager
+    async def mock_session():
+        yield db_session
+    
+    monkeypatch.setattr("backend.database.AsyncSessionLocal", mock_session)
 
     response = await explain_commit_stream(
         NarrativeRequest(repo_id=1, commit_sha="abc123def456", prompt_type="explain_drop"),
