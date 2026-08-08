@@ -219,6 +219,11 @@ export default function DashboardPage() {
               setCustomStartDate(start)
               setCustomEndDate(end)
             }}
+            onReset={() => {
+              setTimeRangePreset('all')
+              setCustomStartDate('')
+              setCustomEndDate('')
+            }}
           />
 
           {timelineState.isLoading ? (
