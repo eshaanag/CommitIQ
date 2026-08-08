@@ -14,7 +14,7 @@ import { TimeRangeSelector, type TimeRangePreset } from '../components/TimeRange
 import { HealthBadge } from '../components/ui/HealthBadge'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { ScrollToTop } from '../components/ui/ScrollToTop'
-import { Layers, Compass, BarChart2, Activity, GitBranch, AlertTriangle } from 'lucide-react'
+import { Layers, Compass, BarChart2, Activity, GitBranch, AlertTriangle, Download } from 'lucide-react'
 import { sanitizeCommitMessage } from '../lib/utils'
 
 
@@ -210,16 +210,41 @@ export default function DashboardPage() {
         </aside>
 
         <main ref={mainRef} className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6 relative z-10">
-          <TimeRangeSelector
-            selectedPreset={timeRangePreset}
-            onSelectPreset={setTimeRangePreset}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
-            onCustomDateChange={(start, end) => {
-              setCustomStartDate(start)
-              setCustomEndDate(end)
-            }}
-          />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <TimeRangeSelector
+              selectedPreset={timeRangePreset}
+              onSelectPreset={setTimeRangePreset}
+              customStartDate={customStartDate}
+              customEndDate={customEndDate}
+              onCustomDateChange={(start, end) => {
+                setCustomStartDate(start)
+                setCustomEndDate(end)
+              }}
+              onReset={() => {
+                setTimeRangePreset('all')
+                setCustomStartDate('')
+                setCustomEndDate('')
+              }}
+            />
+            {repo && (
+              <button
+                onClick={() => {
+                  let url = `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')}/api/repos/${repo.id}/timeline/export`
+                  const params = new URLSearchParams()
+                  if (customStartDate) params.append('start_date', new Date(customStartDate).toISOString())
+                  if (customEndDate) params.append('end_date', new Date(`${customEndDate}T23:59:59.999Z`).toISOString())
+                  if (params.toString()) {
+                    url += `?${params.toString()}`
+                  }
+                  window.location.href = url
+                }}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-[14px] text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 flex items-center gap-2 transition-colors flex-shrink-0"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV
+              </button>
+            )}
+          </div>
 
           {timelineState.isLoading ? (
             <div className="glass-panel rounded-[28px] p-6 h-64 flex items-center justify-center text-slate-400 border border-white/10">

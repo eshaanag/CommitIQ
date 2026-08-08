@@ -1,4 +1,6 @@
 import asyncio
+import csv
+import io
 import json
 import logging
 from datetime import datetime, timezone
@@ -804,6 +806,46 @@ async def get_timeline(
         "repo_id": repo_id,
         "commits": [_snapshot_payload(commit, snap) for commit, snap in result.all()],
     }
+
+
+@router.get("/{repo_id}/timeline/export")
+async def export_timeline_csv(
+    repo_id: int,
+    start_date: datetime | None = Query(default=None),
+    end_date: datetime | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    query = (
+        select(Commit, HealthSnapshot)
+        .join(HealthSnapshot, HealthSnapshot.commit_id == Commit.id)
+        .where(Commit.repo_id == repo_id)
+    )
+    if isinstance(start_date, datetime):
+        query = query.where(Commit.committed_at >= start_date)
+    if isinstance(end_date, datetime):
+        query = query.where(Commit.committed_at <= end_date)
+    query = query.order_by(Commit.committed_at)
+    
+    result = await db.execute(query)
+    rows = result.all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Date", "Complexity", "Churn", "Score"])
+    for commit, snap in rows:
+        writer.writerow([
+            commit.committed_at.isoformat(),
+            round(snap.avg_complexity, 2) if snap.avg_complexity else 0.0,
+            round(snap.churn_rate, 4) if snap.churn_rate else 0.0,
+            round(snap.health_score, 1) if snap.health_score else 0.0
+        ])
+    
+    from fastapi.responses import Response
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=timeline_{repo_id}.csv"}
+    )
 
 
 @router.get("/{repo_id}/commit/{sha}", response_model=CommitDetailResponse)
