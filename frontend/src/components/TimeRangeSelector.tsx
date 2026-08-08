@@ -1,4 +1,4 @@
-import { Calendar, Clock, Filter } from 'lucide-react'
+import { Calendar, Clock, Filter, RotateCcw } from 'lucide-react'
 
 export type TimeRangePreset = 'all' | '7d' | '30d' | '1y' | 'custom'
 
@@ -8,6 +8,7 @@ export interface TimeRangeSelectorProps {
   customStartDate: string
   customEndDate: string
   onCustomDateChange: (startDate: string, endDate: string) => void
+  onReset?: () => void
 }
 
 const PRESETS: { id: TimeRangePreset; label: string }[] = [
@@ -24,6 +25,7 @@ export function TimeRangeSelector({
   customStartDate,
   customEndDate,
   onCustomDateChange,
+  onReset,
 }: TimeRangeSelectorProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] border border-white/5 p-2.5 rounded-[20px] backdrop-blur-xl">
@@ -56,6 +58,15 @@ export function TimeRangeSelector({
             </button>
           )
         })}
+        {(selectedPreset !== 'all' || customStartDate || customEndDate) && onReset && (
+          <button
+            onClick={onReset}
+            title="Reset Filters"
+            className="px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 border flex items-center cursor-pointer bg-white/5 text-slate-400 border-white/5 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40 ml-1"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {selectedPreset === 'custom' && (
