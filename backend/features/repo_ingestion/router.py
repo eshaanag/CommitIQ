@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import delete, desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -804,6 +804,47 @@ async def get_timeline(
         "repo_id": repo_id,
         "commits": [_snapshot_payload(commit, snap) for commit, snap in result.all()],
     }
+
+
+@router.get("/{repo_id}/timeline/export")
+async def export_timeline_csv(
+    repo_id: int,
+    start_date: datetime | None = Query(default=None),
+    end_date: datetime | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    import csv
+    import io
+
+    query = (
+        select(Commit, HealthSnapshot)
+        .join(HealthSnapshot, HealthSnapshot.commit_id == Commit.id)
+        .where(Commit.repo_id == repo_id)
+    )
+    if isinstance(start_date, datetime):
+        query = query.where(Commit.committed_at >= start_date)
+    if isinstance(end_date, datetime):
+        query = query.where(Commit.committed_at <= end_date)
+    query = query.order_by(Commit.committed_at)
+    result = await db.execute(query)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["date", "complexity", "churn", "score"])
+
+    for commit, snap in result.all():
+        writer.writerow([
+            commit.committed_at.isoformat() if commit.committed_at else "",
+            round(snap.avg_complexity, 2) if snap.avg_complexity is not None else 0,
+            round(snap.churn_rate, 2) if snap.churn_rate is not None else 0,
+            round(snap.health_score, 2) if snap.health_score is not None else 0
+        ])
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=timeline_{repo_id}.csv"}
+    )
 
 
 @router.get("/{repo_id}/commit/{sha}", response_model=CommitDetailResponse)

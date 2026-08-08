@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import { getBusFactor, getGraph, getHealthTimeline, getLLMUsage, getRepoBySlug } from '../lib/api'
+import { getBusFactor, getGraph, getHealthTimeline, getLLMUsage, getRepoBySlug, exportTimelineCSV } from '../lib/api'
 import type { HealthSnapshot } from '../types'
 import { BusFactorTable } from '../components/BusFactorTable'
 import { CommitList } from '../components/CommitList'
@@ -239,7 +239,8 @@ export default function DashboardPage() {
               commits={commits} 
               repoSlug={repo.repo_slug} 
               selectedSha={selected?.sha} 
-              onSelectCommit={setSelected} 
+              onSelectCommit={setSelected}
+              onExport={() => exportTimelineCSV(repo.id, startDate, endDate)}
             />
           )}
 

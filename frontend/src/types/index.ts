@@ -287,6 +287,7 @@ export interface HealthTimelineProps {
   repoSlug?: string
   selectedSha?: string | null
   onSelectCommit: (commit: HealthSnapshot) => void
+  onExport?: () => void
 }
 
 export interface CommitListProps {

@@ -14,7 +14,7 @@ import {
 import type { AreaDotProps, ChartClickState, ChartTooltipProps, HealthTimelineProps } from '../types'
 import { formatSha, getHealthColor } from '../types'
 import { formatDateShort, sanitizeCommitMessage } from '../lib/utils'
-import { GitCommit, TrendingUp, Cpu, Flame } from 'lucide-react'
+import { GitCommit, TrendingUp, Cpu, Flame, Download } from 'lucide-react'
 
 function CommitTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
@@ -88,7 +88,7 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
   )
 }
 
-export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit }: HealthTimelineProps) {
+export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit, onExport }: HealthTimelineProps) {
   const navigate = useNavigate()
   const [visibleLines, setVisibleLines] = useState({
     complexity_drift: false,
@@ -193,6 +193,16 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
               </button>
             )
           })}
+          {onExport && (
+            <button
+              onClick={onExport}
+              title="Export as CSV"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 border text-xs font-semibold cursor-pointer bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-300 ml-2"
+            >
+              <Download className="w-3.5 h-3.5" />
+              CSV
+            </button>
+          )}
         </div>
       </div>
 

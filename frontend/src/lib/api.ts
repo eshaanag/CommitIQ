@@ -75,6 +75,30 @@ export async function getHealthTimeline(
   return data.commits
 }
 
+export async function exportTimelineCSV(
+  repoId: string | number,
+  startDate?: string,
+  endDate?: string,
+): Promise<void> {
+  const params: Record<string, string> = {}
+  if (startDate) params.start_date = startDate
+  if (endDate) params.end_date = endDate
+  
+  const response = await client.get(`/repos/${repoId}/timeline/export`, {
+    params: Object.keys(params).length ? params : undefined,
+    responseType: 'blob'
+  })
+  
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `timeline_${repoId}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
 export async function getCommitDetail(
   repoId: string | number,
   sha: string,
