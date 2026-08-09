@@ -10,8 +10,12 @@ describe('sanitizeCommitMessage', () => {
   })
 
   it('leaves standard commit messages unchanged', () => {
-    expect(sanitizeCommitMessage('fix: correct login button alignment')).toBe('fix: correct login button alignment')
-    expect(sanitizeCommitMessage('feat: add user authentication')).toBe('feat: add user authentication')
+    expect(sanitizeCommitMessage('fix: correct login button alignment')).toBe(
+      'fix: correct login button alignment'
+    )
+    expect(sanitizeCommitMessage('feat: add user authentication')).toBe(
+      'feat: add user authentication'
+    )
   })
 
   it('strips unsafe HTML script tags and content', () => {
@@ -21,7 +25,8 @@ describe('sanitizeCommitMessage', () => {
 
   it('strips HTML tags and escapes raw < and > characters', () => {
     expect(sanitizeCommitMessage('fix: update <Header /> component')).toBe('fix: update  component')
-    expect(sanitizeCommitMessage('feat: value < 100 && value > 10')).toBe('feat: value &lt; 100 && value &gt; 10')
+    expect(sanitizeCommitMessage('feat: value < 100 && value > 10')).toBe(
+      'feat: value &lt; 100 && value &gt; 10'
+    )
   })
-
 })

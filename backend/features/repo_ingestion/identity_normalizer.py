@@ -88,7 +88,7 @@ class ContributorIdentityResolver:
             # Formats 1, 2 or 4: two email addresses
             first_email_idx = tokens.index(emails[0])
             canonical_name_parts = [t for t in tokens[:first_email_idx] if not t.startswith("<")]
-            raw_name_parts = [t for t in tokens[first_email_idx + 1:] if not t.startswith("<")]
+            raw_name_parts = [t for t in tokens[first_email_idx + 1 :] if not t.startswith("<")]
             canonical_name = " ".join(canonical_name_parts) if canonical_name_parts else ""
             raw_name = " ".join(raw_name_parts) if raw_name_parts else ""
             return canonical_name, emails[0][1:-1], raw_name, emails[1][1:-1]
@@ -101,7 +101,7 @@ class ContributorIdentityResolver:
             # Formats 3, 5 & 6: one email address
             email_idx = tokens.index(emails[0])
             before = " ".join(t for t in tokens[:email_idx] if not t.startswith("<"))
-            after = " ".join(t for t in tokens[email_idx + 1:] if not t.startswith("<"))
+            after = " ".join(t for t in tokens[email_idx + 1 :] if not t.startswith("<"))
             email_val = emails[0][1:-1]
 
             if before and after:

@@ -59,13 +59,17 @@ vi.mock('./components/HealthTimeline', () => ({
 
 vi.mock('./components/HotspotMap', () => ({
   HotspotMap: ({ repoId, sha }: { repoId: number; sha: string | null }) => (
-    <div data-testid="hotspots">hotspots {repoId}:{sha ?? 'none'}</div>
+    <div data-testid="hotspots">
+      hotspots {repoId}:{sha ?? 'none'}
+    </div>
   ),
 }))
 
 vi.mock('./components/NarrativeCard', () => ({
   NarrativeCard: ({ repoId, commitSha }: { repoId: number; commitSha: string }) => (
-    <div data-testid="narrative-card">narrative {repoId}:{commitSha}</div>
+    <div data-testid="narrative-card">
+      narrative {repoId}:{commitSha}
+    </div>
   ),
 }))
 
@@ -141,7 +145,7 @@ function renderApp() {
   return render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0, revalidateOnFocus: false }}>
       <App />
-    </SWRConfig>,
+    </SWRConfig>
   )
 }
 
@@ -205,7 +209,11 @@ describe('App route flow', () => {
     await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
-      expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/example/project', 25,undefined)
+      expect(ingestRepoMock).toHaveBeenCalledWith(
+        'https://github.com/example/project',
+        25,
+        undefined
+      )
       expect(getIngestProgressMock).toHaveBeenCalledWith('17')
     })
     expect(await screen.findByText('Analyzing Repository')).toBeInTheDocument()

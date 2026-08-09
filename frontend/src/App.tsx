@@ -12,7 +12,9 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 function RouteFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center text-slate-400">
-      <div className="glass-panel rounded-full px-5 py-3 text-xs font-semibold">Loading workspace...</div>
+      <div className="glass-panel rounded-full px-5 py-3 text-xs font-semibold">
+        Loading workspace...
+      </div>
     </div>
   )
 }

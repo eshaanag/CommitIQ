@@ -12,19 +12,15 @@ Verifies that:
 import json
 import os
 import time
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 from backend.features.repo_ingestion.commit_walker import (
-    walk_commits,
-    _cache_path,
+    _CACHE_TTL_SECONDS,
     _cache_is_valid,
+    _cache_path,
     _load_cache,
     _save_cache,
-    _CACHE_DIR,
-    _CACHE_TTL_SECONDS,
+    walk_commits,
 )
 
 
@@ -122,9 +118,7 @@ def test_load_cache_returns_none_for_wrong_format(tmp_path):
 def test_walk_commits_writes_cache_on_first_call(tmp_path, monkeypatch):
     """First call to walk_commits must write a cache file."""
     # Point cache dir to tmp_path
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path
-    )
+    monkeypatch.setattr("backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path)
 
     mock_data = _mock_commit_data(3)
 
@@ -143,6 +137,7 @@ def test_walk_commits_writes_cache_on_first_call(tmp_path, monkeypatch):
     cpath = _cache_path(tmp_path / "fake_repo", 150)
     # _cache_path uses _CACHE_DIR which we patched, so recompute
     import hashlib
+
     key_str = f"{(tmp_path / 'fake_repo').resolve()}:150"
     key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
     expected_path = tmp_path / f"commits_{key_hash}.json"
@@ -157,9 +152,7 @@ def test_walk_commits_writes_cache_on_first_call(tmp_path, monkeypatch):
 
 def test_walk_commits_loads_from_cache_on_second_call(tmp_path, monkeypatch):
     """Second call within TTL must load from cache, not re-walk."""
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path
-    )
+    monkeypatch.setattr("backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path)
 
     mock_data = _mock_commit_data(3)
 
@@ -187,9 +180,7 @@ def test_walk_commits_loads_from_cache_on_second_call(tmp_path, monkeypatch):
 
 def test_walk_commits_rewalks_when_cache_expired(tmp_path, monkeypatch):
     """Expired cache must trigger a re-walk."""
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path
-    )
+    monkeypatch.setattr("backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path)
 
     mock_data = _mock_commit_data(2)
 
@@ -209,6 +200,7 @@ def test_walk_commits_rewalks_when_cache_expired(tmp_path, monkeypatch):
 
         # Expire the cache by setting mtime to past TTL
         import hashlib
+
         key_str = f"{(tmp_path / 'fake_repo').resolve()}:150"
         key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
         cache_file = tmp_path / f"commits_{key_hash}.json"
@@ -222,9 +214,7 @@ def test_walk_commits_rewalks_when_cache_expired(tmp_path, monkeypatch):
 
 def test_walk_commits_different_limits_use_separate_caches(tmp_path, monkeypatch):
     """Different limits must not share cache files."""
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path
-    )
+    monkeypatch.setattr("backend.features.repo_ingestion.commit_walker._CACHE_DIR", tmp_path)
 
     walk_call_count = [0]
 

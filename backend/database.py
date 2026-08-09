@@ -18,6 +18,7 @@ engine = create_async_engine(
 )
 
 if _IS_SQLITE:
+
     @event.listens_for(engine.sync_engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
@@ -26,6 +27,7 @@ if _IS_SQLITE:
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 
+
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -33,7 +35,9 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def commit_with_retry(session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1) -> None:
+async def commit_with_retry(
+    session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1
+) -> None:
     """Commit an AsyncSession transaction with a 3-attempt retry loop for transient SQLite database locks."""
     for attempt in range(1, max_retries + 1):
         try:
@@ -92,14 +96,9 @@ async def _execute_statement(conn, statement: str, *, is_sqlite: bool = _IS_SQLI
 def _migration_statements(migration_sql: str) -> list[str]:
     migration_lines = migration_sql.splitlines()
     uncommented_sql = "\n".join(
-        line for line in migration_lines
-        if not line.lstrip().startswith("--")
+        line for line in migration_lines if not line.lstrip().startswith("--")
     )
-    return [
-        statement.strip()
-        for statement in uncommented_sql.split(";")
-        if statement.strip()
-    ]
+    return [statement.strip() for statement in uncommented_sql.split(";") if statement.strip()]
 
 
 async def _ensure_migration_table(conn) -> None:
@@ -174,6 +173,7 @@ async def init_db():
 
     # Auto-seed the facebook-react demo data if database is empty
     from backend.demo_seeder import seed_demo_data_if_empty
+
     async with AsyncSessionLocal() as session:
         try:
             await seed_demo_data_if_empty(session)
@@ -181,16 +181,17 @@ async def init_db():
             logger.error(f"Failed to auto-seed demo data: {exc}", exc_info=True)
 
 
-
 async def mark_stale_jobs_as_error() -> None:
     """Queries for any AnalysisJob in active statuses and marks them as error on startup.
     Also cleans up leftover temporary repository folders under REPO_STORAGE_PATH.
     """
-    from backend.shared.models import AnalysisJob
-    from backend.features.repo_ingestion.router import ACTIVE_JOB_STATUSES
-    from backend.features.repo_ingestion.clone_service import cleanup_repo, REPO_STORAGE_PATH
     import shutil
+
     from sqlalchemy import select
+
+    from backend.features.repo_ingestion.clone_service import REPO_STORAGE_PATH, cleanup_repo
+    from backend.features.repo_ingestion.router import ACTIVE_JOB_STATUSES
+    from backend.shared.models import AnalysisJob
 
     logger.info("Checking for stale/orphaned analysis jobs on startup...")
     async with AsyncSessionLocal() as session:
@@ -207,7 +208,9 @@ async def mark_stale_jobs_as_error() -> None:
                 f"Found {len(stale_jobs)} stale/orphaned analysis jobs. Marking as error and cleaning up storage..."
             )
             for job in stale_jobs:
-                logger.info(f"Aborting stale job id={job.id} (status={job.status}, repo_id={job.repo_id})")
+                logger.info(
+                    f"Aborting stale job id={job.id} (status={job.status}, repo_id={job.repo_id})"
+                )
                 job.status = "error"
                 job.error_message = "System restart aborted the analysis job"
 
@@ -234,4 +237,3 @@ async def mark_stale_jobs_as_error() -> None:
         except Exception as exc:
             await session.rollback()
             logger.error(f"Failed to mark stale jobs as error during startup: {exc}", exc_info=True)
-

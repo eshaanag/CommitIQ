@@ -115,10 +115,9 @@ def extract_commit_metrics(
     checkout_commit(repo_path, commit_data["full_sha"])
     metrics: dict[str, dict] = {}
 
-    files = [
-        fpath for fpath in commit_data.get("files_list", [])
-        if _is_supported(fpath)
-    ][:max_files]
+    files = [fpath for fpath in commit_data.get("files_list", []) if _is_supported(fpath)][
+        :max_files
+    ]
 
     for rel_path in files:
         full_path = repo_path / rel_path
@@ -149,18 +148,14 @@ def scan_repo_head(repo_path: Path, max_files: int = 200) -> dict[str, dict]:
 
     for root, dirs, files in os.walk(repo_path):
         dirs[:] = [
-            d for d in dirs
-            if d not in {".git", "node_modules", "__pycache__", "dist", "build"}
+            d for d in dirs if d not in {".git", "node_modules", "__pycache__", "dist", "build"}
         ]
         for fname in files:
             if count >= max_files:
                 return file_metrics
             rel_path = os.path.relpath(os.path.join(root, fname), repo_path)
             if _is_supported(rel_path):
-                file_metrics[rel_path] = extract_file_metrics_from_path(
-                    str(repo_path / rel_path)
-                )
+                file_metrics[rel_path] = extract_file_metrics_from_path(str(repo_path / rel_path))
                 count += 1
 
     return file_metrics
-
