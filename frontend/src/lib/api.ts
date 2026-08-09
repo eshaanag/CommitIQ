@@ -47,9 +47,13 @@ async function request<T>(promise: Promise<{ data: T }>): Promise<T> {
   }
 }
 
-export async function ingestRepo(url: string, maxCommits?: number,branch?: string,): Promise<IngestResponse> {
+export async function ingestRepo(
+  url: string,
+  maxCommits?: number,
+  branch?: string
+): Promise<IngestResponse> {
   return request<IngestResponse>(
-    client.post('/repos/ingest', { repo_url: url,branch, max_commits: maxCommits || 500 })
+    client.post('/repos/ingest', { repo_url: url, branch, max_commits: maxCommits || 500 })
   )
 }
 
@@ -64,20 +68,22 @@ export async function getRepo(repoId: string | number): Promise<Repo> {
 export async function getHealthTimeline(
   repoId: string | number,
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ): Promise<HealthSnapshot[]> {
   const params: Record<string, string> = {}
   if (startDate) params.start_date = startDate
   if (endDate) params.end_date = endDate
   const data = await request<TimelineResponse>(
-    client.get(`/repos/${repoId}/timeline`, { params: Object.keys(params).length ? params : undefined })
+    client.get(`/repos/${repoId}/timeline`, {
+      params: Object.keys(params).length ? params : undefined,
+    })
   )
   return data.commits
 }
 
 export async function getCommitDetail(
   repoId: string | number,
-  sha: string,
+  sha: string
 ): Promise<CommitDetailResponse> {
   return request<CommitDetailResponse>(client.get(`/repos/${repoId}/commit/${sha}`))
 }
@@ -95,7 +101,7 @@ export async function getBusFactor(repoId: string | number): Promise<BusFactorWr
 export async function getGraphDiff(
   repoId: string | number,
   shaBefore: string,
-  shaAfter: string,
+  shaAfter: string
 ): Promise<GraphDiffResponse> {
   return request<GraphDiffResponse>(
     client.get(`/repos/${repoId}/graph/diff`, {
@@ -108,14 +114,16 @@ export async function getHotspots(
   repoId: string | number,
   sha?: string,
   startDate?: string,
-  endDate?: string,
+  endDate?: string
 ): Promise<HotspotResponse> {
   const params: Record<string, string> = {}
   if (sha) params.sha = sha
   if (startDate) params.start_date = startDate
   if (endDate) params.end_date = endDate
   return request<HotspotResponse>(
-    client.get(`/repos/${repoId}/hotspots`, { params: Object.keys(params).length ? params : undefined })
+    client.get(`/repos/${repoId}/hotspots`, {
+      params: Object.keys(params).length ? params : undefined,
+    })
   )
 }
 
@@ -153,7 +161,7 @@ export async function cancelIngest(repoId: string | number): Promise<IngestStatu
 export async function streamNarrative(
   repoId: string | number,
   sha: string,
-  onChunk: (chunk: NarrativeStreamChunk) => void,
+  onChunk: (chunk: NarrativeStreamChunk) => void
 ): Promise<void> {
   const response = await fetch(`${API_ROOT}/explain/stream`, {
     method: 'POST',
@@ -198,4 +206,4 @@ export async function streamNarrative(
   if (buffer.trim().startsWith('data: ')) {
     onChunk(JSON.parse(buffer.trim().slice(6)) as NarrativeStreamChunk)
   }
-} 
+}

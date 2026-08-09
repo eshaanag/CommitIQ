@@ -6,19 +6,22 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   })
 }
 
 export function formatDateShort(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric'
+    month: 'short',
+    day: 'numeric',
   })
 }
 
 export function sanitizeCommitMessage(message?: string | null): string {
   if (!message) return 'No commit message'
-  
+
   const sanitized = message
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
@@ -30,6 +33,3 @@ export function sanitizeCommitMessage(message?: string | null): string {
 
   return sanitized || 'No commit message'
 }
-
-
-

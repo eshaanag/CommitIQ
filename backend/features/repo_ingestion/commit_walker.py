@@ -10,7 +10,6 @@ from typing import Iterator
 
 import git
 
-
 logger = logging.getLogger(__name__)
 
 # ── Issue #266: Graceful fallbacks for missing author details ───────────────
@@ -116,11 +115,11 @@ def sanitize_commit_message(message: str | None) -> str:
     """
     if not message:
         return ""
-    msg = re.sub(r'<script[\s\S]*?>[\s\S]*?</script>', '', message, flags=re.IGNORECASE)
-    msg = re.sub(r'<style[\s\S]*?>[\s\S]*?</style>', '', msg, flags=re.IGNORECASE)
-    msg = re.sub(r'<iframe[\s\S]*?>[\s\S]*?</iframe>', '', msg, flags=re.IGNORECASE)
-    msg = re.sub(r'<[a-zA-Z/!][^>]*>', '', msg)
-    msg = msg.replace('<', '&lt;').replace('>', '&gt;')
+    msg = re.sub(r"<script[\s\S]*?>[\s\S]*?</script>", "", message, flags=re.IGNORECASE)
+    msg = re.sub(r"<style[\s\S]*?>[\s\S]*?</style>", "", msg, flags=re.IGNORECASE)
+    msg = re.sub(r"<iframe[\s\S]*?>[\s\S]*?</iframe>", "", msg, flags=re.IGNORECASE)
+    msg = re.sub(r"<[a-zA-Z/!][^>]*>", "", msg)
+    msg = msg.replace("<", "&lt;").replace(">", "&gt;")
     return msg.strip()[:500]
 
 
@@ -132,7 +131,7 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
     Metrics are computed from git stats, not file inspection.
     """
     repo = git.Repo(repo_path)
-    commits = list(repo.iter_commits('HEAD', max_count=limit))
+    commits = list(repo.iter_commits("HEAD", max_count=limit))
     commits.reverse()  # oldest → newest for timeline
 
     total = len(commits)
@@ -142,8 +141,8 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
         try:
             stats = commit.stats
             files_changed = list(stats.files.keys())
-            insertions = stats.total.get('insertions', 0)
-            deletions = stats.total.get('deletions', 0)
+            insertions = stats.total.get("insertions", 0)
+            deletions = stats.total.get("deletions", 0)
         except Exception:
             # Fallback for shallow clone boundary commits where parent object is missing
             files_changed = []
@@ -151,9 +150,13 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
             deletions = 0
             try:
                 cmd = ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit.hexsha]
-                res = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, errors="replace")
+                res = subprocess.run(
+                    cmd, cwd=repo_path, capture_output=True, text=True, errors="replace"
+                )
                 if res.returncode == 0:
-                    files_changed = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+                    files_changed = [
+                        line.strip() for line in res.stdout.splitlines() if line.strip()
+                    ]
                 # Set dummy insertions/deletions as proxy to avoid zero metrics division issues
                 insertions = len(files_changed) * 15
                 deletions = 5
@@ -173,8 +176,7 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
             # The Actor object itself could not be read — extremely rare,
             # but we still want to yield a record rather than crash.
             logger.warning(
-                "commit_walker: failed to read author for commit %s (%s); "
-                "using defaults",
+                "commit_walker: failed to read author for commit %s (%s); " "using defaults",
                 commit.hexsha[:12],
                 exc,
             )
@@ -186,10 +188,7 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
 
         # Emit a debug log when a fallback was actually used, so operators
         # can spot repos with widespread author metadata corruption.
-        if (
-            author_name == DEFAULT_AUTHOR_NAME
-            or author_email == DEFAULT_AUTHOR_EMAIL
-        ):
+        if author_name == DEFAULT_AUTHOR_NAME or author_email == DEFAULT_AUTHOR_EMAIL:
             logger.info(
                 "commit_walker: commit %s had missing/empty author identity; "
                 "fell back to name=%r email=%r",
@@ -199,21 +198,21 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
             )
 
         yield {
-            "sha":           commit.hexsha[:12],
-            "full_sha":      commit.hexsha,
-            "message":       sanitize_commit_message(commit.message),
-            "author_name":   author_name,
-            "author_email":  author_email,
-            "committed_at":  datetime.fromtimestamp(
-                                 commit.committed_date, tz=timezone.utc
-                             ).isoformat(),
-            "insertions":    insertions,
-            "deletions":     deletions,
+            "sha": commit.hexsha[:12],
+            "full_sha": commit.hexsha,
+            "message": sanitize_commit_message(commit.message),
+            "author_name": author_name,
+            "author_email": author_email,
+            "committed_at": datetime.fromtimestamp(
+                commit.committed_date, tz=timezone.utc
+            ).isoformat(),
+            "insertions": insertions,
+            "deletions": deletions,
             "files_changed": len(files_changed),
-            "files_list":    files_changed[:100],  # cap to 100 for storage
-            "parent_sha":    parent_sha,
-            "index":         idx,
-            "total":         total,
+            "files_list": files_changed[:100],  # cap to 100 for storage
+            "parent_sha": parent_sha,
+            "index": idx,
+            "total": total,
         }
 
 

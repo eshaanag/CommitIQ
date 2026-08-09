@@ -4,7 +4,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
 def assign_health_color(avg_complexity: float) -> str:
     if avg_complexity <= 5:
         return "green"
@@ -61,135 +60,165 @@ def build_risk_reasons(
     reasons: list[dict] = []
 
     if avg_complexity >= 10:
-        reasons.append(_risk_reason(
-            "high_complexity",
-            "high",
-            "High complexity",
-            f"Changed files average {avg_complexity:.1f} cyclomatic complexity.",
-            min(avg_complexity * 2.0, 30.0),
-        ))
+        reasons.append(
+            _risk_reason(
+                "high_complexity",
+                "high",
+                "High complexity",
+                f"Changed files average {avg_complexity:.1f} cyclomatic complexity.",
+                min(avg_complexity * 2.0, 30.0),
+            )
+        )
     elif avg_complexity >= 5:
-        reasons.append(_risk_reason(
-            "elevated_complexity",
-            "medium",
-            "Elevated complexity",
-            f"Changed files average {avg_complexity:.1f} cyclomatic complexity.",
-            min(avg_complexity * 1.4, 18.0),
-        ))
+        reasons.append(
+            _risk_reason(
+                "elevated_complexity",
+                "medium",
+                "Elevated complexity",
+                f"Changed files average {avg_complexity:.1f} cyclomatic complexity.",
+                min(avg_complexity * 1.4, 18.0),
+            )
+        )
 
     if prev_avg_complexity > 0:
         drift_pct = (avg_complexity - prev_avg_complexity) / prev_avg_complexity
         if drift_pct > 0.20:
-            reasons.append(_risk_reason(
-                "complexity_jump",
-                "medium",
-                "Complexity jump",
-                f"Average complexity rose {drift_pct * 100.0:.0f}% from the previous analyzed commit.",
-                min(drift_pct * 35.0, 20.0),
-            ))
+            reasons.append(
+                _risk_reason(
+                    "complexity_jump",
+                    "medium",
+                    "Complexity jump",
+                    f"Average complexity rose {drift_pct * 100.0:.0f}% from the previous analyzed commit.",
+                    min(drift_pct * 35.0, 20.0),
+                )
+            )
 
     if churn_rate >= 0.50:
-        reasons.append(_risk_reason(
-            "high_churn",
-            "high",
-            "High churn",
-            f"This commit rewrote about {churn_rate * 100.0:.0f}% of the analyzed lines.",
-            22.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "high_churn",
+                "high",
+                "High churn",
+                f"This commit rewrote about {churn_rate * 100.0:.0f}% of the analyzed lines.",
+                22.0,
+            )
+        )
     elif churn_rate >= 0.25:
-        reasons.append(_risk_reason(
-            "elevated_churn",
-            "medium",
-            "Elevated churn",
-            f"This commit touched about {churn_rate * 100.0:.0f}% of the analyzed lines.",
-            12.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "elevated_churn",
+                "medium",
+                "Elevated churn",
+                f"This commit touched about {churn_rate * 100.0:.0f}% of the analyzed lines.",
+                12.0,
+            )
+        )
 
     if hotspot_files:
-        reasons.append(_risk_reason(
-            "active_hotspots",
-            "high" if len(hotspot_files) > 2 else "medium",
-            "Active hotspots",
-            f"{len(hotspot_files)} high-complexity file(s) are repeatedly changing.",
-            min(len(hotspot_files) * 8.0, 24.0),
-        ))
+        reasons.append(
+            _risk_reason(
+                "active_hotspots",
+                "high" if len(hotspot_files) > 2 else "medium",
+                "Active hotspots",
+                f"{len(hotspot_files)} high-complexity file(s) are repeatedly changing.",
+                min(len(hotspot_files) * 8.0, 24.0),
+            )
+        )
 
     if hotspot_persistence_score >= 60:
-        reasons.append(_risk_reason(
-            "persistent_hotspots",
-            "high",
-            "Persistent hotspots",
-            "Risky files are staying active across several recent commits.",
-            min(hotspot_persistence_score / 4.0, 25.0),
-        ))
+        reasons.append(
+            _risk_reason(
+                "persistent_hotspots",
+                "high",
+                "Persistent hotspots",
+                "Risky files are staying active across several recent commits.",
+                min(hotspot_persistence_score / 4.0, 25.0),
+            )
+        )
     elif hotspot_persistence_score >= 30:
-        reasons.append(_risk_reason(
-            "persistent_hotspots",
-            "medium",
-            "Persistent hotspots",
-            "Some risky files are recurring in the recent commit window.",
-            min(hotspot_persistence_score / 5.0, 15.0),
-        ))
+        reasons.append(
+            _risk_reason(
+                "persistent_hotspots",
+                "medium",
+                "Persistent hotspots",
+                "Some risky files are recurring in the recent commit window.",
+                min(hotspot_persistence_score / 5.0, 15.0),
+            )
+        )
 
     if bus_factor_min <= 1:
-        reasons.append(_risk_reason(
-            "single_owner",
-            "critical",
-            "Single-owner risk",
-            "At least one critical module has only one active contributor.",
-            30.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "single_owner",
+                "critical",
+                "Single-owner risk",
+                "At least one critical module has only one active contributor.",
+                30.0,
+            )
+        )
     elif bus_factor_min == 2:
-        reasons.append(_risk_reason(
-            "limited_ownership",
-            "medium",
-            "Limited ownership",
-            "Critical ownership is concentrated across two contributors.",
-            14.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "limited_ownership",
+                "medium",
+                "Limited ownership",
+                "Critical ownership is concentrated across two contributors.",
+                14.0,
+            )
+        )
 
     if dependency_density >= 2.0:
-        reasons.append(_risk_reason(
-            "dense_dependencies",
-            "high",
-            "Dense dependency graph",
-            f"Dependency density is {dependency_density:.2f} edges per analyzed file.",
-            18.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "dense_dependencies",
+                "high",
+                "Dense dependency graph",
+                f"Dependency density is {dependency_density:.2f} edges per analyzed file.",
+                18.0,
+            )
+        )
     elif dependency_density >= 1.0:
-        reasons.append(_risk_reason(
-            "dense_dependencies",
-            "medium",
-            "Dense dependency graph",
-            f"Dependency density is {dependency_density:.2f} edges per analyzed file.",
-            10.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "dense_dependencies",
+                "medium",
+                "Dense dependency graph",
+                f"Dependency density is {dependency_density:.2f} edges per analyzed file.",
+                10.0,
+            )
+        )
 
     if has_cycles:
-        reasons.append(_risk_reason(
-            "dependency_cycle",
-            "high",
-            "Dependency cycle",
-            "Import cycles were detected in the analyzed dependency graph.",
-            20.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "dependency_cycle",
+                "high",
+                "Dependency cycle",
+                "Import cycles were detected in the analyzed dependency graph.",
+                20.0,
+            )
+        )
 
     if semantic_health_score < 70:
-        reasons.append(_risk_reason(
-            "semantic_drift",
-            "high",
-            "High semantic drift",
-            f"Semantic health is {semantic_health_score:.0f}/100 for this snapshot.",
-            20.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "semantic_drift",
+                "high",
+                "High semantic drift",
+                f"Semantic health is {semantic_health_score:.0f}/100 for this snapshot.",
+                20.0,
+            )
+        )
     elif semantic_health_score < 85:
-        reasons.append(_risk_reason(
-            "semantic_drift",
-            "medium",
-            "Semantic drift",
-            f"Semantic health is {semantic_health_score:.0f}/100 for this snapshot.",
-            10.0,
-        ))
+        reasons.append(
+            _risk_reason(
+                "semantic_drift",
+                "medium",
+                "Semantic drift",
+                f"Semantic health is {semantic_health_score:.0f}/100 for this snapshot.",
+                10.0,
+            )
+        )
 
     return sorted(reasons, key=lambda item: item["impact"], reverse=True)[:6]
 
@@ -197,7 +226,9 @@ def build_risk_reasons(
 def calculate_average_metrics(total_complexity: float, total_code_files: int) -> float:
     """Calculate average cyclomatic complexity safely without ZeroDivisionError."""
     if total_code_files <= 0:
-        logger.info("Repository contains no code files (total_code_files=0). Returning neutral average complexity 0.0.")
+        logger.info(
+            "Repository contains no code files (total_code_files=0). Returning neutral average complexity 0.0."
+        )
         return 0.0
     return round(total_complexity / total_code_files, 2)
 
@@ -320,9 +351,7 @@ def compute_full_snapshot(
     total_code_files = len(metrics)
     total_loc = sum(item.get("loc", 0) for item in metrics)
     complexities = [
-        item.get("avg_complexity", 0.0)
-        for item in metrics
-        if item.get("avg_complexity", 0.0) > 0
+        item.get("avg_complexity", 0.0) for item in metrics if item.get("avg_complexity", 0.0) > 0
     ]
     max_complexities = [item.get("max_complexity", 0.0) for item in metrics]
 
@@ -338,7 +367,10 @@ def compute_full_snapshot(
         churn_rate = round(min(1.0, lines_changed / max(total_loc, lines_changed, 1)), 4)
 
     hotspot_persistence_score = round(
-        min(100.0, sum(float(item.get("recent_commit_count", 0)) * 12.5 for item in persistent_hotspots)),
+        min(
+            100.0,
+            sum(float(item.get("recent_commit_count", 0)) * 12.5 for item in persistent_hotspots),
+        ),
         1,
     )
 

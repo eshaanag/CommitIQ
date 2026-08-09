@@ -48,9 +48,26 @@ function HotspotCell(props: TreemapNode) {
   const label = name.length > labelLimit ? `${name.slice(0, labelLimit)}...` : name
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} fill={RISK_COLORS[risk]} fillOpacity={0.86} stroke="var(--color-surface)" strokeWidth={1} rx={2} />
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={RISK_COLORS[risk]}
+        fillOpacity={0.86}
+        stroke="var(--color-surface)"
+        strokeWidth={1}
+        rx={2}
+      />
       {width > 44 && height > 22 && (
-        <text x={x + width / 2} y={y + height / 2} textAnchor="middle" fill="white" fontSize={Math.min(width / 8, 11)} fontFamily="monospace">
+        <text
+          x={x + width / 2}
+          y={y + height / 2}
+          textAnchor="middle"
+          fill="white"
+          fontSize={Math.min(width / 8, 11)}
+          fontFamily="monospace"
+        >
           {label}
         </text>
       )}
@@ -90,9 +107,8 @@ function Th({
 }
 
 export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps) {
-  const hotspotState = useSWR(
-    ['hotspots', repoId, sha, startDate, endDate],
-    () => getHotspots(repoId, sha || undefined, startDate, endDate)
+  const hotspotState = useSWR(['hotspots', repoId, sha, startDate, endDate], () =>
+    getHotspots(repoId, sha || undefined, startDate, endDate)
   )
   const hotspots = useMemo(() => hotspotState.data?.hotspots || [], [hotspotState.data])
 
@@ -100,14 +116,17 @@ export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps)
   const [sortKey, setSortKey] = useState<SortKey>('risk_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
-  const handleSort = useCallback((key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('desc')
-    }
-  }, [sortKey])
+  const handleSort = useCallback(
+    (key: SortKey) => {
+      if (key === sortKey) {
+        setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortKey(key)
+        setSortDir('desc')
+      }
+    },
+    [sortKey]
+  )
 
   const sortedHotspots = useMemo(() => {
     const sorted = [...hotspots]
@@ -142,22 +161,39 @@ export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps)
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         <div>
-          <h2 className="font-head text-[18px] font-semibold text-white tracking-tight">Complexity Churn Hotspots</h2>
-          <p className="text-slate-400 text-xs mt-1">Area represents file complexity scaled by recent churn volume</p>
+          <h2 className="font-head text-[18px] font-semibold text-white tracking-tight">
+            Complexity Churn Hotspots
+          </h2>
+          <p className="text-slate-400 text-xs mt-1">
+            Area represents file complexity scaled by recent churn volume
+          </p>
         </div>
         <div className="flex gap-3 text-[10px] font-bold tracking-wider uppercase font-mono">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-red-500/30" /> Critical</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-orange-400/30" /> High</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500 border border-yellow-400/30" /> Medium</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-600 border border-red-500/30" />{' '}
+            Critical
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-orange-400/30" />{' '}
+            High
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500 border border-yellow-400/30" />{' '}
+            Medium
+          </span>
         </div>
       </div>
 
       {/* ── Treemap ─────────────────────────────────────────────── */}
       <div className="relative z-10" style={{ minHeight: 280 }}>
         {hotspotState.isLoading ? (
-          <div className="h-[280px] flex items-center justify-center text-slate-400 font-mono text-xs animate-pulse">Loading hotspots...</div>
+          <div className="h-[280px] flex items-center justify-center text-slate-400 font-mono text-xs animate-pulse">
+            Loading hotspots...
+          </div>
         ) : hotspots.length === 0 ? (
-          <div className="h-[280px] flex items-center justify-center text-slate-500 font-mono text-xs">No high-complexity churn hotspots found for this commit.</div>
+          <div className="h-[280px] flex items-center justify-center text-slate-500 font-mono text-xs">
+            No high-complexity churn hotspots found for this commit.
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <Treemap
@@ -173,12 +209,25 @@ export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps)
                   const item = payload[0].payload as TreemapNode
                   return (
                     <div className="glass-panel-bright rounded-[20px] p-4 text-xs shadow-2xl border border-white/10 font-sans backdrop-blur-xl">
-                      <p className="font-mono text-white mb-2 max-w-[260px] truncate pb-1.5 border-b border-white/5">{item.fullPath}</p>
+                      <p className="font-mono text-white mb-2 max-w-[260px] truncate pb-1.5 border-b border-white/5">
+                        {item.fullPath}
+                      </p>
                       <div className="space-y-1 font-mono text-[11px]">
-                        <p className="text-slate-400">Complexity: <span className="text-white font-bold">{item.complexity ?? 0}</span></p>
-                        <p className="text-slate-400">Churn count: <span className="text-white font-bold">{item.churnCount ?? 0}</span></p>
-                        <p className="text-slate-400">LOC: <span className="text-white font-bold">{item.loc ?? '—'}</span></p>
-                        <p className="text-slate-400">Risk score: <span className="text-red-400 font-bold">{item.riskScore ?? 0}/100</span></p>
+                        <p className="text-slate-400">
+                          Complexity:{' '}
+                          <span className="text-white font-bold">{item.complexity ?? 0}</span>
+                        </p>
+                        <p className="text-slate-400">
+                          Churn count:{' '}
+                          <span className="text-white font-bold">{item.churnCount ?? 0}</span>
+                        </p>
+                        <p className="text-slate-400">
+                          LOC: <span className="text-white font-bold">{item.loc ?? '—'}</span>
+                        </p>
+                        <p className="text-slate-400">
+                          Risk score:{' '}
+                          <span className="text-red-400 font-bold">{item.riskScore ?? 0}/100</span>
+                        </p>
                       </div>
                     </div>
                   )
@@ -195,11 +244,45 @@ export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps)
           <table className="w-full text-xs">
             <thead className="bg-white/5 border-b border-white/10">
               <tr>
-                <Th label="File" sortKey="file" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
-                <Th label="LOC" sortKey="loc" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
-                <Th label="Churn" sortKey="churn_count" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
-                <Th label="Complexity" sortKey="complexity" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
-                <Th label="Risk" sortKey="risk_score" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} align="right" />
+                <Th
+                  label="File"
+                  sortKey="file"
+                  currentSort={sortKey}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                />
+                <Th
+                  label="LOC"
+                  sortKey="loc"
+                  currentSort={sortKey}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <Th
+                  label="Churn"
+                  sortKey="churn_count"
+                  currentSort={sortKey}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <Th
+                  label="Complexity"
+                  sortKey="complexity"
+                  currentSort={sortKey}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  align="right"
+                />
+                <Th
+                  label="Risk"
+                  sortKey="risk_score"
+                  currentSort={sortKey}
+                  currentDir={sortDir}
+                  onSort={handleSort}
+                  align="right"
+                />
               </tr>
             </thead>
             <tbody>
@@ -211,7 +294,10 @@ export function HotspotMap({ repoId, sha, startDate, endDate }: HotspotMapProps)
                     key={`${hp.file}-${i}`}
                     className="border-b border-white/5 hover:bg-white/5 transition-colors"
                   >
-                    <td className="px-3 py-2 font-mono text-slate-300 max-w-[280px] truncate" title={hp.file}>
+                    <td
+                      className="px-3 py-2 font-mono text-slate-300 max-w-[280px] truncate"
+                      title={hp.file}
+                    >
                       {hp.file}
                     </td>
                     <td className="px-3 py-2 font-mono text-right text-slate-400">
