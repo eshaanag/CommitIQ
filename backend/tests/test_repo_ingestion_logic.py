@@ -2,14 +2,17 @@ import json
 
 import pytest
 
+
 @pytest.fixture()
 def anyio_backend():
     return "asyncio"
 
+
 from pydantic import ValidationError
 
 from backend.config import MAX_COMMITS
-from backend.features.repo_ingestion.bus_factor import is_code_file, _blame_authors
+from backend.features.repo_ingestion import semantic_analyzer
+from backend.features.repo_ingestion.bus_factor import _blame_authors, is_code_file
 from backend.features.repo_ingestion.clone_service import (
     cleanup_repo,
     get_clone_path,
@@ -24,7 +27,6 @@ from backend.features.repo_ingestion.graph_builder import (
     resolve_import_to_file,
 )
 from backend.features.repo_ingestion.health_scorer import compute_full_snapshot
-from backend.features.repo_ingestion import semantic_analyzer
 from backend.shared.schemas import IngestRequest
 
 
@@ -116,16 +118,18 @@ def test_import_extractors_and_resolver_cover_common_python_and_ts_patterns():
 
 
 def test_extract_python_imports_preserves_relative_import_levels():
-    source = "\n".join([
-        "from .database import get_db",
-        "from ..shared.utils import helper",
-        "from ...config import settings",
-        "from . import models",
-        "from .. import api",
-        "import os",
-        "import pathlib",
-        "from collections import defaultdict",
-    ])
+    source = "\n".join(
+        [
+            "from .database import get_db",
+            "from ..shared.utils import helper",
+            "from ...config import settings",
+            "from . import models",
+            "from .. import api",
+            "import os",
+            "import pathlib",
+            "from collections import defaultdict",
+        ]
+    )
     python_imports = extract_python_imports(source)
     assert ".database" in python_imports
     assert "..shared.utils" in python_imports
@@ -136,15 +140,13 @@ def test_extract_python_imports_preserves_relative_import_levels():
     assert "pathlib" in python_imports
     assert "collections" in python_imports
 
-    js_imports = extract_js_imports(
-        """
+    js_imports = extract_js_imports("""
         import type { User } from './types'
         export { Button } from './Button'
         import './polyfill'
         const mod = require('../lib/mod')
         const lazy = import('./lazy')
-        """
-    )
+        """)
     assert js_imports == ["./types", "./Button", "./polyfill", "../lib/mod", "./lazy"]
 
     files = [
@@ -211,7 +213,7 @@ def test_blame_authors_handles_timeout(monkeypatch, tmp_path):
 
     def mock_run(*args, **kwargs):
         raise subprocess.TimeoutExpired(cmd=args[0], timeout=60)
-    
+
     monkeypatch.setattr("backend.features.repo_ingestion.bus_factor.subprocess.run", mock_run)
 
     result = _blame_authors(tmp_path, "some_file.py")
@@ -226,7 +228,9 @@ def test_semantic_drift_uses_fallback_without_graphcodebert(monkeypatch):
     monkeypatch.setattr(semantic_analyzer, "ENABLE_GRAPHCODEBERT", False)
     monkeypatch.setattr(semantic_analyzer, "_load_model", fail_if_model_loads)
 
-    result = semantic_analyzer.compute_semantic_drift("def value():\n    return 1\n", "def value():\n    return 2\n")
+    result = semantic_analyzer.compute_semantic_drift(
+        "def value():\n    return 1\n", "def value():\n    return 2\n"
+    )
 
     assert result["method"] == "fallback_levenshtein"
     assert result["model"] == "difflib.SequenceMatcher"
@@ -289,6 +293,7 @@ def test_compute_full_snapshot_aggregates_metric_and_semantic_inputs():
     }
     assert json.loads(snapshot["persistent_hotspots_json"]) == persistent_hotspots
 
+
 @pytest.mark.anyio
 async def test_clone_repo_rejects_when_storage_quota_exceeded(monkeypatch, tmp_path):
     """Ingestion must be rejected when REPO_STORAGE_PATH usage exceeds MAX_REPO_STORAGE_MB."""
@@ -318,7 +323,9 @@ async def test_clone_repo_allows_when_under_quota(monkeypatch, tmp_path):
 
     # Storage is empty, so quota check should pass; it will fail at git clone instead
     with pytest.raises(RuntimeError):
-        await clone_repo("https://github.com/test/nonexistent-repo-12345", repo_id=999, max_commits=10)
+        await clone_repo(
+            "https://github.com/test/nonexistent-repo-12345", repo_id=999, max_commits=10
+        )
 
 
 def test_calculate_average_metrics_zero_code_files():
@@ -359,6 +366,7 @@ def test_compute_full_snapshot_with_zero_code_files():
     assert snapshot["churn_rate"] == 0.0
     assert json.loads(snapshot["risk_reasons_json"]) == []
 
+
 def test_sanitize_commit_message():
     from backend.features.repo_ingestion.commit_walker import sanitize_commit_message
 
@@ -384,4 +392,3 @@ def test_is_code_file_excludes_documentation_files():
     assert not is_code_file("LICENSE")
     assert not is_code_file("README.md")
     assert not is_code_file("CHANGELOG.md")
-

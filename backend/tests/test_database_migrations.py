@@ -70,6 +70,7 @@ def test_apply_sql_migrations_records_and_skips_applied_files(tmp_path: Path):
         """,
         encoding="utf-8",
     )
+
     async def run_assertions():
         conn = FakeAsyncConnection()
 
@@ -92,6 +93,7 @@ def test_apply_sql_migrations_keeps_sqlite_add_column_idempotent(tmp_path: Path)
         "ALTER TABLE repos ADD COLUMN status TEXT DEFAULT 'pending';",
         encoding="utf-8",
     )
+
     async def run_assertions():
         conn = FakeAsyncConnection()
         await conn.execute("CREATE TABLE repos (id INTEGER PRIMARY KEY)")

@@ -15,7 +15,7 @@ function renderLandingPage() {
   return render(
     <MemoryRouter>
       <LandingPage />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 
@@ -31,15 +31,9 @@ describe('LandingPage', () => {
     const repoInput = screen.getByPlaceholderText(/search or enter/i)
     await user.type(repoInput, 'not-a-repo')
 
-    expect(
-      screen.getByText(
-        'Please enter a valid owner/repository format.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Please enter a valid owner/repository format.')).toBeInTheDocument()
 
-    expect(
-      screen.getByRole('button', { name: 'Analyze' }),
-    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled()
 
     expect(ingestRepoMock).not.toHaveBeenCalled()
   })
@@ -57,25 +51,20 @@ describe('LandingPage', () => {
 
     renderLandingPage()
 
-    await user.type(
-      screen.getByPlaceholderText(/search or enter/i),
-      'example/project',
-    )
+    await user.type(screen.getByPlaceholderText(/search or enter/i), 'example/project')
 
     const limitInput = screen.getByPlaceholderText('500')
 
     await user.clear(limitInput)
     await user.type(limitInput, '25')
 
-    await user.click(
-      screen.getByRole('button', { name: 'Analyze' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
       expect(ingestRepoMock).toHaveBeenCalledWith(
         'https://github.com/example/project',
         25,
-        undefined,
+        undefined
       )
     })
   })
@@ -95,19 +84,13 @@ describe('LandingPage', () => {
 
     await user.type(
       screen.getByPlaceholderText(/search or enter/i),
-      'http://github.com/owner/repo.git/',
+      'http://github.com/owner/repo.git/'
     )
 
-    await user.click(
-      screen.getByRole('button', { name: 'Analyze' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
-      expect(ingestRepoMock).toHaveBeenCalledWith(
-        'https://github.com/owner/repo',
-        500,
-        undefined,
-      )
+      expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/owner/repo', 500, undefined)
     })
   })
 
@@ -124,30 +107,20 @@ describe('LandingPage', () => {
 
     renderLandingPage()
 
-    await user.type(
-      screen.getByPlaceholderText(/search or enter/i),
-      'example/project',
-    )
+    await user.type(screen.getByPlaceholderText(/search or enter/i), 'example/project')
 
     const limitInput = screen.getByPlaceholderText('500')
     await user.clear(limitInput)
     await user.type(limitInput, '25')
 
-    const branchInput =
-      screen.getByPlaceholderText(/branch/i)
+    const branchInput = screen.getByPlaceholderText(/branch/i)
 
     await user.type(branchInput, 'main')
 
-    await user.click(
-      screen.getByRole('button', { name: 'Analyze' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Analyze' }))
 
     await waitFor(() => {
-      expect(ingestRepoMock).toHaveBeenCalledWith(
-        'https://github.com/example/project',
-        25,
-        'main',
-      )
+      expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/example/project', 25, 'main')
     })
   })
 })

@@ -30,9 +30,7 @@ const mockHotspots = [
   { file: 'src/utils.ts', complexity: 6.0, churn_count: 15, risk_score: 90.0, loc: 120 },
 ]
 
-function mockSWRReturnValue(
-  overrides: Partial<SWRMockReturn>,
-): SWRMockReturn {
+function mockSWRReturnValue(overrides: Partial<SWRMockReturn>): SWRMockReturn {
   return {
     data: undefined,
     error: undefined,
@@ -53,7 +51,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
+      })
     )
 
     render(<HotspotMap repoId={1} />)
@@ -74,7 +72,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
+      })
     )
 
     const { container } = render(<HotspotMap repoId={1} />)
@@ -92,7 +90,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
+      })
     )
 
     const { container } = render(<HotspotMap repoId={1} />)
@@ -115,7 +113,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
+      })
     )
 
     const { container } = render(<HotspotMap repoId={1} />)
@@ -139,7 +137,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
+      })
     )
 
     const { container } = render(<HotspotMap repoId={1} />)
@@ -160,7 +158,7 @@ describe('HotspotMap', () => {
     mockUseSWR.mockReturnValue(
       mockSWRReturnValue({
         data: { repo_id: 1, commit_sha: 'abc', hotspots: [] },
-      }),
+      })
     )
 
     render(<HotspotMap repoId={1} />)
@@ -172,7 +170,7 @@ describe('HotspotMap', () => {
       mockSWRReturnValue({
         data: undefined,
         isLoading: true,
-      }),
+      })
     )
 
     render(<HotspotMap repoId={1} />)

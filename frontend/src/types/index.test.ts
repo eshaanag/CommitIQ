@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  formatDelta,
-  formatSha,
-  getHealthColor,
-  getHealthLabel,
-  getHealthStatus,
-} from './index'
+import { formatDelta, formatSha, getHealthColor, getHealthLabel, getHealthStatus } from './index'
 
 describe('health formatting helpers', () => {
   it('maps health scores to stable user-facing severity labels', () => {

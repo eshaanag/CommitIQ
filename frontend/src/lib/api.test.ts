@@ -22,12 +22,14 @@ describe('streamNarrative', () => {
 
   it('parses server-sent narrative chunks split across network reads', async () => {
     const chunks: NarrativeStreamChunk[] = []
-    const fetchMock = vi.fn(async () => streamResponse([
-      'data: {"token":"The ","done":false}\n\n',
-      'data: {"token":"risk","done":false}\n',
-      '\n',
-      'data: {"done":true,"explanation":"The risk","tokens_total":4,"cost_usd":0.001,"cached":false,"model":"demo"}\n\n',
-    ]))
+    const fetchMock = vi.fn(async () =>
+      streamResponse([
+        'data: {"token":"The ","done":false}\n\n',
+        'data: {"token":"risk","done":false}\n',
+        '\n',
+        'data: {"done":true,"explanation":"The risk","tokens_total":4,"cost_usd":0.001,"cached":false,"model":"demo"}\n\n',
+      ])
+    )
     vi.stubGlobal('fetch', fetchMock)
 
     await streamNarrative(7, 'abcdef123456', (chunk) => chunks.push(chunk))
@@ -50,7 +52,9 @@ describe('streamNarrative', () => {
   it('surfaces API error details for failed streams', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ detail: 'LLM budget exceeded' }), { status: 429 })),
+      vi.fn(
+        async () => new Response(JSON.stringify({ detail: 'LLM budget exceeded' }), { status: 429 })
+      )
     )
 
     await expect(streamNarrative(7, 'abcdef123456', vi.fn())).rejects.toThrow('LLM budget exceeded')

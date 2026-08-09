@@ -3,13 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { SWRConfig } from 'swr'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  getBusFactor,
-  getGraph,
-  getHealthTimeline,
-  getLLMUsage,
-  getRepoBySlug,
-} from '../lib/api'
+import { getBusFactor, getGraph, getHealthTimeline, getLLMUsage, getRepoBySlug } from '../lib/api'
 import type { HealthSnapshot, Repo } from '../types'
 import DashboardPage from './DashboardPage'
 
@@ -69,13 +63,17 @@ vi.mock('../components/HealthTimeline', () => ({
 
 vi.mock('../components/HotspotMap', () => ({
   HotspotMap: ({ repoId, sha }: { repoId: number; sha: string | null }) => (
-    <div data-testid="hotspots">hotspots {repoId}:{sha ?? 'none'}</div>
+    <div data-testid="hotspots">
+      hotspots {repoId}:{sha ?? 'none'}
+    </div>
   ),
 }))
 
 vi.mock('../components/NarrativeCard', () => ({
   NarrativeCard: ({ repoId, commitSha }: { repoId: number; commitSha: string }) => (
-    <div data-testid="narrative-card">narrative {repoId}:{commitSha}</div>
+    <div data-testid="narrative-card">
+      narrative {repoId}:{commitSha}
+    </div>
   ),
 }))
 
@@ -147,7 +145,7 @@ function renderDashboard(path = '/dashboard/example-project') {
           <Route path="/" element={<div>Landing</div>} />
         </Routes>
       </MemoryRouter>
-    </SWRConfig>,
+    </SWRConfig>
   )
 }
 
@@ -161,7 +159,12 @@ describe('DashboardPage', () => {
 
     getRepoBySlugMock.mockResolvedValue(makeRepo())
     getHealthTimelineMock.mockResolvedValue([
-      makeSnapshot({ sha: 'abc123', full_sha: 'abc123', message: 'Initial import', health_score: 76 }),
+      makeSnapshot({
+        sha: 'abc123',
+        full_sha: 'abc123',
+        message: 'Initial import',
+        health_score: 76,
+      }),
       makeSnapshot({
         sha: 'def456',
         full_sha: 'def456',
