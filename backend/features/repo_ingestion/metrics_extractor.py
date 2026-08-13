@@ -7,6 +7,7 @@ from radon.complexity import cc_visit
 from radon.raw import analyze as radon_raw_analyze
 
 from backend.config import ENABLE_SEMANTIC_ANALYSIS
+from backend.features.repo_ingestion.complexity import compute_python_complexity
 from backend.features.repo_ingestion.semantic_analyzer import (
     compute_repo_semantic_health,
     compute_semantic_drift,
@@ -33,16 +34,17 @@ def extract_file_metrics_from_path(file_path: str) -> dict:
     try:
         if path.suffix.lower() == ".py":
             source = path.read_text(encoding="utf-8", errors="ignore")
-            blocks = cc_visit(source)
-            raw = radon_raw_analyze(source)
-            complexities = [block.complexity for block in blocks]
-            if complexities:
-                return {
-                    "avg_complexity": round(sum(complexities) / len(complexities), 2),
-                    "max_complexity": round(max(complexities), 2),
-                    "loc": int(raw.loc),
-                }
-            return {"avg_complexity": 0.0, "max_complexity": 0.0, "loc": int(raw.loc)}
+            avg_cc, max_cc = compute_python_complexity(source)
+            try:
+                raw = radon_raw_analyze(source)
+                loc = int(raw.loc)
+            except Exception:
+                loc = len([line for line in source.splitlines() if line.strip()])
+            return {
+                "avg_complexity": avg_cc,
+                "max_complexity": max_cc,
+                "loc": loc,
+            }
 
         result = lizard.analyze_file(str(path))
         if not result.function_list:

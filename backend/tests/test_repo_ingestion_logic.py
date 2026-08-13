@@ -385,3 +385,47 @@ def test_is_code_file_excludes_documentation_files():
     assert not is_code_file("README.md")
     assert not is_code_file("CHANGELOG.md")
 
+
+def test_compute_python_complexity_valid_code():
+    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
+
+    valid_code = """
+def sample_func(x):
+    if x > 10:
+        return x * 2
+    elif x > 5:
+        return x + 5
+    return x
+"""
+    avg_cc, max_cc = compute_python_complexity(valid_code)
+    assert avg_cc >= 3.0
+    assert max_cc >= 3.0
+    assert calculate_complexity(valid_code) >= 3.0
+
+
+def test_compute_python_complexity_syntax_error_fallback():
+    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
+
+    invalid_syntax_code = """
+def broken_syntax(x
+    if x > 10
+        return
+"""
+    avg_cc, max_cc = compute_python_complexity(invalid_syntax_code)
+    assert avg_cc == 1.0
+    assert max_cc == 1.0
+    assert calculate_complexity(invalid_syntax_code) == 1.0
+
+
+def test_extract_file_metrics_from_path_syntax_error(tmp_path):
+    from backend.features.repo_ingestion.metrics_extractor import extract_file_metrics_from_path
+
+    test_file = tmp_path / "syntax_error.py"
+    test_file.write_text("def invalid_func(: return 42\n", encoding="utf-8")
+
+    metrics = extract_file_metrics_from_path(str(test_file))
+    assert metrics["avg_complexity"] == 1.0
+    assert metrics["max_complexity"] == 1.0
+    assert metrics["loc"] == 1
+
+
