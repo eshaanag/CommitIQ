@@ -321,6 +321,46 @@ async def test_clone_repo_allows_when_under_quota(monkeypatch, tmp_path):
         await clone_repo("https://github.com/test/nonexistent-repo-12345", repo_id=999, max_commits=10)
 
 
+@pytest.mark.anyio
+async def test_clone_repo_enforces_timeout_and_cleans_up(monkeypatch, tmp_path):
+    import asyncio
+    from unittest.mock import AsyncMock, MagicMock
+    from backend.features.repo_ingestion.clone_service import clone_repo, GIT_CLONE_TIMEOUT_SECONDS
+
+    assert GIT_CLONE_TIMEOUT_SECONDS == 180
+
+    monkeypatch.setattr("backend.features.repo_ingestion.clone_service.REPO_STORAGE_PATH", tmp_path)
+    monkeypatch.setattr("backend.config.MAX_REPO_STORAGE_MB", 5000)
+
+    mock_process = MagicMock()
+    mock_process.communicate = AsyncMock(side_effect=asyncio.TimeoutError)
+    mock_process.kill = MagicMock()
+
+    async def mock_subprocess_exec(*args, **kwargs):
+        return mock_process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", mock_subprocess_exec)
+
+    with pytest.raises(RuntimeError, match="git clone timed out"):
+        await clone_repo("https://github.com/test/hanging-repo", repo_id=777, max_commits=10)
+
+    mock_process.kill.assert_called_once()
+
+
+def test_blame_authors_timeout_handling(monkeypatch, tmp_path):
+    import subprocess
+    from backend.features.repo_ingestion.bus_factor import _blame_authors
+
+    def mock_subprocess_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="git blame", timeout=60)
+
+    monkeypatch.setattr(subprocess, "run", mock_subprocess_run)
+
+    result = _blame_authors(tmp_path, "src/main.py")
+    assert result == {}
+
+
+
 def test_calculate_average_metrics_zero_code_files():
     from backend.features.repo_ingestion.health_scorer import calculate_average_metrics
 

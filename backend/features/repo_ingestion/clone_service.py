@@ -9,6 +9,9 @@ import re
 logger = logging.getLogger(__name__)
 
 
+GIT_CLONE_TIMEOUT_SECONDS = 180
+
+
 def _redact_secret(value: str) -> str:
     if GITHUB_TOKEN:
         value = value.replace(GITHUB_TOKEN, "[REDACTED_GITHUB_TOKEN]")
@@ -140,12 +143,12 @@ async def clone_repo(
     try:
         stdout, stderr = await asyncio.wait_for(
             process.communicate(),
-            timeout=300,
+            timeout=GIT_CLONE_TIMEOUT_SECONDS,
         )
     except asyncio.TimeoutError:
         process.kill()
         cleanup_repo(repo_id)
-        raise RuntimeError(f"git clone timed out for repo_id={repo_id}")
+        raise RuntimeError(f"git clone timed out after {GIT_CLONE_TIMEOUT_SECONDS}s for repo_id={repo_id}")
 
     if process.returncode != 0:
         cleanup_repo(repo_id)

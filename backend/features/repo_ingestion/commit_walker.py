@@ -151,7 +151,7 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
             deletions = 0
             try:
                 cmd = ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit.hexsha]
-                res = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, errors="replace")
+                res = subprocess.run(cmd, cwd=repo_path, capture_output=True, text=True, errors="replace", timeout=30)
                 if res.returncode == 0:
                     files_changed = [line.strip() for line in res.stdout.splitlines() if line.strip()]
                 # Set dummy insertions/deletions as proxy to avoid zero metrics division issues
