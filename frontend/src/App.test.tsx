@@ -12,6 +12,7 @@ import {
   getRepo,
   getRepoBySlug,
   ingestRepo,
+  listRepos,
 } from './lib/api'
 import type { HealthSnapshot, Repo } from './types'
 
@@ -25,6 +26,7 @@ vi.mock('./lib/api', () => ({
   getRepo: vi.fn(),
   getRepoBySlug: vi.fn(),
   ingestRepo: vi.fn(),
+  listRepos: vi.fn(),
 }))
 
 vi.mock('./components/BusFactorTable', () => ({
@@ -77,6 +79,7 @@ const getHealthTimelineMock = vi.mocked(getHealthTimeline)
 const getBusFactorMock = vi.mocked(getBusFactor)
 const getGraphMock = vi.mocked(getGraph)
 const getLLMUsageMock = vi.mocked(getLLMUsage)
+const listReposMock = vi.mocked(listRepos)
 
 class MockEventSource {
   onmessage: ((event: MessageEvent<string>) => void) | null = null
@@ -156,6 +159,9 @@ describe('App route flow', () => {
     getBusFactorMock.mockReset()
     getGraphMock.mockReset()
     getLLMUsageMock.mockReset()
+    listReposMock.mockReset()
+
+    listReposMock.mockResolvedValue([])
 
     ingestRepoMock.mockResolvedValue({
       repo_id: 17,

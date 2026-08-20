@@ -312,10 +312,18 @@ export interface NarrativeCardProps {
   commitSha: string | null
 }
 
+export interface HealthFactor {
+  name: string
+  weight: number | string
+  score?: number
+}
+
 export interface HealthBadgeProps {
   score: number
   delta?: number | null
   size?: 'sm' | 'md' | 'lg'
+  factors?: HealthFactor[]
+  showTooltip?: boolean
 }
 
 export interface CostMeterProps {

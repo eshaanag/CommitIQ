@@ -2,14 +2,16 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ingestRepo } from '../lib/api'
+import { ingestRepo, listRepos } from '../lib/api'
 import LandingPage from './LandingPage'
 
 vi.mock('../lib/api', () => ({
   ingestRepo: vi.fn(),
+  listRepos: vi.fn(),
 }))
 
 const ingestRepoMock = vi.mocked(ingestRepo)
+const listReposMock = vi.mocked(listRepos)
 
 function renderLandingPage() {
   return render(
@@ -22,6 +24,8 @@ function renderLandingPage() {
 describe('LandingPage', () => {
   beforeEach(() => {
     ingestRepoMock.mockReset()
+    listReposMock.mockReset()
+    listReposMock.mockResolvedValue([])
   })
 
   it('rejects invalid repository input before submission', async () => {
