@@ -901,6 +901,12 @@ async def run_rescan(repo_id: int, job_id: int, max_commits: int) -> None:
         cleanup_repo(repo_id)
 
 
+async def _find_repo_by_slug(db: AsyncSession, slug: str) -> Repo | None:
+    normalized = slug.strip().lower()
+    result = await db.execute(select(Repo).where(func.lower(Repo.repo_slug) == normalized))
+    return result.scalar_one_or_none()
+
+
 @router.post("/ingest", response_model=IngestResponse, status_code=202)
 async def ingest_repo(
     request: IngestRequest,
@@ -922,8 +928,7 @@ async def ingest_repo(
     repo_slug = make_repo_slug(owner, repo_name)
     max_c = request.max_commits or MAX_COMMITS
 
-    existing_result = await db.execute(select(Repo).where(Repo.repo_slug == repo_slug))
-    repo = existing_result.scalar_one_or_none()
+    repo = await _find_repo_by_slug(db, repo_slug)
 
     if repo:
         active_job = await _latest_active_job(db, repo.id)
@@ -952,8 +957,9 @@ async def ingest_repo(
             await db.flush()
         except IntegrityError:
             await db.rollback()
-            existing = await db.execute(select(Repo).where(Repo.repo_slug == repo_slug))
-            repo = existing.scalar_one()
+            repo = await _find_repo_by_slug(db, repo_slug)
+            if not repo:
+                raise
     else:
         repo.url = url
         repo.name = f"{owner}/{repo_name}"
@@ -1146,7 +1152,7 @@ async def list_repos(
         limit = 100
     query = select(Repo)
     if slug:
-        query = query.where(Repo.repo_slug == slug)
+        query = query.where(func.lower(Repo.repo_slug) == slug.strip().lower())
     query = query.order_by(desc(Repo.ingested_at)).limit(limit).offset(offset)
     result = await db.execute(query)
     repos = result.scalars().all()
@@ -1157,8 +1163,7 @@ async def list_repos(
 
 @router.get("/by-slug/{slug}", response_model=RepoOut)
 async def get_repo_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Repo).where(Repo.repo_slug == slug))
-    repo = result.scalar_one_or_none()
+    repo = await _find_repo_by_slug(db, slug)
     if not repo:
         raise _http_error(404, "Repository not found.", "repo_not_found")
     count = await _count_active_contributors(db, repo.id)
