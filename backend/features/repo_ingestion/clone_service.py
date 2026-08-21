@@ -258,7 +258,109 @@ async def fetch_github_metadata(owner: str, repo: str) -> dict:
     return {"github_stars": None, "github_language": None, "github_description": None}
 
 
-async def fetch_github_pull_requests(owner: str, repo: str, limit: int = 500) -> list[dict]:
+GITHUB_GRAPHQL_URL = "https://api.github.com/graphql"
+GRAPHQL_PR_QUERY = """
+query GetPullRequests($owner: String!, $repo: String!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequests(first: 100, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        number
+        title
+        state
+        createdAt
+        mergedAt
+        closedAt
+        author {
+          login
+        }
+      }
+    }
+  }
+}
+"""
+
+
+async def fetch_github_pull_requests_graphql(owner: str, repo: str, limit: int = 500) -> list[dict] | None:
+    """Fetch pull requests via GitHub GraphQL API to reduce rate limit consumption."""
+    try:
+        from dateutil.parser import parse as parse_date
+    except ImportError:
+        def parse_date(s: str):
+            return datetime.fromisoformat(s.replace("Z", "+00:00"))
+
+    headers = {"Accept": "application/json"}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"bearer {GITHUB_TOKEN}"
+    else:
+        # GraphQL queries require authentication on GitHub API; return None to fall back to REST
+        return None
+
+    prs = []
+    cursor = None
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            while True:
+                variables = {"owner": owner, "repo": repo, "cursor": cursor}
+                response = await client.post(
+                    GITHUB_GRAPHQL_URL,
+                    json={"query": GRAPHQL_PR_QUERY, "variables": variables},
+                    headers=headers,
+                )
+                if response.status_code != 200:
+                    logger.warning(f"GraphQL PR query returned status {response.status_code} for {owner}/{repo}")
+                    return None
+
+                data = response.json()
+                if "errors" in data or "data" not in data or not data["data"].get("repository"):
+                    logger.warning(f"GraphQL PR query errors or empty repository for {owner}/{repo}")
+                    return None
+
+                pr_data = data["data"]["repository"]["pullRequests"]
+                nodes = pr_data.get("nodes") or []
+                page_info = pr_data.get("pageInfo") or {}
+
+                for item in nodes:
+                    created_at = item.get("createdAt")
+                    merged_at = item.get("mergedAt")
+                    closed_at = item.get("closedAt")
+                    author_obj = item.get("author") or {}
+                    author_login = author_obj.get("login", "unknown") if isinstance(author_obj, dict) else "unknown"
+
+                    state_raw = (item.get("state") or "unknown").lower()
+
+                    prs.append(
+                        {
+                            "pr_number": item.get("number"),
+                            "title": item.get("title", "")[:255],
+                            "state": state_raw,
+                            "author": author_login,
+                            "created_at": parse_date(created_at) if created_at else None,
+                            "merged_at": parse_date(merged_at) if merged_at else None,
+                            "closed_at": parse_date(closed_at) if closed_at else None,
+                        }
+                    )
+
+                if len(prs) >= limit:
+                    prs = prs[:limit]
+                    break
+
+                if not page_info.get("hasNextPage") or not page_info.get("endCursor"):
+                    break
+
+                cursor = page_info.get("endCursor")
+        return prs
+    except Exception as e:
+        logger.warning(f"Error fetching PRs via GraphQL for {owner}/{repo}: {e}")
+        return None
+
+
+async def fetch_github_pull_requests_rest(owner: str, repo: str, limit: int = 500) -> list[dict]:
+    """Fallback fetch for pull requests using REST API."""
     try:
         from dateutil.parser import parse as parse_date
     except ImportError:
@@ -309,5 +411,16 @@ async def fetch_github_pull_requests(owner: str, repo: str, limit: int = 500) ->
                     break
                 page += 1
     except Exception as e:
-        logger.warning(f"Error fetching PRs for {owner}/{repo}: {e}")
+        logger.warning(f"Error fetching PRs via REST for {owner}/{repo}: {e}")
     return prs
+
+
+async def fetch_github_pull_requests(owner: str, repo: str, limit: int = 500) -> list[dict]:
+    """Fetch pull requests using GraphQL API with automatic fallback to REST API."""
+    if GITHUB_TOKEN:
+        graphql_prs = await fetch_github_pull_requests_graphql(owner, repo, limit)
+        if graphql_prs is not None:
+            return graphql_prs
+
+    return await fetch_github_pull_requests_rest(owner, repo, limit)
+

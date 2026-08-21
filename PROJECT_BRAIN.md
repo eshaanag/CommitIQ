@@ -87,7 +87,7 @@ Incomplete or fragile:
 
 Exists:
 
-- GitHub URL ingestion, shallow clone, commit walk, metric extraction, health scoring, dependency/co-change graph storage, bus-factor table, hot spot map, timeline, graph explorer, commit detail, LLM narratives, cost meter, dark/light theme toggle, floating 'Back to Top' scroll button, and a Chromium landing-to-dashboard e2e.
+- GitHub URL ingestion, shallow clone, commit walk, metric extraction, health scoring, dependency/co-change graph storage, bus-factor table, hot spot map, timeline, graph explorer, commit detail, LLM narratives, cost meter, dark/light theme toggle, floating 'Back to Top' scroll button, GitHub PR ingestion via GraphQL with REST fallback to reduce rate limit consumption (#385), and a Chromium landing-to-dashboard e2e.
 
 Half-done:
 
