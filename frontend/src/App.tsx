@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import AmbientBackground from './components/AmbientBackground'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
+        <Analytics />
       </div>
     </BrowserRouter>
   )
