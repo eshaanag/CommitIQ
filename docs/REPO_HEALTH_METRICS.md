@@ -17,15 +17,18 @@ CommitIQ already measures complexity, churn, dependency and co-change graph stru
 Measures how quickly health risk is changing over recent commits.
 
 Inputs:
+
 - Health score delta
 - Complexity delta
 - Churn trend
 - Hotspot count trend
 
 Why it matters:
+
 - A repo with a moderate score but rapidly worsening trend needs attention before the absolute score looks bad.
 
 Suggested output:
+
 - `risk_velocity_score`
 - `risk_velocity_direction`: improving, stable, worsening
 - `risk_velocity_confidence`
@@ -35,15 +38,18 @@ Suggested output:
 Tracks files that stay risky across multiple commits, not just one snapshot.
 
 Inputs:
+
 - Repeated high complexity
 - Repeated churn
 - Repeated semantic drift
 - Repeated graph centrality
 
 Why it matters:
+
 - Persistent hotspots are more important than one-off risky changes.
 
 Suggested output:
+
 - `persistent_hotspots`
 - `hotspot_age_commits`
 - `hotspot_pressure_score`
@@ -53,14 +59,17 @@ Suggested output:
 Measures whether ownership is healthy or concentrated.
 
 Inputs:
+
 - Contributors per file/module
 - Share of commits by top contributor
 - Recency of contributor activity
 
 Why it matters:
+
 - Bus factor catches critical single-owner modules, but entropy gives a smoother risk signal.
 
 Suggested output:
+
 - `ownership_entropy`
 - `ownership_concentration_score`
 - `inactive_owner_risk`
@@ -70,14 +79,17 @@ Suggested output:
 Measures hidden coupling by comparing co-change frequency against normal file activity.
 
 Inputs:
+
 - Co-change edge count
 - Individual file change frequencies
 - Expected co-change baseline
 
 Why it matters:
+
 - Two files that change together more often than expected may share an undocumented dependency.
 
 Suggested output:
+
 - `coupling_surprise_score`
 - `surprising_cochange_edges`
 - `hidden_coupling_modules`
@@ -87,15 +99,18 @@ Suggested output:
 Estimates how many files or modules are likely affected by changes to a file.
 
 Inputs:
+
 - Import graph centrality
 - Co-change graph centrality
 - Entry-point flags
 - Recent churn
 
 Why it matters:
+
 - A low-complexity file can still be risky if it sits at the center of the dependency graph.
 
 Suggested output:
+
 - `blast_radius_score`
 - `high_blast_radius_files`
 - `centrality_rank`
@@ -105,15 +120,18 @@ Suggested output:
 Moves beyond yes/no cycle detection.
 
 Inputs:
+
 - Cycle count
 - Cycle size
 - Files/modules involved
 - Whether cycles touch entry points or hotspots
 
 Why it matters:
+
 - Small isolated cycles and large core cycles should not be treated the same.
 
 Suggested output:
+
 - `cycle_severity_score`
 - `largest_cycle_size`
 - `critical_cycles`
@@ -123,6 +141,7 @@ Suggested output:
 Classifies commits by risk type.
 
 Inputs:
+
 - Files changed
 - Churn
 - Complexity delta
@@ -131,9 +150,11 @@ Inputs:
 - Blast radius
 
 Why it matters:
+
 - Users need labels like "high-churn refactor" or "central module change", not only raw scores.
 
 Suggested output:
+
 - `change_risk_type`
 - `change_risk_score`
 - `risk_reasons`
@@ -143,6 +164,7 @@ Suggested output:
 Detects whether recent work is reducing accumulated risk.
 
 Inputs:
+
 - Complexity decrease
 - Hotspot count decrease
 - Cycle reduction
@@ -150,9 +172,11 @@ Inputs:
 - Lower churn after high-risk commits
 
 Why it matters:
+
 - A good health system should recognize cleanup and stabilization, not only punish churn.
 
 Suggested output:
+
 - `stabilization_score`
 - `risk_reduction_events`
 - `cleanup_momentum`

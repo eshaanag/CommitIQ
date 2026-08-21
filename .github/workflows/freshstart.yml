@@ -1,0 +1,25 @@
+name: FreshstartCI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-freshstart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run FreshstartCI
+        uses: eshaanag/freshstartci@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          post-comment: true
+          fail-below: 50

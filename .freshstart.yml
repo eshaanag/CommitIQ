@@ -1,0 +1,17 @@
+checks:
+  dependencies: true
+  env: true
+  build: false
+  test: false
+  server: false
+  readme: true
+
+scoring:
+  weights:
+    dependencies: 40
+    env: 40
+    readme: 20
+
+fail-below: 50
+ignore: []
+package-manager: npm

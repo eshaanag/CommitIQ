@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_TmIPgTNYnrXCkmM8cyONGkqiSoQg",
+  "orgId": "team_FMU2aBuBkiqil2na9qHzJiVp",
+  "projectName": "commitiq-os",
+  "settings": {
+    "createdAt": 1785987326409,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": "frontend",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

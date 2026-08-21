@@ -1,0 +1,17 @@
+{
+  "name": "commitiq",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Repository health intelligence for professional engineering teams.",
+  "scripts": {
+    "postinstall": "npm --prefix frontend install",
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend run test"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.0",
+    "react": "^18.3.1",
+    "vite": "^5.0.0"
+  }
+}

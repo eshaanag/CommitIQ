@@ -20,26 +20,33 @@ export function HealthBadge({ score, delta, size = 'md' }: HealthBadgeProps) {
   }
 
   return (
-    <span 
+    <span
       className={cn(
-        'inline-flex items-center font-mono bg-white/5 border border-white/10 shadow-lg select-none', 
+        'inline-flex items-center font-mono bg-white/5 border border-white/10 shadow-lg select-none',
         sizes[size]
       )}
     >
-      <span 
+      <span
         className={cn(
-          'rounded-full flex-shrink-0', 
-          dotAnims[status], 
+          'rounded-full flex-shrink-0',
+          dotAnims[status],
           size === 'sm' ? 'w-1.5 h-1.5' : size === 'md' ? 'w-2 h-2' : 'w-2.5 h-2.5'
-        )} 
-        style={{ 
+        )}
+        style={{
           backgroundColor: color,
-          boxShadow: `0 0 8px ${color}`
-        }} 
+          boxShadow: `0 0 8px ${color}`,
+        }}
       />
-      <span style={{ color }} className="font-extrabold">{score.toFixed(0)}</span>
+      <span style={{ color }} className="font-extrabold">
+        {score.toFixed(0)}
+      </span>
       {delta !== undefined && delta !== null && (
-        <span className={cn('text-[9px] font-bold ml-1', delta >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+        <span
+          className={cn(
+            'text-[9px] font-bold ml-1',
+            delta >= 0 ? 'text-emerald-400' : 'text-rose-400'
+          )}
+        >
           {delta >= 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}
         </span>
       )}

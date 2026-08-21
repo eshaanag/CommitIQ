@@ -11,7 +11,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import type { AreaDotProps, ChartClickState, ChartTooltipProps, HealthTimelineProps } from '../types'
+import type {
+  AreaDotProps,
+  ChartClickState,
+  ChartTooltipProps,
+  HealthTimelineProps,
+} from '../types'
 import { formatSha, getHealthColor } from '../types'
 import { formatDateShort, sanitizeCommitMessage } from '../lib/utils'
 import { GitCommit, TrendingUp, Cpu, Flame } from 'lucide-react'
@@ -33,7 +38,7 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
           {formatDateShort(data.committed_at)}
         </span>
       </div>
-      
+
       <div className="text-white text-xs font-medium mb-3 line-clamp-2 max-w-[220px] font-sans">
         {sanitizeCommitMessage(data.message)}
       </div>
@@ -48,7 +53,7 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
             {data.health_score.toFixed(1)}
           </span>
         </div>
-        
+
         <div className="flex items-center justify-between text-xs bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5">
           <span className="text-slate-400 flex items-center gap-1.5">
             <Cpu className="w-3.5 h-3.5 text-rose-400" />
@@ -67,7 +72,7 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
             {(data.churn_rate * 100).toFixed(1)}%
           </span>
         </div>
-        
+
         <div className="flex items-center justify-between text-xs bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/5">
           <span className="text-slate-400 flex items-center gap-1.5">
             <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
@@ -88,7 +93,12 @@ function CommitTooltip({ active, payload }: ChartTooltipProps) {
   )
 }
 
-export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit }: HealthTimelineProps) {
+export function HealthTimeline({
+  commits,
+  repoSlug,
+  selectedSha,
+  onSelectCommit,
+}: HealthTimelineProps) {
   const navigate = useNavigate()
   const [visibleLines, setVisibleLines] = useState({
     complexity_drift: false,
@@ -115,23 +125,29 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
   }
 
   const toggleLine = (key: keyof typeof visibleLines) => {
-    setVisibleLines(prev => ({ ...prev, [key]: !prev[key] }))
+    setVisibleLines((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   return (
-    <div className="glass-panel rounded-[28px] p-6 shadow-2xl relative border border-white/10 overflow-hidden">
-      <div className="absolute -top-12 -left-12 w-48 h-48 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none" />
-      <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+    <div className="glass-panel rounded-[28px] p-6 shadow-2xl relative border border-white/10">
+      <div className="absolute inset-0 overflow-hidden rounded-[28px] pointer-events-none">
+        <div className="absolute -top-12 -left-12 w-48 h-48 bg-purple-500/10 rounded-full blur-[80px]" />
+        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px]" />
+      </div>
 
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-6 relative z-10">
         <div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-purple-400" />
-            <h2 className="font-head text-[18px] font-semibold text-white tracking-tight">Codebase Health Timeline</h2>
+            <h2 className="font-head text-[18px] font-semibold text-white tracking-tight">
+              Codebase Health Timeline
+            </h2>
           </div>
-          <p className="text-slate-400 text-xs mt-1">Interactive timeline tracker highlighting drift over recent commits</p>
+          <p className="text-slate-400 text-xs mt-1">
+            Interactive timeline tracker highlighting drift over recent commits
+          </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
@@ -144,7 +160,8 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
               label: 'Complexity',
               color: 'text-amber-300',
               dotBg: 'bg-amber-400',
-              activeBg: 'bg-amber-500/15 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]',
+              activeBg:
+                'bg-amber-500/15 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]',
             },
             {
               key: 'churn_risk',
@@ -158,14 +175,16 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
               label: 'Bus Factor',
               color: 'text-fuchsia-300',
               dotBg: 'bg-fuchsia-400',
-              activeBg: 'bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_15px_rgba(217,70,239,0.15)]',
+              activeBg:
+                'bg-fuchsia-500/15 border-fuchsia-500/30 shadow-[0_0_15px_rgba(217,70,239,0.15)]',
             },
             {
               key: 'dependency_health',
               label: 'Dependencies',
               color: 'text-emerald-300',
               dotBg: 'bg-emerald-400',
-              activeBg: 'bg-emerald-500/15 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+              activeBg:
+                'bg-emerald-500/15 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]',
             },
             {
               key: 'semantic_drift',
@@ -173,7 +192,7 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
               color: 'text-cyan-300',
               dotBg: 'bg-cyan-400',
               activeBg: 'bg-cyan-500/15 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]',
-            }
+            },
           ].map((item) => {
             const isActive = visibleLines[item.key as keyof typeof visibleLines]
             return (
@@ -181,12 +200,14 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
                 key={item.key}
                 onClick={() => toggleLine(item.key as keyof typeof visibleLines)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 border text-xs font-semibold cursor-pointer ${
-                  isActive 
-                    ? `${item.activeBg} ${item.color}` 
+                  isActive
+                    ? `${item.activeBg} ${item.color}`
                     : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-300'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full ${item.dotBg} ${isActive ? 'animate-pulse' : 'opacity-60'}`} />
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${item.dotBg} ${isActive ? 'animate-pulse' : 'opacity-60'}`}
+                />
                 {item.label}
               </button>
             )
@@ -204,26 +225,27 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" vertical={false} />
-            <XAxis 
-              dataKey="committed_at" 
-              tickFormatter={(value: string) => formatDateShort(value)} 
-              tick={{ fill: 'var(--color-muted)', fontSize: 10, fontFamily: 'var(--font-body)' }} 
-              axisLine={false} 
-              tickLine={false} 
-              minTickGap={40} 
+            <XAxis
+              dataKey="committed_at"
+              tickFormatter={(value: string) => formatDateShort(value)}
+              tick={{ fill: 'var(--color-muted)', fontSize: 10, fontFamily: 'var(--font-body)' }}
+              axisLine={false}
+              tickLine={false}
+              minTickGap={40}
             />
-            <YAxis 
-              domain={[0, 100]} 
-              tick={{ fill: 'var(--color-muted)', fontSize: 10, fontFamily: 'var(--font-mono)' }} 
-              axisLine={false} 
-              tickLine={false} 
-              width={28} 
+            <YAxis
+              domain={[0, 100]}
+              tick={{ fill: 'var(--color-muted)', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+              axisLine={false}
+              tickLine={false}
+              width={28}
             />
-            <Tooltip 
-              content={<CommitTooltip />} 
+            <Tooltip
+              content={<CommitTooltip />}
               cursor={{ stroke: 'var(--glass-border)', strokeWidth: 1.5 }}
               wrapperStyle={{ zIndex: 999999, pointerEvents: 'none' }}
               useTranslate3d={true}
+              allowEscapeViewBox={{ x: true, y: true }}
             />
 
             <Area
@@ -241,90 +263,90 @@ export function HealthTimeline({ commits, repoSlug, selectedSha, onSelectCommit 
                 return (
                   <g key={props.index}>
                     {isSelected && (
-                      <circle 
-                        cx={props.cx || 0} 
-                        cy={props.cy || 0} 
-                        r={12} 
-                        fill={color} 
-                        opacity={0.16} 
+                      <circle
+                        cx={props.cx || 0}
+                        cy={props.cy || 0}
+                        r={12}
+                        fill={color}
+                        opacity={0.16}
                         className="animate-ping"
                       />
                     )}
-                    <circle 
-                      cx={props.cx || 0} 
-                      cy={props.cy || 0} 
-                      r={radius} 
-                      fill={isSelected ? '#ffffff' : 'rgba(10, 11, 16, 0.85)'} 
-                      stroke={color} 
-                      strokeWidth={isSelected ? 4 : 2} 
+                    <circle
+                      cx={props.cx || 0}
+                      cy={props.cy || 0}
+                      r={radius}
+                      fill={isSelected ? '#ffffff' : 'rgba(10, 11, 16, 0.85)'}
+                      stroke={color}
+                      strokeWidth={isSelected ? 4 : 2}
                     />
                   </g>
                 )
               }}
             />
-            
-            <Line 
-              type="monotone" 
-              dataKey="subscores.complexity_drift" 
-              stroke="#fb1" 
-              strokeWidth={1.5} 
-              strokeDasharray="4 3" 
+
+            <Line
+              type="monotone"
+              dataKey="subscores.complexity_drift"
+              stroke="#fb1"
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
               dot={false}
               hide={!visibleLines.complexity_drift}
               name="Complexity Drift"
             />
-            
-            <Line 
-              type="monotone" 
-              dataKey="subscores.churn_risk" 
-              stroke="#ef4444" 
-              strokeWidth={1.5} 
-              strokeDasharray="3 3" 
+
+            <Line
+              type="monotone"
+              dataKey="subscores.churn_risk"
+              stroke="#ef4444"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
               dot={false}
               hide={!visibleLines.churn_risk}
               name="Churn Risk"
             />
 
-            <Line 
-              type="monotone" 
-              dataKey="subscores.bus_factor_risk" 
-              stroke="#d946ef" 
-              strokeWidth={1.5} 
-              strokeDasharray="4 2" 
+            <Line
+              type="monotone"
+              dataKey="subscores.bus_factor_risk"
+              stroke="#d946ef"
+              strokeWidth={1.5}
+              strokeDasharray="4 2"
               dot={false}
               hide={!visibleLines.bus_factor_risk}
               name="Bus Factor"
             />
 
-            <Line 
-              type="monotone" 
-              dataKey="subscores.dependency_health" 
-              stroke="#10b981" 
-              strokeWidth={1.5} 
-              strokeDasharray="5 3" 
+            <Line
+              type="monotone"
+              dataKey="subscores.dependency_health"
+              stroke="#10b981"
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
               dot={false}
               hide={!visibleLines.dependency_health}
               name="Dependency Health"
             />
 
-            <Line 
-              type="monotone" 
-              dataKey="subscores.semantic_drift" 
-              stroke="#06b6d4" 
-              strokeWidth={1.5} 
-              strokeDasharray="3 4" 
+            <Line
+              type="monotone"
+              dataKey="subscores.semantic_drift"
+              stroke="#06b6d4"
+              strokeWidth={1.5}
+              strokeDasharray="3 4"
               dot={false}
               hide={!visibleLines.semantic_drift}
               name="Semantic Drift"
             />
 
-            <Brush 
-              dataKey="committed_at" 
-              tickFormatter={(value: string) => formatDateShort(value)} 
-              height={26} 
-              stroke="var(--glass-border)" 
-              fill="var(--glass-bg)" 
-              travellerWidth={7} 
+            <Brush
+              dataKey="committed_at"
+              tickFormatter={(value: string) => formatDateShort(value)}
+              height={26}
+              stroke="var(--glass-border)"
+              fill="var(--glass-bg)"
+              travellerWidth={7}
             />
           </ComposedChart>
         </ResponsiveContainer>

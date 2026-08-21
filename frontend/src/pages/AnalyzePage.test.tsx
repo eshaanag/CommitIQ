@@ -34,7 +34,7 @@ function renderAnalyzePage(source = new MockEventSource()) {
         <Route path="/" element={<div>Landing</div>} />
         <Route path="/dashboard/:slug" element={<div>Dashboard</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
   return source
 }

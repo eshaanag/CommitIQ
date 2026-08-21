@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: commitiq
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d commitiq"]
+      test: ['CMD-SHELL', 'pg_isready -U user -d commitiq']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
       context: .
       target: backend
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/commitiq
       - ENVIRONMENT=development
@@ -39,7 +39,7 @@ services:
       context: .
       target: frontend-base
     ports:
-      - "5173:5173"
+      - '5173:5173'
     environment:
       - VITE_DEV_API_PROXY_TARGET=http://backend:8000
       - CHOKIDAR_USEPOLLING=true

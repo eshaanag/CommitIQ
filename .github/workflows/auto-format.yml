@@ -2,7 +2,7 @@ name: Auto Format
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: write
@@ -45,4 +45,4 @@ jobs:
         if: github.event.pull_request.head.repo.fork == false
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: auto-format code on PR branch"
+          commit_message: 'chore: auto-format code on PR branch'

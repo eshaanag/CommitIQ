@@ -6,19 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CommitIQ</title>
     <script>
-      (function() {
-        let theme = 'dark';
+      ;(function () {
+        let theme = 'dark'
         try {
-          theme = localStorage.getItem('theme') || 'dark';
+          theme = localStorage.getItem('theme') || 'dark'
         } catch (error) {
-          theme = 'dark';
+          theme = 'dark'
         }
         if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add('dark')
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove('dark')
         }
-      })();
+      })()
     </script>
   </head>
   <body>

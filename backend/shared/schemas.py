@@ -2,12 +2,21 @@ import re
 from datetime import datetime
 from typing import Literal
 
-from backend.config import MAX_COMMITS
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from backend.config import MAX_COMMITS
 
 RepoStatus = Literal["pending", "processing", "ready", "error"]
-JobStatus = Literal["queued", "cloning", "analyzing", "building_graph", "computing_bus_factor", "ready", "error", "cancelled"]
+JobStatus = Literal[
+    "queued",
+    "cloning",
+    "analyzing",
+    "building_graph",
+    "computing_bus_factor",
+    "ready",
+    "error",
+    "cancelled",
+]
 PromptType = Literal["explain_drop", "predict_merge"]
 RiskLevel = Literal["low", "medium", "high", "critical"]
 GraphEdgeType = Literal["import", "co_change"]
@@ -22,6 +31,7 @@ class ApiError(BaseModel):
 
 class IngestRequest(BaseModel):
     repo_url: str = Field(..., min_length=3, max_length=300)
+    branch: str | None = None
     max_commits: int = Field(default=MAX_COMMITS, ge=1, le=MAX_COMMITS)
 
     @field_validator("repo_url")
@@ -67,6 +77,15 @@ class IngestResponse(BaseModel):
     message: str
 
 
+class RescanResponse(BaseModel):
+    repo_id: int
+    repo_slug: str
+    status: str
+    job_id: int
+    message: str
+    new_commits_found: int = 0
+
+
 class RepoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -86,6 +105,7 @@ class RepoOut(BaseModel):
     github_stars: int | None
     github_language: str | None
     github_description: str | None
+    active_contributors_count: int = 0
 
 
 class CommitOut(BaseModel):
@@ -195,6 +215,22 @@ class GraphResponse(BaseModel):
     commit_sha: str
     nodes: list[GraphNodeOut]
     edges: list[GraphEdgeOut]
+
+
+class HotspotItem(BaseModel):
+    file: str
+    complexity: float
+    churn_count: int
+    risk_score: float
+
+
+class HotspotResponse(BaseModel):
+    repo_id: int
+    commit_sha: str
+    hotspots: list[HotspotItem]
+    total: int
+    limit: int
+    offset: int
 
 
 class BusFactorEntryOut(BaseModel):

@@ -9,9 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.database import get_db
 from backend.features.llm_analysis.cache import make_cache_key
-from backend.features.llm_analysis.claude_client import (
-    get_or_create_narrative,
-)
+from backend.features.llm_analysis.claude_client import get_or_create_narrative
 from backend.features.llm_analysis.cost_guard import check_budget, estimate_cost_usd
 from backend.features.llm_analysis.llm_router import (
     LLMProvider,
@@ -31,9 +29,17 @@ def _build_demo_narrative(
     before: dict,
     after: dict,
 ) -> str:
-    health_delta = float(after.get("health_score", 0) or 0) - float(before.get("health_score", 0) or 0)
-    complexity_delta = float(after.get("avg_complexity", 0) or 0) - float(before.get("avg_complexity", 0) or 0)
-    risk_level = "High" if health_delta <= -15 or after.get("bus_factor_min", 1) <= 1 else "Medium" if health_delta < 0 else "Low"
+    health_delta = float(after.get("health_score", 0) or 0) - float(
+        before.get("health_score", 0) or 0
+    )
+    complexity_delta = float(after.get("avg_complexity", 0) or 0) - float(
+        before.get("avg_complexity", 0) or 0
+    )
+    risk_level = (
+        "High"
+        if health_delta <= -15 or after.get("bus_factor_min", 1) <= 1
+        else "Medium" if health_delta < 0 else "Low"
+    )
     top_files = after.get("top_files_json") or "[]"
 
     return (
@@ -94,19 +100,24 @@ async def explain_commit_stream(
     db: AsyncSession = Depends(get_db),
 ):
     commit_result = await db.execute(
-        select(Commit).where(
+        select(Commit)
+        .where(
             Commit.repo_id == request.repo_id,
             (Commit.sha == request.commit_sha[:12]) | (Commit.full_sha == request.commit_sha),
-        ).limit(1)
+        )
+        .limit(1)
     )
     commit = commit_result.scalar_one_or_none()
     if not commit:
         raise HTTPException(status_code=404, detail=f"Commit {request.commit_sha} not found")
 
     cache_key = make_cache_key(request.repo_id, commit.full_sha, request.prompt_type)
-    cached_result = await db.execute(select(LLMNarrative).where(LLMNarrative.cache_key == cache_key))
+    cached_result = await db.execute(
+        select(LLMNarrative).where(LLMNarrative.cache_key == cache_key)
+    )
     cached = cached_result.scalar_one_or_none()
     if cached:
+
         async def replay_cache():
             for word in cached.response_text.split(" "):
                 yield f"data: {json.dumps({'token': word + ' ', 'done': False})}\n\n"
@@ -120,9 +131,13 @@ async def explain_commit_stream(
         )
 
     if not await check_budget(request.repo_id, db):
-        raise HTTPException(status_code=429, detail="LLM budget exceeded for this repo. Cache will be used.")
+        raise HTTPException(
+            status_code=429, detail="LLM budget exceeded for this repo. Cache will be used."
+        )
 
-    snapshot_result = await db.execute(select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id))
+    snapshot_result = await db.execute(
+        select(HealthSnapshot).where(HealthSnapshot.commit_id == commit.id)
+    )
     snapshot = snapshot_result.scalar_one_or_none()
     if not snapshot:
         raise HTTPException(status_code=404, detail="Health snapshot not found")
@@ -162,6 +177,8 @@ async def explain_commit_stream(
     }
     prompt = build_explain_prompt(before, after, commit.message or "")
 
+    from backend.database import AsyncSessionLocal
+
     async def event_generator():
         full_text: list[str] = []
         provider_used = LLMProvider.NONE
@@ -176,43 +193,45 @@ async def explain_commit_stream(
             provider_value = provider_used.value
             cost = estimate_cost_usd(tokens_in, tokens_out, provider_value)
             model_used = model_for_provider(provider_used)
-            narrative = LLMNarrative(
-                repo_id=request.repo_id,
-                commit_id=commit.id,
-                full_sha=commit.full_sha,
-                prompt_type=request.prompt_type,
-                cache_key=cache_key,
-                prompt_input=prompt,
-                response_text=response_text,
-                tokens_input=tokens_in,
-                tokens_output=tokens_out,
-                cost_usd=cost,
-                model_used=model_used,
-            )
-            db.add(narrative)
-            await db.commit()
+            async with AsyncSessionLocal() as local_db:
+                narrative = LLMNarrative(
+                    repo_id=request.repo_id,
+                    commit_id=commit.id,
+                    full_sha=commit.full_sha,
+                    prompt_type=request.prompt_type,
+                    cache_key=cache_key,
+                    prompt_input=prompt,
+                    response_text=response_text,
+                    tokens_input=tokens_in,
+                    tokens_output=tokens_out,
+                    cost_usd=cost,
+                    model_used=model_used,
+                )
+                local_db.add(narrative)
+                await local_db.commit()
             yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': cost, 'cached': False, 'model': model_used, 'provider': provider_value, 'demo_mode': False})}\n\n"
         except Exception as exc:
             logger.warning("Narrative stream provider unavailable, using demo mode: %s", exc)
             response_text = _build_demo_narrative(commit.message or "", before, after)
             tokens_in = int(len((EXPLAIN_DROP_SYSTEM + prompt).split()) * 1.3)
             tokens_out = int(len(response_text.split()) * 1.3)
-            narrative = LLMNarrative(
-                repo_id=request.repo_id,
-                commit_id=commit.id,
-                full_sha=commit.full_sha,
-                prompt_type=request.prompt_type,
-                cache_key=cache_key,
-                prompt_input=prompt,
-                response_text=response_text,
-                tokens_input=tokens_in,
-                tokens_output=tokens_out,
-                cost_usd=0.0,
-                model_used="demo-mode",
-                is_pre_cached=False,
-            )
-            db.add(narrative)
-            await db.commit()
+            async with AsyncSessionLocal() as local_db:
+                narrative = LLMNarrative(
+                    repo_id=request.repo_id,
+                    commit_id=commit.id,
+                    full_sha=commit.full_sha,
+                    prompt_type=request.prompt_type,
+                    cache_key=cache_key,
+                    prompt_input=prompt,
+                    response_text=response_text,
+                    tokens_input=tokens_in,
+                    tokens_output=tokens_out,
+                    cost_usd=0.0,
+                    model_used="demo-mode",
+                    is_pre_cached=False,
+                )
+                local_db.add(narrative)
+                await local_db.commit()
             yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': 0.0, 'cached': False, 'model': 'demo-mode', 'provider': LLMProvider.NONE.value, 'demo_mode': True})}\n\n"
 
     return StreamingResponse(

@@ -1,24 +1,26 @@
 """LLM call wrapper for on-demand CommitIQ narratives."""
+
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.shared.models import LLMNarrative, Commit, HealthSnapshot
+from backend.config import ANTHROPIC_API_KEY
 from backend.features.llm_analysis.cache import make_cache_key
-from backend.features.llm_analysis.cost_guard import check_budget
-from backend.features.llm_analysis.cost_guard import estimate_cost_usd
+from backend.features.llm_analysis.cost_guard import check_budget, estimate_cost_usd
 from backend.features.llm_analysis.llm_router import get_narrative_non_streaming, model_for_provider
 from backend.features.llm_analysis.prompt_builder import (
-    EXPLAIN_DROP_SYSTEM, PREDICT_MERGE_SYSTEM,
-    build_explain_prompt, build_predict_prompt
+    EXPLAIN_DROP_SYSTEM,
+    PREDICT_MERGE_SYSTEM,
+    build_explain_prompt,
+    build_predict_prompt,
 )
-from backend.config import ANTHROPIC_API_KEY, GEMINI_API_KEY
+from backend.shared.models import Commit, HealthSnapshot, LLMNarrative
 
 # Sonnet pricing (as of 2025):
 # Input:  $3.00 per 1M tokens = $0.000003 per token
 # Output: $15.00 per 1M tokens = $0.000015 per token
-INPUT_COST_PER_TOKEN  = 0.000003
+INPUT_COST_PER_TOKEN = 0.000003
 OUTPUT_COST_PER_TOKEN = 0.000015
 CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
 
@@ -26,6 +28,7 @@ CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
 def _get_anthropic():
     try:
         import anthropic
+
         return anthropic
     except ImportError:
         return None
@@ -34,6 +37,7 @@ def _get_anthropic():
 def _get_genai():
     try:
         import google.generativeai as genai
+
         return genai
     except ImportError:
         return None
@@ -67,7 +71,7 @@ async def stream_narrative(prompt: str) -> AsyncGenerator[str, None]:
             "You are a code health analyst. Given metric deltas for a Git commit, "
             "explain in plain English why the health score changed. Be specific about "
             "which files and metrics drove the change. Use bullet points. Max 4 sentences. "
-            "Always end with: \"Estimated impact: [Low/Medium/High] risk to next sprint.\" "
+            'Always end with: "Estimated impact: [Low/Medium/High] risk to next sprint." '
             "Never mention token costs or that you're an AI."
         ),
     ) as stream:
@@ -93,10 +97,12 @@ async def get_or_create_narrative(
     Checks cache → checks budget → fires API → stores result.
     """
     commit_result = await db.execute(
-        select(Commit).where(
+        select(Commit)
+        .where(
             Commit.repo_id == repo_id,
             Commit.sha == commit_sha[:12],
-        ).limit(1)
+        )
+        .limit(1)
     )
     commit = commit_result.scalar_one_or_none()
     if not commit:
@@ -116,11 +122,11 @@ async def get_or_create_narrative(
             "prompt_type": prompt_type,
             "explanation": cached.response_text,
             "tokens_used": cached.tokens_input + cached.tokens_output,
-            "cost_usd":    cached.cost_usd,
-            "cached":      True,
-            "model":       cached.model_used,
-            "provider":    "cache",
-            "demo_mode":   False,
+            "cost_usd": cached.cost_usd,
+            "cached": True,
+            "model": cached.model_used,
+            "provider": "cache",
+            "demo_mode": False,
         }
 
     # 3. Check budget — hard limit
@@ -135,12 +141,12 @@ async def get_or_create_narrative(
         raise ValueError(f"No health snapshot for commit {commit_sha}")
 
     after_dict = {
-        "health_score":      snapshot.health_score,
-        "avg_complexity":    snapshot.avg_complexity,
-        "churn_rate":        snapshot.churn_rate,
+        "health_score": snapshot.health_score,
+        "avg_complexity": snapshot.avg_complexity,
+        "churn_rate": snapshot.churn_rate,
         "num_files_changed": snapshot.num_files_changed,
-        "bus_factor_min":    snapshot.bus_factor_min,
-        "top_files_json":    snapshot.top_files_json,
+        "bus_factor_min": snapshot.bus_factor_min,
+        "top_files_json": snapshot.top_files_json,
         "avg_semantic_drift": snapshot.avg_semantic_drift,
         "semantic_health_score": snapshot.semantic_health_score,
         "high_drift_files": snapshot.high_drift_files,
@@ -148,10 +154,13 @@ async def get_or_create_narrative(
     }
 
     prev_commit_result = await db.execute(
-        select(Commit).where(
+        select(Commit)
+        .where(
             Commit.repo_id == repo_id,
             Commit.committed_at < commit.committed_at,
-        ).order_by(Commit.committed_at.desc()).limit(1)
+        )
+        .order_by(Commit.committed_at.desc())
+        .limit(1)
     )
     prev_commit = prev_commit_result.scalar_one_or_none()
 
@@ -161,7 +170,7 @@ async def get_or_create_narrative(
         )
         prev_snap = prev_snap_result.scalar_one_or_none()
         before_dict = {
-            "health_score":   prev_snap.health_score if prev_snap else 0,
+            "health_score": prev_snap.health_score if prev_snap else 0,
             "avg_complexity": prev_snap.avg_complexity if prev_snap else 0,
             "bus_factor_min": prev_snap.bus_factor_min if prev_snap else 1,
         }
@@ -227,9 +236,9 @@ async def get_or_create_narrative(
         "prompt_type": prompt_type,
         "explanation": response_text,
         "tokens_used": tokens_in + tokens_out,
-        "cost_usd":    round(cost, 5),
-        "cached":      False,
-        "model":       model_used,
-        "provider":    provider_used,
-        "demo_mode":   demo_mode,
+        "cost_usd": round(cost, 5),
+        "cached": False,
+        "model": model_used,
+        "provider": provider_used,
+        "demo_mode": demo_mode,
     }

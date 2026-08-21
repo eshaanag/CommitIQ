@@ -1,9 +1,11 @@
 # PROJECT BRAIN
 
 ## What this project is
+
 CommitIQ is a full-stack repository health analyzer for GitHub projects. It ingests commit history, computes complexity/churn/dependency/semantic/bus-factor signals, stores snapshots in SQLite or Postgres, and presents an interactive React dashboard with optional LLM-generated commit narratives.
 
 ## Tech stack
+
 - Backend: Python 3.11+, FastAPI, SQLAlchemy async ORM, SQLite via aiosqlite by default, optional Postgres via asyncpg.
 - Repository analysis: GitPython, git subprocess calls, radon for Python complexity, lizard for JS/TS/Java/Go/C/C++ metrics, custom import/co-change graph extraction, git blame for bus factor.
 - Semantic analysis: difflib fallback enabled by default, optional GraphCodeBERT via transformers and torch only when `ENABLE_GRAPHCODEBERT=true`.
@@ -12,6 +14,7 @@ CommitIQ is a full-stack repository health analyzer for GitHub projects. It inge
 - Deployment/config: backend `.env.example`, frontend `.env.example`, frontend lockfile, GitHub Actions CI/governance checks including Chromium e2e, contribution/security templates, Dependabot config, CODEOWNERS, and GitHub issue/PR templates are checked in; no Dockerfile, backend lockfile, or deployment manifest exists yet.
 
 ## Architecture overview
+
 - `backend/main.py` creates the FastAPI app, initializes database schema and SQL migrations on lifespan startup, configures CORS, and mounts repo ingestion plus LLM routers under `/api`.
 - `backend/config.py` loads environment variables, normalizes database URLs, creates repo storage, and exposes operational settings.
 - `backend/shared/models.py` defines repos, commits, health snapshots, graph nodes/edges, bus factor rows, LLM narratives, and ingestion jobs.
@@ -23,7 +26,9 @@ CommitIQ is a full-stack repository health analyzer for GitHub projects. It inge
 - LLM narratives are requested on demand from `NarrativeCard`, streamed over `/api/explain/stream`, cached in `llm_narratives`, and summarized in the cost meter with billable provider rows separated from demo/pre-cached rows. When provider keys are absent or a provider call fails, the stream returns a deterministic demo-mode narrative instead of a failure card.
 
 ## Current state assessment
+
 Working well:
+
 - Clear product concept with a coherent end-to-end flow: enter GitHub repo, ingest, view health timeline, inspect commit graph, review hotspots/bus-factor, generate narratives.
 - Backend has structured schemas/models and separates ingestion, analysis, graph, bus factor, semantic, and LLM concerns.
 - LLM cost guard and cache are already part of the domain model, which is the right production instinct.
@@ -31,6 +36,7 @@ Working well:
 - Removed dead compute_health_score function from metrics_extractor.py; health scoring now lives exclusively in health_scorer.py, eliminating duplicate logic.
 
 Incomplete or fragile:
+
 - Test runner config, focused backend/frontend tests, a real-browser frontend e2e, a frontend lockfile, and CI quality gates now exist; backend dependency locking is still absent.
 - A tracked SQL migration workflow now exists with `schema_migrations` applied-file tracking, but there are not yet model-changing migration files because the current schema is still bootstrapped from SQLAlchemy metadata.
 - Backend ingestion performs long CPU/disk/network work inside FastAPI `BackgroundTasks`; active duplicate submissions now reuse the existing job and users can request cooperative cancellation, but restarts and production scaling remain fragile.
@@ -39,6 +45,7 @@ Incomplete or fragile:
 - Demo flow now runs live bounded analysis, but still lacks a fast fixture-backed offline demo.
 
 ## User flows (as-is)
+
 - New analysis: user opens `/`, enters a GitHub URL or `owner/repo`, optionally sets max commits, submits, then lands on `/analyze?repo_id=...`.
 - Ingestion progress: `/analyze` opens an EventSource to `/api/repos/ingest/progress/{repo_id}`, displays clone/analyze/bus-factor/finalize progress, allows cancellation through `/api/repos/ingest/cancel/{repo_id}`, then redirects to `/dashboard/{repo_slug}` when ready.
 - Dashboard: user views latest health score, commit timeline, recent commit list, selected commit metrics, top risk reasons, persistent hotspots, graph explorer, bus factor table, hotspot map, and LLM cost meter.
@@ -47,6 +54,7 @@ Incomplete or fragile:
 - Demo: `/demo` starts a bounded `facebook/react` analysis and then routes to the normal analysis progress page.
 
 ## Identified problems (root causes, not symptoms)
+
 - Verification breadth: unit, integration, route smoke, and one real-browser frontend e2e now protect the main flow, but there is no staging test that performs a live GitHub clone and backend ingestion.
 - Backend dependency reproducibility: the frontend lockfile is committed, but broad Python requirement ranges and no backend lock tooling mean backend installs can still drift.
 - No production ingestion boundary: FastAPI background tasks are not a durable job system. Active job reuse and cooperative cancellation reduce user-facing harm, but long repo analysis is still tied to a web worker process lifecycle.
@@ -58,7 +66,9 @@ Incomplete or fragile:
 - UI maintainability drift: Tailwind token configuration and one browser e2e now exist, but heavy one-off styling still makes visual regressions likely without broader route-level visual coverage.
 
 ## Discovered issues
+
 - Medium: shutil.rmtree raised PermissionError on Windows when deleting read-only .git files; it now uses a custom onerror handler to clear the readonly bit.
+- Medium: commit author name/email could be None or empty for malformed commits (shallow-clone boundaries, VCS-imported histories, plumbing-created commits), crashing downstream Pydantic models and DB inserts. The commit walker now falls back to "Unknown" / "unknown@example.com" and logs the substitution (#266).
 - High: clone_service and router used synchronous subprocesses that blocked the FastAPI event loop; they are now fully asynchronous.
 - High: no deployment health gate; CI now exists for unit/e2e tests, lint, build, and repository hygiene checks on pushes and pull requests.
 - High: npm audit previously reported 9 frontend dependency vulnerabilities; dependency upgrades now leave `npm audit --audit-level=moderate` clean as of 2026-06-04.
@@ -68,15 +78,19 @@ Incomplete or fragile:
 - Medium: route-level code splitting reduced the initial frontend JS chunk to about 168 kB; dashboard and narrative code are now separate chunks.
 - Medium: backend startup now logs database initialization through the module logger; broader request/job observability is still limited.
 - Medium: production CORS now requires explicit `CORS_ORIGINS`; local development still gets localhost defaults when not in production.
+- Medium: `CORS_ORIGINS=""` (empty string) in `.env` was treated as "explicitly set" and returned `[]`, silently blocking all cross-origin requests in development. Fixed in #264: empty/whitespace values now fall back to localhost defaults in dev, and dev environments always merge localhost defaults with any explicit origins.
 - Medium: LLM usage accounting now separates billable provider rows from pre-cached/demo rows; runtime cache-hit telemetry is still not persisted separately from narrative rows.
 - Medium: GraphCodeBERT model loading is now opt-in; deployments that enable it still need explicit model cache/storage planning.
 - Medium: shallow clone plus per-commit checkout can fail or produce incomplete stats around boundary commits and deleted/renamed files.
 
 ## Feature analysis
+
 Exists:
-- GitHub URL ingestion, shallow clone, commit walk, metric extraction, health scoring, dependency/co-change graph storage, bus-factor table, hot spot map, timeline, graph explorer, commit detail, LLM narratives, cost meter, dark/light theme toggle, and a Chromium landing-to-dashboard e2e.
+
+- GitHub URL ingestion, shallow clone, commit walk, metric extraction, health scoring, dependency/co-change graph storage, bus-factor table, hot spot map, timeline, graph explorer, commit detail, LLM narratives, cost meter, dark/light theme toggle, floating 'Back to Top' scroll button, and a Chromium landing-to-dashboard e2e.
 
 Half-done:
+
 - Demo mode exists as a route and LLM fallback concept. Narrative streams now have a no-key demo fallback, but the product still lacks seed data/scripts and a complete no-backend demo experience.
 - Migration support exists as a startup SQL runner with applied-file tracking and directory docs; it still lacks a generated-diff/revision authoring process.
 - Semantic drift is implemented with a default lightweight fallback; GraphCodeBERT is documented and opt-in but not productionized for cache/storage management.
@@ -84,6 +98,7 @@ Half-done:
 - LLM cache exists and usage reporting separates provider, demo, and pre-cached rows, but runtime cache-hit telemetry is not persisted as its own event stream.
 
 Missing but obviously needed:
+
 - Backend lockfiles or pinned dependency management.
 - Deployment health checks; basic CI secret/debug/conflict scans now exist.
 - Durable job processing or at least safer ingestion state management with retry and stronger cancellation semantics around long-running subprocesses.
@@ -92,6 +107,7 @@ Missing but obviously needed:
 - Productized deeper health metrics beyond the new risk reasons and hotspot persistence, especially ownership entropy, coupling surprise, blast radius, cycle severity, and stabilization scoring.
 
 ## Improvement plan (prioritised)
+
 1. Establish verification baseline: add backend pytest setup, frontend test setup, and smoke checks for core user/API flows. This matters because every meaningful improvement touches scoring, ingestion, or UI behavior.
 2. Make builds reproducible: add frontend lockfile and tighten Python dependency strategy enough for deterministic local/CI installs.
 3. Fix immediate correctness bugs in low-risk pure logic: URL parsing parity, cache/usage accounting, health scoring edge cases, graph import resolution, and bus-factor risk classification.
@@ -104,6 +120,7 @@ Missing but obviously needed:
 10. Revisit ingestion architecture for durable jobs once baseline tests protect current behavior.
 
 ## Decisions log
+
 - 2026-05-31: Read the entire tracked codebase and project config before feature work, per requested process.
 - 2026-05-31: Treated `PROJECT_BRAIN.md` as the first required artifact and did not edit source code before creating it.
 - 2026-05-31: Prioritized test infrastructure and reproducibility ahead of feature additions because the project currently has no safe change boundary.
@@ -145,13 +162,13 @@ Missing but obviously needed:
 - 2026-06-07: Made streaming LLM narratives match the non-streaming demo fallback, because a no-key local/demo environment should still show a useful static-metrics explanation instead of a failure card.
 - 2026-06-07: Opted into React Router v7 future flags to remove route deprecation warnings in development; remaining Recharts dev warnings come from the installed `recharts@2.12.7` internals.
 - 2026-07-21: Added pagination to the repo list endpoint with `limit` (default 20, max 100) and `offset` (default 0) query parameters, because unbounded list responses degrade as repositories accumulate.
-- 2026-07-21: Fixed Python import parsing to preserve relative import levels by using `ast.ImportFrom.level`, because dot-prefix context was being dropped and breaking dependency resolution for relative imports.
 - 2026-07-25: Implemented custom time range selector for Commit Timeline and Hotspots (#223), allowing users to filter codebase health data by preset intervals (7d, 30d, 1y, All Time) or custom start/end dates.
 - 2026-07-26: Added contributor identity resolution for bus factor calculations. Introduced `ContributorIdentityResolver` with `.mailmap` support and normalized contributor identities before both `git blame` and fallback commit-history aggregation to prevent duplicate contributor aliases from distorting ownership metrics.
 - 2026-07-31: Implemented 3-attempt transaction retry helper (commit_with_retry) and busy timeout connection parameter adjustments (timeout=30, PRAGMA busy_timeout=30000) to resolve transient SQLite lock errors during concurrent ingestion runs (#259).
 
 ## Test coverage status
-- Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults, boolean env parsing, repo URL parsing/validation, max-commit cap validation, slug generation, clone cleanup success/failure, import extraction/resolution, co-change edge generation, top-file frequency, bus-factor file filtering, semantic fallback behavior, health snapshot aggregation, risk reasons/hotspot persistence, LLM cache keys, provider mapping, cost estimation, usage/budget accounting, prompt builders, contributor identity normalization, `.mailmap` parsing, canonical identity resolution, and bus factor contributor deduplication.
+
+- Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults (including dev-environment merging, empty-string fallback, deduplication, and unknown-environment fail-closed behavior from #264), boolean env parsing, repo URL parsing/validation, URL token credentials stripping (#309), streaming git diff parsing (#300), renamed file path resolution in co-change coupling (#398), max-commit cap validation, slug generation, clone cleanup success/failure, import extraction/resolution, co-change edge generation, top-file frequency, bus-factor file filtering, semantic fallback behavior, health snapshot aggregation, risk reasons/hotspot persistence, LLM cache keys, provider mapping, cost estimation, usage/budget accounting, prompt builders, contributor identity normalization, `.mailmap` parsing, canonical identity resolution, bus factor contributor deduplication, and commit-walker author identity fallback resolution (#266).
 - Backend integration/API tests: database-backed coverage exists for repo listing/lookup with pagination, timeline payloads including risk reasons and persistent hotspots, timeline and hotspots date-range filtering (`start_date`/`end_date`), graph payloads, bus factor payloads, LLM usage payloads, commit detail composition, active ingestion job reuse, background job scheduling arguments, ingestion cancellation, SQLite-safe duration math, ingestion progress SSE payloads for missing/terminal/polled jobs, and streaming narrative demo fallback.
 
 - Backend migration tests: coverage exists for sorted SQL migration application, applied-file tracking, skip-on-reapply behavior, and SQLite duplicate-column protection.
@@ -161,6 +178,7 @@ Missing but obviously needed:
 - Local quality gates: `python -m pytest` (67 tests), `npm run test` (26 tests), `npm run lint`, `npm run build`, and `git diff --check` pass.
 
 ## Commit log summary
+
 - `1132a0d` docs: initial PROJECT_BRAIN.md — full codebase understanding. Added the required living project understanding document before feature work.
 - `e2fc631` test: add backend logic coverage and harden repo URL validation. Established pytest configuration/dev requirements, added 19 backend pure-logic tests, and fixed URL validation gaps those tests exposed.
 - `d1e0cef` docs: update project brain after backend test baseline. Recorded the backend test baseline and parser-hardening decision.
@@ -225,4 +243,13 @@ Missing but obviously needed:
 - docs: update project brain for stale ingestion job recovery on startup #26. Recorded stale job recovery implementation, storage cleanup details, and unit test coverage.
 - feat: implement custom time range selector for commit timeline and hotspots (#223). Added preset filters (All Time, 7d, 30d, 1y, Custom) and custom date pickers, updated timeline and hotspots backend APIs with `start_date`/`end_date` parameters, integrated into Dashboard UI, and added test coverage.
 - `019b96e` fix: deduplicate contributor identities in bus factor calculation. Added `ContributorIdentityResolver` with `.mailmap` support, normalized contributor identities before ownership aggregation, integrated resolution into both `git blame` and fallback commit-history paths, and added comprehensive regression tests.
-
+- feat: highlight hotspots in Graph Explorer file tree (#215). Added hotspot visual warning icons and color coding to the file tree view of the Graph Explorer.
+- fix(frontend): allow chart tooltips to overflow viewBox dynamically on smaller screens (#217). Updated Recharts tooltips wrapper configurations so metrics aren't clipped on mobile.
+- fix(ingestion): normalize repository URLs and names to lowercase (#206). Prevents duplicate repository records in database caused by casing differences.
+- fix(ingestion): handle missing git commit author name or email gracefully (#266). Added `resolve_author_name`/`resolve_author_email` helpers in `commit_walker.py` with `"Unknown"` / `"unknown@example.com"` defaults, defensive Actor access, INFO logging when fallbacks apply, and five regression tests in `test_repo_ingestion_logic.py`.
+- docs: update project brain after commit-walker author fallback (#266). Recorded the identity-fallback decision, updated discovered-issues and test-coverage status.
+- feat: support sorting and filtering by metrics (LOC, Churn, Complexity) in the hotspots list (#260). Added a sortable table below the treemap in `HotspotMap.tsx` with clickable column headers for File, LOC, Churn, Complexity, and Risk. Sorting defaults to risk_score descending; clicking a header toggles asc/desc. Added `loc` field to the backend `get_hotspots` response and `HotspotEntry` type. Added 7 unit tests covering rendering, sorting by each metric, direction toggling, empty state, and loading state.
+- docs: update project brain after hotspot sorting enhancement (#260). Recorded the sortable hotspots table decision, backend `loc` field addition, and frontend test coverage.
+- feat: cache and reuse git commit history walks in backend analysis (#263). Added on-disk JSON caching to `commit_walker.py` — the first `walk_commits()` call for a given (repo_path, limit) pair walks the git tree and caches results to `/tmp/commitiq_cache/`. Subsequent calls within a 24-hour TTL load directly from cache, skipping the expensive git walk entirely. The cache key is a SHA-256 hash of the absolute repo_path + limit, so different repos and different depth clones get separate cache files. Added `_walk_commits_uncached()` (the original walk logic) and made `walk_commits()` a thin caching wrapper. Added 13 unit tests covering cache path derivation, TTL expiry, roundtrip serialization, and cache-hit/cache-miss behavior.
+- docs: update project brain after commit walk caching (#263). Recorded the caching decision, TTL strategy, and test coverage.
+- Refactored git blame to catch TimeoutExpired and rmtree to handle Windows permission errors in backend.
