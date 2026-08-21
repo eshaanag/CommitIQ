@@ -236,7 +236,9 @@ def _walk_commits_uncached(repo_path: Path, limit: int) -> Iterator[dict]:
         parent_sha = commit.parents[0].hexsha if commit.parents else None
 
         # Issue #300: Stream git diff stats line-by-line to avoid memory spikes on giant commits
-        files_changed, insertions, deletions, renames = stream_commit_diff_stats(repo_path, commit.hexsha)
+        files_changed, insertions, deletions, renames = stream_commit_diff_stats(
+            repo_path, commit.hexsha
+        )
 
         # Fallback to commit.stats if git diff-tree was empty
         if not files_changed:
