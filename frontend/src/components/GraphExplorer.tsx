@@ -585,7 +585,7 @@ export function GraphExplorer({
 
   const getNodeSize = useCallback(
     (node: RenderNode): number => {
-      let base = 5
+      let base: number
       if (nodeSizeMetric === 'loc') {
         base = Math.sqrt(Math.max(node.loc || 0, 10)) * 0.9 + 2.5
       } else if (nodeSizeMetric === 'churn') {

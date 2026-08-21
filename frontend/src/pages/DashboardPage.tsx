@@ -16,6 +16,7 @@ import { CommitList } from '../components/CommitList'
 import { CostMeter } from '../components/CostMeter'
 import { GraphExplorer } from '../components/GraphExplorer'
 import { HealthTimeline } from '../components/HealthTimeline'
+import { HealthTimelineSkeleton } from '../components/HealthTimelineSkeleton'
 import { HotspotMap } from '../components/HotspotMap'
 import { NarrativeCard } from '../components/NarrativeCard'
 import { CycleTimeDashboard } from '../components/CycleTimeDashboard'
@@ -449,10 +450,7 @@ export default function DashboardPage() {
           />
 
           {timelineState.isLoading ? (
-            <div className="glass-panel rounded-[28px] p-6 h-64 flex items-center justify-center text-slate-400 border border-white/10">
-              <Activity className="w-6 h-6 text-purple-400 animate-spin mr-2" />
-              <span className="text-xs font-medium animate-pulse">Loading health timeline...</span>
-            </div>
+            <HealthTimelineSkeleton />
           ) : timelineState.error ? (
             <div className="glass-panel rounded-[28px] p-6 text-rose-300 border border-rose-500/20 bg-rose-500/10">
               Could not load architectural health timeline datasets.

@@ -114,24 +114,13 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
     session.add(repo)
     await session.flush()
 
-    # Define authors and files
+    # Define authors
     authors = [
         {"name": "Dan Abramov", "email": "dan@gaearon.mobi"},
         {"name": "Sebastian Markbåge", "email": "seb@fb.com"},
         {"name": "Sophie Alpert", "email": "sophie@fb.com"},
         {"name": "Andrew Clark", "email": "andrew@clark.com"},
         {"name": "Lauren Tan", "email": "lauren@fb.com"},
-    ]
-
-    files = [
-        "packages/react/src/React.js",
-        "packages/react/src/ReactBaseClasses.js",
-        "packages/react/src/ReactHooks.js",
-        "packages/react-reconciler/src/ReactFiber.js",
-        "packages/react-reconciler/src/ReactFiberBeginWork.js",
-        "packages/react-reconciler/src/ReactFiberCommitWork.js",
-        "packages/react-dom/src/client/ReactDOM.js",
-        "packages/shared/ReactSharedInternals.js",
     ]
 
     # 2. Generate timeline commits & snapshots

@@ -7,10 +7,10 @@
     <title>CommitIQ</title>
     <script>
       ;(function () {
-        let theme = 'dark'
+        let theme
         try {
           theme = localStorage.getItem('theme') || 'dark'
-        } catch (error) {
+        } catch {
           theme = 'dark'
         }
         if (theme === 'dark') {

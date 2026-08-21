@@ -177,10 +177,11 @@ def count_repo_files_and_loc(repo_path: Path) -> tuple[int, int]:
             if _is_supported(rel_path):
                 full_path = Path(root) / fname
                 try:
-                    loc = sum(1 for line in open(full_path, "rb") if line.strip())
+                    with open(full_path, "rb") as f:
+                        loc = sum(1 for line in f if line.strip())
                     total_loc += loc
                     file_count += 1
-                except Exception:
+                except OSError:
                     pass
 
     return file_count, total_loc

@@ -90,9 +90,9 @@ def test_cors_origins_merges_explicit_with_defaults_in_dev():
     """
     origins = _cors_origins("development", "https://preview.example.com")
 
-    assert "https://preview.example.com" in origins
-    assert "http://localhost:5173" in origins
-    assert "http://127.0.0.1:3000" in origins
+    assert any(o == "https://preview.example.com" for o in origins)
+    assert any(o == "http://localhost:5173" for o in origins)
+    assert any(o == "http://127.0.0.1:3000" for o in origins)
 
 
 def test_cors_origins_deduplicates_in_dev():
@@ -103,7 +103,7 @@ def test_cors_origins_deduplicates_in_dev():
     )
 
     assert origins.count("http://localhost:5173") == 1
-    assert "https://custom.example.com" in origins
+    assert any(o == "https://custom.example.com" for o in origins)
     # Localhost defaults appear first (they're merged in before explicit).
     assert origins[0] == "http://localhost:5173"
 

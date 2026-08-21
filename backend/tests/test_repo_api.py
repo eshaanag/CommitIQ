@@ -1049,7 +1049,6 @@ async def test_mark_stale_jobs_as_error(tmp_path, monkeypatch):
     repo1_dir = get_clone_path(1)
     repo2_dir = get_clone_path(2)
     repo3_dir = get_clone_path(3)
-    job1_dir = tmp_path / "1"
 
     # Create directories
     repo1_dir.mkdir(parents=True, exist_ok=True)

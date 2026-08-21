@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 import stat
+import urllib.parse
 from pathlib import Path
 
 import httpx
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 def _redact_secret(value: str) -> str:
     if GITHUB_TOKEN:
         value = value.replace(GITHUB_TOKEN, "[REDACTED_GITHUB_TOKEN]")
-    return re.sub(r"https://[^@\s]+@github\.com/", "https://[REDACTED]@github.com/", value)
+    return re.sub(r"https?://[^/@\s]+@github\.com", "https://[REDACTED]@github.com", value)
 
 
 def _is_valid_github_name(value: str) -> bool:
@@ -239,13 +240,19 @@ def cleanup_repo(repo_id: int) -> bool:
 
 async def fetch_github_metadata(owner: str, repo: str) -> dict:
     """Optional metadata fetch — cosmetic only, skipped on rate limit."""
+    if not _is_valid_github_name(owner) or not _is_valid_github_name(repo):
+        return {"github_stars": None, "github_language": None, "github_description": None}
+
     headers = {"Accept": "application/vnd.github+json"}
     if GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
+    safe_owner = urllib.parse.quote(owner, safe="")
+    safe_repo = urllib.parse.quote(repo, safe="")
+
     try:
         async with httpx.AsyncClient(timeout=5) as client:
-            r = await client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
+            r = await client.get(f"https://api.github.com/repos/{safe_owner}/{safe_repo}", headers=headers)
             if r.status_code == 200:
                 data = r.json()
                 return {
@@ -372,13 +379,16 @@ async def fetch_github_pull_requests_rest(owner: str, repo: str, limit: int = 50
     if GITHUB_TOKEN:
         headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
+    safe_owner = urllib.parse.quote(owner, safe="")
+    safe_repo = urllib.parse.quote(repo, safe="")
+
     prs = []
     page = 1
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             while True:
                 r = await client.get(
-                    f"https://api.github.com/repos/{owner}/{repo}/pulls?state=all&per_page=100&page={page}",
+                    f"https://api.github.com/repos/{safe_owner}/{safe_repo}/pulls?state=all&per_page=100&page={page}",
                     headers=headers,
                 )
                 if r.status_code != 200:

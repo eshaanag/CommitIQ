@@ -1,4 +1,5 @@
 import hashlib
+import html
 import json
 import logging
 import os
@@ -115,10 +116,8 @@ def sanitize_commit_message(message: str | None) -> str:
     """
     if not message:
         return ""
-    msg = re.sub(r"<script[\s\S]*?>[\s\S]*?</script>", "", message, flags=re.IGNORECASE)
-    msg = re.sub(r"<style[\s\S]*?>[\s\S]*?</style>", "", msg, flags=re.IGNORECASE)
-    msg = re.sub(r"<iframe[\s\S]*?>[\s\S]*?</iframe>", "", msg, flags=re.IGNORECASE)
-    msg = re.sub(r"<[a-zA-Z/!][^>]*>", "", msg)
+    msg = re.sub(r"(?is)<\s*(?:script|style|iframe)\b[^>]*>.*?<\s*/\s*(?:script|style|iframe)\s*>", "", message)
+    msg = re.sub(r"<[^>]+>", "", msg)
     msg = msg.replace("<", "&lt;").replace(">", "&gt;")
     return msg.strip()[:500]
 

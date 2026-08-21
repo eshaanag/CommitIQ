@@ -135,16 +135,10 @@ def test_walk_commits_writes_cache_on_first_call(tmp_path, monkeypatch):
     assert len(result) == 3
     # Cache file must exist
     cpath = _cache_path(tmp_path / "fake_repo", 150)
-    # _cache_path uses _CACHE_DIR which we patched, so recompute
-    import hashlib
-
-    key_str = f"{(tmp_path / 'fake_repo').resolve()}:150"
-    key_hash = hashlib.sha256(key_str.encode()).hexdigest()[:16]
-    expected_path = tmp_path / f"commits_{key_hash}.json"
-    assert expected_path.exists()
+    assert cpath.exists()
 
     # Verify cache content
-    with open(expected_path) as f:
+    with open(cpath) as f:
         cached = json.load(f)
     assert len(cached) == 3
     assert cached[0]["sha"] == "abc0000"

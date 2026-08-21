@@ -1096,7 +1096,7 @@ async def ingest_progress(repo_id: int):
 
                 await asyncio.sleep(0.75)
         except asyncio.CancelledError:
-            logger.debug("Ingestion progress stream disconnected for repo_id=%s", repo_id)
+            logger.debug("Ingestion progress stream disconnected for repo_id=%d", int(repo_id))
             return
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

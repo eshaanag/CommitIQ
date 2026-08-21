@@ -112,7 +112,6 @@ def resolve_import_to_file(import_path: str, source_file: str, all_files: list[s
 def build_import_edges(repo_path: Path, all_files: list[str]) -> list[dict]:
     """Extract import dependency edges from HEAD state of repo."""
     edges = []
-    file_set = set(all_files)
 
     for rel_path in all_files:
         full_path = os.path.join(repo_path, rel_path)

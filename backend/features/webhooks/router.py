@@ -108,8 +108,13 @@ async def _process_gitlab_pipeline_webhook(
     await db.commit()
     await db.refresh(deployment)
 
+    safe_pipeline_id = str(pipeline_id).replace("\r", "").replace("\n", "")[:50]
+    safe_status = str(status_raw).replace("\r", "").replace("\n", "")[:50]
     logger.info(
-        f"GitLab pipeline deployment recorded: repo_id={repo.id}, pipeline_id={pipeline_id}, status={status_raw}"
+        "GitLab pipeline deployment recorded: repo_id=%d, pipeline_id=%s, status=%s",
+        repo.id,
+        safe_pipeline_id,
+        safe_status,
     )
 
     return WebhookResponse(

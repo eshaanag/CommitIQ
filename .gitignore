@@ -21,3 +21,6 @@ AGENTS.md
 .agents/
 backend/.coverage
 backend/coverage.xml
+coverage/
+frontend/coverage/
+*.lcov
