@@ -112,11 +112,32 @@ async def explain_commit_stream(
         raise HTTPException(status_code=404, detail=f"Commit {request.commit_sha} not found")
 
     cache_key = make_cache_key(request.repo_id, commit.full_sha, request.prompt_type)
+    
+    # Check Redis cache first
+    from backend.features.llm_analysis.cache import get_cached_narrative, set_cached_narrative
+    redis_cached_text = await get_cached_narrative(cache_key)
+    
+    if redis_cached_text:
+        async def replay_redis_cache():
+            for word in redis_cached_text.split(" "):
+                yield f"data: {json.dumps({'token': word + ' ', 'done': False})}\n\n"
+                await asyncio.sleep(0.03)
+            yield f"data: {json.dumps({'done': True, 'explanation': redis_cached_text, 'tokens_total': 0, 'cost_usd': 0.0, 'cached': True, 'model': 'redis-cache', 'provider': 'cache', 'demo_mode': False})}\n\n"
+
+        return StreamingResponse(
+            replay_redis_cache(),
+            media_type="text/event-stream",
+            headers={"X-LLM-Provider": "cache", "X-Cache-Hit": "true", "X-LLM-Cost-USD": "0.0000"},
+        )
+
+    # Check Postgres cache
     cached_result = await db.execute(
         select(LLMNarrative).where(LLMNarrative.cache_key == cache_key)
     )
     cached = cached_result.scalar_one_or_none()
     if cached:
+        # Backfill Redis cache
+        await set_cached_narrative(cache_key, cached.response_text)
 
         async def replay_cache():
             for word in cached.response_text.split(" "):
@@ -209,6 +230,11 @@ async def explain_commit_stream(
                 )
                 local_db.add(narrative)
                 await local_db.commit()
+                
+                # Update Redis cache
+                if not demo_mode:
+                    from backend.features.llm_analysis.cache import set_cached_narrative
+                    await set_cached_narrative(cache_key, response_text)
             yield f"data: {json.dumps({'done': True, 'explanation': response_text, 'tokens_total': tokens_in + tokens_out, 'cost_usd': cost, 'cached': False, 'model': model_used, 'provider': provider_value, 'demo_mode': False})}\n\n"
         except Exception as exc:
             logger.warning("Narrative stream provider unavailable, using demo mode: %s", exc)
