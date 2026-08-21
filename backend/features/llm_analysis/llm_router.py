@@ -7,6 +7,7 @@ import logging
 from enum import Enum
 from typing import AsyncGenerator
 
+import pybreaker
 from backend.config import ANTHROPIC_API_KEY, GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 GEMINI_MODEL = "gemini-2.5-flash"
 
+# Circuit breaker: max 3 failures, reset after 60 seconds
+llm_breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
 
 class LLMProvider(str, Enum):
     ANTHROPIC = "anthropic"
@@ -61,27 +64,37 @@ async def stream_narrative(
     max_tokens: int = 600,
 ) -> AsyncGenerator[tuple[str, LLMProvider], None]:
     """Stream narrative tokens from Claude first, then Gemini fallback."""
-    if ANTHROPIC_API_KEY:
-        try:
-            async for token in _stream_anthropic(prompt, max_tokens):
-                yield token, LLMProvider.ANTHROPIC
-            return
-        except Exception as exc:
-            logger.warning("Anthropic failed, trying Gemini fallback: %s", exc)
+    try:
+        if ANTHROPIC_API_KEY:
+            try:
+                async for token in _stream_anthropic(prompt, max_tokens):
+                    yield token, LLMProvider.ANTHROPIC
+                return
+            except pybreaker.CircuitBreakerError:
+                raise  # Let the outer try-except handle breaker errors
+            except Exception as exc:
+                logger.warning("Anthropic failed, trying Gemini fallback: %s", exc)
 
-    if GEMINI_API_KEY:
-        try:
-            async for token in _stream_gemini(prompt, max_tokens):
-                yield token, LLMProvider.GEMINI
-            return
-        except Exception as exc:
-            logger.error("Gemini fallback failed: %s", exc)
+        if GEMINI_API_KEY:
+            try:
+                async for token in _stream_gemini(prompt, max_tokens):
+                    yield token, LLMProvider.GEMINI
+                return
+            except pybreaker.CircuitBreakerError:
+                raise
+            except Exception as exc:
+                logger.error("Gemini fallback failed: %s", exc)
 
-    raise RuntimeError(
-        "All LLM providers unavailable. Configure ANTHROPIC_API_KEY or GEMINI_API_KEY."
-    )
+        raise RuntimeError(
+            "All LLM providers unavailable. Configure ANTHROPIC_API_KEY or GEMINI_API_KEY."
+        )
+    except pybreaker.CircuitBreakerError:
+        logger.error("LLM circuit breaker open. APIs temporarily degraded.")
+        fallback_msg = "AI services are temporarily degraded due to high failure rates. Please try again later.\n\nRisk level: Unknown"
+        yield fallback_msg, LLMProvider.NONE
 
 
+@llm_breaker
 async def _stream_anthropic(prompt: str, max_tokens: int) -> AsyncGenerator[str, None]:
     import anthropic
 
@@ -96,6 +109,7 @@ async def _stream_anthropic(prompt: str, max_tokens: int) -> AsyncGenerator[str,
             yield text
 
 
+@llm_breaker
 async def _stream_gemini(prompt: str, max_tokens: int) -> AsyncGenerator[str, None]:
     import google.generativeai as genai
 
