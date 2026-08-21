@@ -897,17 +897,22 @@ async def test_ingestion_rollback_preserves_old_data_on_mid_ingestion_failure(
         lambda path, max_commits: fake_history,
     )
 
-    # --- patch checkout_commit and extract_commit_metrics via fake module ---
-    # metrics_extractor imports lizard at module level which may not be installed;
-    # we inject a fake module into sys.modules so the lazy import in run_ingestion works.
+    from concurrent.futures import ThreadPoolExecutor
+
+    monkeypatch.setattr(
+        "backend.features.repo_ingestion.router.ProcessPoolExecutor",
+        ThreadPoolExecutor,
+    )
+
+    # --- patch _extract_metrics_in_worktree ---
     call_count = 0
 
-    def failing_extract(path, commit_data):
+    def failing_extract_in_wt(path, commit_data):
         nonlocal call_count
         call_count += 1
         if call_count >= 2:
             raise RuntimeError("Simulated mid-ingestion failure")
-        return {
+        return commit_data["full_sha"], {
             "src/app.py": {
                 "avg_complexity": 2.0,
                 "max_complexity": 3.0,
@@ -917,11 +922,15 @@ async def test_ingestion_rollback_preserves_old_data_on_mid_ingestion_failure(
             },
         }
 
-    fake_metrics_mod = types.ModuleType("backend.features.repo_ingestion.metrics_extractor")
-    fake_metrics_mod.checkout_commit = lambda path, sha: None
-    fake_metrics_mod.extract_commit_metrics = failing_extract
-    monkeypatch.setitem(
-        sys.modules, "backend.features.repo_ingestion.metrics_extractor", fake_metrics_mod
+    monkeypatch.setattr(
+        "backend.features.repo_ingestion.router._extract_metrics_in_worktree",
+        failing_extract_in_wt,
+    )
+
+    # --- patch checkout_commit ---
+    monkeypatch.setattr(
+        "backend.features.repo_ingestion.metrics_extractor.checkout_commit",
+        lambda path, sha: None,
     )
 
     # --- patch bus factor ---

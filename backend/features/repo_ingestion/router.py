@@ -1,9 +1,23 @@
 import asyncio
 import json
 import logging
+import subprocess
+import uuid
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
+
+def _extract_metrics_in_worktree(repo_path: Path, commit_data: dict) -> tuple[str, dict]:
+    wt_name = f"wt_{uuid.uuid4().hex[:8]}"
+    wt_path = repo_path.parent / wt_name
+    subprocess.run(["git", "worktree", "add", "--detach", str(wt_path), commit_data["full_sha"]], cwd=repo_path, capture_output=True, check=True)
+    try:
+        from backend.features.repo_ingestion.metrics_extractor import extract_commit_metrics
+        metrics = extract_commit_metrics(wt_path, commit_data)
+        return commit_data["full_sha"], metrics
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", str(wt_path)], cwd=repo_path, capture_output=True)
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -475,6 +489,19 @@ async def run_ingestion(
 
             prev_health = None
             prev_avg_complexity = 0.0
+
+            await _update_job(job_id, status="analyzing", current_stage="Extracting metrics in parallel...")
+            loop = asyncio.get_running_loop()
+            import os
+            max_workers = min(8, (os.cpu_count() or 4) + 4)
+            with ProcessPoolExecutor(max_workers=max_workers) as pool:
+                tasks = [
+                    loop.run_in_executor(pool, _extract_metrics_in_worktree, clone_path, commit_data)
+                    for commit_data in commit_history
+                ]
+                results = await asyncio.gather(*tasks)
+            metrics_by_sha = dict(results)
+
             for idx, commit_data in enumerate(commit_history):
                 await _raise_if_cancelled(job_id)
                 await _update_job(
@@ -487,9 +514,7 @@ async def run_ingestion(
                     progress_pct=round(idx / len(commit_history) * 60, 1),
                 )
 
-                file_metrics_map = await asyncio.to_thread(
-                    extract_commit_metrics, clone_path, commit_data
-                )
+                file_metrics_map = metrics_by_sha[commit_data["full_sha"]]
                 top_files = list(file_metrics_map.keys())[:50]
                 import_edges = build_import_edges(clone_path, top_files)
                 cochange_edges = build_cochange_edges(commit_history[: idx + 1])
@@ -730,12 +755,22 @@ async def run_rescan(repo_id: int, job_id: int, max_commits: int) -> None:
         )
         min_bus_factor = min((entry["contributor_count"] for entry in bus_entries), default=1)
 
+        await _update_job(job_id, status="analyzing", current_stage="Extracting metrics in parallel...")
+        loop = asyncio.get_running_loop()
+        import os
+        max_workers = min(8, (os.cpu_count() or 4) + 4)
+        with ProcessPoolExecutor(max_workers=max_workers) as pool:
+            tasks = [
+                loop.run_in_executor(pool, _extract_metrics_in_worktree, clone_path, commit_data)
+                for commit_data in new_commits
+            ]
+            results = await asyncio.gather(*tasks)
+        metrics_by_sha = dict(results)
+
         for idx, commit_data in enumerate(new_commits):
             await _raise_if_cancelled(job_id)
 
-            file_metrics_map = await asyncio.to_thread(
-                extract_commit_metrics, clone_path, commit_data
-            )
+            file_metrics_map = metrics_by_sha[commit_data["full_sha"]]
             top_files = list(file_metrics_map.keys())[:50]
             import_edges = build_import_edges(clone_path, top_files)
 
