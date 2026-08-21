@@ -455,7 +455,10 @@ def test_parse_numstat_rename():
 
     assert parse_numstat_rename("src/main.py") == ("src/main.py", None)
     assert parse_numstat_rename("old_name.py => new_name.py") == ("new_name.py", "old_name.py")
-    assert parse_numstat_rename("src/{legacy => current}/app.py") == ("src/current/app.py", "src/legacy/app.py")
+    assert parse_numstat_rename("src/{legacy => current}/app.py") == (
+        "src/current/app.py",
+        "src/legacy/app.py",
+    )
 
 
 def test_resolve_renamed_path_chained_resolution():

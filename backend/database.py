@@ -18,6 +18,7 @@ engine = create_async_engine(
 )
 
 if _IS_SQLITE:
+
     @event.listens_for(engine.sync_engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
@@ -26,6 +27,7 @@ if _IS_SQLITE:
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 
+
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -33,7 +35,9 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def commit_with_retry(session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1) -> None:
+async def commit_with_retry(
+    session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1
+) -> None:
     """Commit an AsyncSession transaction with a 3-attempt retry loop for transient SQLite database locks."""
     for attempt in range(1, max_retries + 1):
         try:

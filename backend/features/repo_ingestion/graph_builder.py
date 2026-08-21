@@ -253,4 +253,3 @@ def get_top_files_by_frequency(
                 freq[canonical_path] += 1
 
     return [f for f, _ in sorted(freq.items(), key=lambda x: -x[1])[:top_n]]
-
