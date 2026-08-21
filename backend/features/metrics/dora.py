@@ -3,16 +3,20 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.shared.models import PullRequest
+from backend.shared.models import Deployment, PullRequest
 
 
 async def compute_dora_metrics(db: AsyncSession, repo_id: int) -> dict:
-    stmt = select(PullRequest).where(PullRequest.repo_id == repo_id)
-    result = await db.execute(stmt)
-    all_prs = result.scalars().all()
+    deploy_stmt = select(Deployment).where(Deployment.repo_id == repo_id, Deployment.status == "success")
+    deploy_res = await db.execute(deploy_stmt)
+    deployments = deploy_res.scalars().all()
+
+    pr_stmt = select(PullRequest).where(PullRequest.repo_id == repo_id)
+    pr_res = await db.execute(pr_stmt)
+    all_prs = pr_res.scalars().all()
     prs = [p for p in all_prs if p.merged_at is not None]
 
-    if not prs:
+    if not prs and not deployments:
         return {
             "deployment_frequency": "Low",
             "deployment_frequency_value": 0.0,
@@ -24,12 +28,18 @@ async def compute_dora_metrics(db: AsyncSession, repo_id: int) -> dict:
         }
 
     # 1. Deployment Frequency (Deployments per week)
-    now = datetime.now(prs[0].merged_at.tzinfo) if prs[0].merged_at.tzinfo else datetime.now()
-    earliest_pr = min(prs, key=lambda p: p.merged_at)
-    days_span = (now - earliest_pr.merged_at).days
-    weeks_span = max(1, days_span / 7)
-
-    weekly_deployments = len(prs) / weeks_span
+    if deployments:
+        now = datetime.now(deployments[0].deployed_at.tzinfo) if deployments[0].deployed_at and deployments[0].deployed_at.tzinfo else datetime.now()
+        earliest_dep = min(deployments, key=lambda d: d.deployed_at or now)
+        days_span = (now - (earliest_dep.deployed_at or now)).days
+        weeks_span = max(1, days_span / 7)
+        weekly_deployments = len(deployments) / weeks_span
+    else:
+        now = datetime.now(prs[0].merged_at.tzinfo) if prs[0].merged_at.tzinfo else datetime.now()
+        earliest_pr = min(prs, key=lambda p: p.merged_at)
+        days_span = (now - earliest_pr.merged_at).days
+        weeks_span = max(1, days_span / 7)
+        weekly_deployments = len(prs) / weeks_span
 
     if weekly_deployments >= 7:
         df_category = "Elite"
@@ -47,7 +57,7 @@ async def compute_dora_metrics(db: AsyncSession, repo_id: int) -> dict:
         if "hotfix" in title or "fix" in title or "revert" in title or "bug" in title:
             failure_prs.append(pr)
 
-    cfr_value = len(failure_prs) / len(prs) * 100
+    cfr_value = (len(failure_prs) / len(prs) * 100) if prs else 0.0
 
     if cfr_value <= 5:
         cfr_category = "Elite"

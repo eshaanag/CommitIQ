@@ -319,3 +319,25 @@ class JobProgressOut(BaseModel):
     progress_pct: float
     status: JobStatus
     error_message: str | None = None
+
+
+class DeploymentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    repo_id: int
+    provider: str
+    environment: str
+    status: str
+    ref: str | None = None
+    sha: str | None = None
+    pipeline_id: str | None = None
+    deployed_at: datetime | None = None
+
+
+class WebhookResponse(BaseModel):
+    status: str
+    message: str
+    deployment_id: int | None = None
+    repo_id: int | None = None
+

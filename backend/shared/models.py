@@ -41,7 +41,28 @@ class Repo(Base):
     commits = relationship("Commit", back_populates="repo", cascade="all, delete-orphan")
     analysis_jobs = relationship("AnalysisJob", back_populates="repo", cascade="all, delete-orphan")
     bus_factor = relationship("BusFactor", back_populates="repo", cascade="all, delete-orphan")
+    deployments = relationship("Deployment", back_populates="repo", cascade="all, delete-orphan")
     pull_requests = relationship("PullRequest", back_populates="repo", cascade="all, delete-orphan")
+
+
+class Deployment(Base):
+    __tablename__ = "deployments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    repo_id = Column(Integer, ForeignKey("repos.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, nullable=False, default="gitlab")
+    environment = Column(String, nullable=False, default="production")
+    status = Column(String, nullable=False)
+    ref = Column(String, nullable=True)
+    sha = Column(String, nullable=True)
+    pipeline_id = Column(String, nullable=True)
+    deployed_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    repo = relationship("Repo", back_populates="deployments")
+
+    __table_args__ = (
+        Index("idx_deployments_repo_time", "repo_id", "deployed_at"),
+    )
 
 
 class Commit(Base):
