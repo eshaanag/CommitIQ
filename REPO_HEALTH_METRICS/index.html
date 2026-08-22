@@ -1,0 +1,868 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Repository health intelligence for professional engineering teams.">
+      
+      
+      
+      
+        <link rel="prev" href="../ARCHITECTURE/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Metrics & Health - CommitIQ</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#repository-health-metrics-roadmap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="CommitIQ" class="md-header__button md-logo" aria-label="CommitIQ" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CommitIQ
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Metrics & Health
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/eshaanag/CommitIQ" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    eshaanag/CommitIQ
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Metrics & Health
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="CommitIQ" class="md-nav__button md-logo" aria-label="CommitIQ" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CommitIQ
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/eshaanag/CommitIQ" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    eshaanag/CommitIQ
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics & Health
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics & Health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Principles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#high-value-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        High-Value Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="High-Value Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-risk-velocity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Risk Velocity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-hotspot-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Hotspot Persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ownership-entropy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Ownership Entropy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-coupling-surprise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Coupling Surprise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-blast-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Blast Radius
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-architectural-cycle-severity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Architectural Cycle Severity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-change-risk-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Change Risk Classification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-recovery-and-stabilization-signal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Recovery and Stabilization Signal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-that-need-external-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics That Need External Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommended-implementation-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Implementation Order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ui-guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI Guidance
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="repository-health-metrics-roadmap">Repository Health Metrics Roadmap</h1>
+<p>CommitIQ already measures complexity, churn, dependency and co-change graph structure, semantic drift, hotspots, and bus factor. The next step is to make repo health more predictive: not just "what changed", but "what kind of risk is accumulating and where".</p>
+<h2 id="principles">Principles</h2>
+<ul>
+<li>Prefer metrics that explain a concrete engineering decision.</li>
+<li>Separate commit-level signals from whole-repo signals.</li>
+<li>Show confidence and data source limits when a metric is approximate.</li>
+<li>Avoid rewarding vanity numbers. A metric should identify risk, trend, or action.</li>
+<li>Add tests for each scoring formula before exposing it in the UI.</li>
+</ul>
+<h2 id="high-value-metrics">High-Value Metrics</h2>
+<h3 id="1-risk-velocity">1. Risk Velocity</h3>
+<p>Measures how quickly health risk is changing over recent commits.</p>
+<p>Inputs:</p>
+<ul>
+<li>Health score delta</li>
+<li>Complexity delta</li>
+<li>Churn trend</li>
+<li>Hotspot count trend</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>A repo with a moderate score but rapidly worsening trend needs attention before the absolute score looks bad.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>risk_velocity_score</code></li>
+<li><code>risk_velocity_direction</code>: improving, stable, worsening</li>
+<li><code>risk_velocity_confidence</code></li>
+</ul>
+<h3 id="2-hotspot-persistence">2. Hotspot Persistence</h3>
+<p>Tracks files that stay risky across multiple commits, not just one snapshot.</p>
+<p>Inputs:</p>
+<ul>
+<li>Repeated high complexity</li>
+<li>Repeated churn</li>
+<li>Repeated semantic drift</li>
+<li>Repeated graph centrality</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>Persistent hotspots are more important than one-off risky changes.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>persistent_hotspots</code></li>
+<li><code>hotspot_age_commits</code></li>
+<li><code>hotspot_pressure_score</code></li>
+</ul>
+<h3 id="3-ownership-entropy">3. Ownership Entropy</h3>
+<p>Measures whether ownership is healthy or concentrated.</p>
+<p>Inputs:</p>
+<ul>
+<li>Contributors per file/module</li>
+<li>Share of commits by top contributor</li>
+<li>Recency of contributor activity</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>Bus factor catches critical single-owner modules, but entropy gives a smoother risk signal.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>ownership_entropy</code></li>
+<li><code>ownership_concentration_score</code></li>
+<li><code>inactive_owner_risk</code></li>
+</ul>
+<h3 id="4-coupling-surprise">4. Coupling Surprise</h3>
+<p>Measures hidden coupling by comparing co-change frequency against normal file activity.</p>
+<p>Inputs:</p>
+<ul>
+<li>Co-change edge count</li>
+<li>Individual file change frequencies</li>
+<li>Expected co-change baseline</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>Two files that change together more often than expected may share an undocumented dependency.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>coupling_surprise_score</code></li>
+<li><code>surprising_cochange_edges</code></li>
+<li><code>hidden_coupling_modules</code></li>
+</ul>
+<h3 id="5-blast-radius">5. Blast Radius</h3>
+<p>Estimates how many files or modules are likely affected by changes to a file.</p>
+<p>Inputs:</p>
+<ul>
+<li>Import graph centrality</li>
+<li>Co-change graph centrality</li>
+<li>Entry-point flags</li>
+<li>Recent churn</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>A low-complexity file can still be risky if it sits at the center of the dependency graph.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>blast_radius_score</code></li>
+<li><code>high_blast_radius_files</code></li>
+<li><code>centrality_rank</code></li>
+</ul>
+<h3 id="6-architectural-cycle-severity">6. Architectural Cycle Severity</h3>
+<p>Moves beyond yes/no cycle detection.</p>
+<p>Inputs:</p>
+<ul>
+<li>Cycle count</li>
+<li>Cycle size</li>
+<li>Files/modules involved</li>
+<li>Whether cycles touch entry points or hotspots</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>Small isolated cycles and large core cycles should not be treated the same.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>cycle_severity_score</code></li>
+<li><code>largest_cycle_size</code></li>
+<li><code>critical_cycles</code></li>
+</ul>
+<h3 id="7-change-risk-classification">7. Change Risk Classification</h3>
+<p>Classifies commits by risk type.</p>
+<p>Inputs:</p>
+<ul>
+<li>Files changed</li>
+<li>Churn</li>
+<li>Complexity delta</li>
+<li>Semantic drift</li>
+<li>Ownership risk</li>
+<li>Blast radius</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>Users need labels like "high-churn refactor" or "central module change", not only raw scores.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>change_risk_type</code></li>
+<li><code>change_risk_score</code></li>
+<li><code>risk_reasons</code></li>
+</ul>
+<h3 id="8-recovery-and-stabilization-signal">8. Recovery and Stabilization Signal</h3>
+<p>Detects whether recent work is reducing accumulated risk.</p>
+<p>Inputs:</p>
+<ul>
+<li>Complexity decrease</li>
+<li>Hotspot count decrease</li>
+<li>Cycle reduction</li>
+<li>Broader ownership</li>
+<li>Lower churn after high-risk commits</li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>A good health system should recognize cleanup and stabilization, not only punish churn.</li>
+</ul>
+<p>Suggested output:</p>
+<ul>
+<li><code>stabilization_score</code></li>
+<li><code>risk_reduction_events</code></li>
+<li><code>cleanup_momentum</code></li>
+</ul>
+<h2 id="metrics-that-need-external-data">Metrics That Need External Data</h2>
+<p>These are valuable but should be optional because they require GitHub PR, issue, CI, or release data.</p>
+<ul>
+<li>Review latency and review depth</li>
+<li>Change failure rate proxy from reverted commits or failed CI</li>
+<li>PR size and merge risk</li>
+<li>Issue-to-code ownership mapping</li>
+<li>Release cadence and stabilization windows</li>
+<li>Test coverage trend</li>
+</ul>
+<h2 id="recommended-implementation-order">Recommended Implementation Order</h2>
+<ol>
+<li>Add commit-level <code>risk_reasons</code> so health scores become explainable.</li>
+<li>Add hotspot persistence using existing stored snapshots and graph nodes.</li>
+<li>Add ownership entropy beside bus factor.</li>
+<li>Add coupling surprise on top of existing co-change counts.</li>
+<li>Add blast-radius scoring from import and co-change centrality.</li>
+<li>Add cycle severity and expose the top cycles.</li>
+<li>Add optional GitHub API enrichment for PR/review/CI metrics.</li>
+</ol>
+<h2 id="ui-guidance">UI Guidance</h2>
+<ul>
+<li>Show the health score as a summary, not the only answer.</li>
+<li>Show top risk reasons beside each score.</li>
+<li>Keep raw metric values available, but lead with action-oriented labels.</li>
+<li>Mark approximate metrics clearly when based on shallow clone or bounded commit history.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
