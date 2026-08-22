@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
@@ -51,6 +52,11 @@ from backend.shared.schemas import (
     RepoOut,
     RescanResponse,
     TimelineResponse,
+    RepoCompareResponse,
+    RepoCompareItem,
+    RepoCompareMetrics,
+    RepoCompareDelta,
+    RepoCompareInsight,
 )
 
 logger = logging.getLogger(__name__)
@@ -1153,6 +1159,277 @@ async def list_repos(
     repo_ids = [repo.id for repo in repos]
     contrib_map = await _active_contributors_map(db, repo_ids)
     return [_repo_to_out(repo, contrib_map.get(repo.id, 0)) for repo in repos]
+
+
+async def _build_repo_compare_item(db: AsyncSession, repo: Repo) -> RepoCompareItem:
+    contrib_count = await _count_active_contributors(db, repo.id)
+    repo_out = _repo_to_out(repo, contrib_count)
+
+    result = await db.execute(
+        select(Commit, HealthSnapshot)
+        .join(HealthSnapshot, HealthSnapshot.commit_id == Commit.id)
+        .where(Commit.repo_id == repo.id)
+        .order_by(Commit.committed_at)
+    )
+    rows = result.all()
+    snapshots_chronological = [_snapshot_payload(commit, snap) for commit, snap in rows]
+    latest_snapshot = snapshots_chronological[-1] if snapshots_chronological else None
+
+    bus_factor = await _bus_factor_payload(db, repo.id)
+    min_bus = min((m["contributor_count"] for m in bus_factor.get("modules", [])), default=1)
+
+    if latest_snapshot:
+        metrics_summary = RepoCompareMetrics(
+            health_score=round(latest_snapshot["health_score"], 1),
+            avg_complexity=round(latest_snapshot["avg_complexity"], 2),
+            max_complexity=round(latest_snapshot["max_complexity"], 2),
+            churn_rate=round(latest_snapshot["churn_rate"], 4),
+            total_loc=latest_snapshot["total_loc"],
+            bus_factor_min=latest_snapshot["bus_factor_min"],
+            hotspot_count=latest_snapshot["hotspot_count"],
+            active_contributors=contrib_count,
+            total_commits=repo.total_commits,
+            analyzed_commits=repo.analyzed_commits,
+            dependency_density=round(latest_snapshot.get("dependency_density", 0.0), 2),
+            has_cycles=bool(latest_snapshot.get("has_cycles", False)),
+            avg_semantic_drift=round(latest_snapshot.get("avg_semantic_drift", 0.0), 2),
+            cc_score=round(latest_snapshot.get("cc_score", 0.0), 1),
+            churn_score=round(latest_snapshot.get("churn_score", 0.0), 1),
+            bus_score=round(latest_snapshot.get("bus_score", 0.0), 1),
+            loc_score=round(latest_snapshot.get("loc_score", 0.0), 1),
+            semantic_health_score=round(latest_snapshot.get("semantic_health_score", 100.0), 1),
+        )
+    else:
+        metrics_summary = RepoCompareMetrics(
+            active_contributors=contrib_count,
+            total_commits=repo.total_commits,
+            analyzed_commits=repo.analyzed_commits,
+            bus_factor_min=min_bus,
+        )
+
+    return RepoCompareItem(
+        repo=repo_out,
+        latest_snapshot=latest_snapshot,
+        metrics_summary=metrics_summary,
+        bus_factor=bus_factor,
+        timeline_summary=snapshots_chronological[-30:],
+    )
+
+
+def _generate_comparison_insights(
+    base: RepoCompareItem, head: RepoCompareItem
+) -> tuple[list[RepoCompareInsight], str]:
+    insights: list[RepoCompareInsight] = []
+    b_m = base.metrics_summary
+    h_m = head.metrics_summary
+    b_name = base.repo.name
+    h_name = head.repo.name
+
+    # Health score insight
+    if h_m.health_score > b_m.health_score + 2.0:
+        insights.append(
+            RepoCompareInsight(
+                category="Health Score",
+                winner=head.repo.repo_slug,
+                summary=f"{h_name} has a higher health score ({h_m.health_score:.1f} vs {b_m.health_score:.1f}).",
+            )
+        )
+    elif b_m.health_score > h_m.health_score + 2.0:
+        insights.append(
+            RepoCompareInsight(
+                category="Health Score",
+                winner=base.repo.repo_slug,
+                summary=f"{b_name} has a higher health score ({b_m.health_score:.1f} vs {h_m.health_score:.1f}).",
+            )
+        )
+    else:
+        insights.append(
+            RepoCompareInsight(
+                category="Health Score",
+                winner=None,
+                summary=f"Both repositories maintain comparable health scores ({h_m.health_score:.1f} vs {b_m.health_score:.1f}).",
+            )
+        )
+
+    # Complexity insight (lower complexity is better)
+    if b_m.avg_complexity > 0 and h_m.avg_complexity > 0:
+        if h_m.avg_complexity < b_m.avg_complexity - 0.5:
+            insights.append(
+                RepoCompareInsight(
+                    category="Code Complexity",
+                    winner=head.repo.repo_slug,
+                    summary=f"{h_name} shows lower cyclomatic complexity ({h_m.avg_complexity:.1f} vs {b_m.avg_complexity:.1f}).",
+                )
+            )
+        elif b_m.avg_complexity < h_m.avg_complexity - 0.5:
+            insights.append(
+                RepoCompareInsight(
+                    category="Code Complexity",
+                    winner=base.repo.repo_slug,
+                    summary=f"{b_name} shows lower cyclomatic complexity ({b_m.avg_complexity:.1f} vs {h_m.avg_complexity:.1f}).",
+                )
+            )
+        else:
+            insights.append(
+                RepoCompareInsight(
+                    category="Code Complexity",
+                    winner=None,
+                    summary=f"Both repositories exhibit similar average cyclomatic complexity ({h_m.avg_complexity:.1f} vs {b_m.avg_complexity:.1f}).",
+                )
+            )
+
+    # Bus factor insight (higher bus factor is better)
+    if h_m.bus_factor_min > b_m.bus_factor_min:
+        insights.append(
+            RepoCompareInsight(
+                category="Bus Factor Resilience",
+                winner=head.repo.repo_slug,
+                summary=f"{h_name} has better key-module contributor redundancy (min bus factor {h_m.bus_factor_min} vs {b_m.bus_factor_min}).",
+            )
+        )
+    elif b_m.bus_factor_min > h_m.bus_factor_min:
+        insights.append(
+            RepoCompareInsight(
+                category="Bus Factor Resilience",
+                winner=base.repo.repo_slug,
+                summary=f"{b_name} has better key-module contributor redundancy (min bus factor {b_m.bus_factor_min} vs {h_m.bus_factor_min}).",
+            )
+        )
+    else:
+        insights.append(
+            RepoCompareInsight(
+                category="Bus Factor Resilience",
+                winner=None,
+                summary=f"Both repositories have identical minimum bus factors ({h_m.bus_factor_min}).",
+            )
+        )
+
+    # Churn & Risk insight (fewer hotspots is better)
+    if h_m.hotspot_count < b_m.hotspot_count:
+        insights.append(
+            RepoCompareInsight(
+                category="Hotspots & Churn",
+                winner=head.repo.repo_slug,
+                summary=f"{h_name} has fewer high-churn hotspots ({h_m.hotspot_count} vs {b_m.hotspot_count}).",
+            )
+        )
+    elif b_m.hotspot_count < h_m.hotspot_count:
+        insights.append(
+            RepoCompareInsight(
+                category="Hotspots & Churn",
+                winner=base.repo.repo_slug,
+                summary=f"{b_name} has fewer high-churn hotspots ({b_m.hotspot_count} vs {h_m.hotspot_count}).",
+            )
+        )
+
+    # Activity insight
+    if h_m.active_contributors > b_m.active_contributors:
+        insights.append(
+            RepoCompareInsight(
+                category="Team Activity",
+                winner=head.repo.repo_slug,
+                summary=f"{h_name} has more active contributors ({h_m.active_contributors} vs {b_m.active_contributors}).",
+            )
+        )
+    elif b_m.active_contributors > h_m.active_contributors:
+        insights.append(
+            RepoCompareInsight(
+                category="Team Activity",
+                winner=base.repo.repo_slug,
+                summary=f"{b_name} has more active contributors ({b_m.active_contributors} vs {h_m.active_contributors}).",
+            )
+        )
+
+    # Overall verdict
+    score_diff = round(h_m.health_score - b_m.health_score, 1)
+    if abs(score_diff) < 2.0:
+        verdict = f"{h_name} and {b_name} have balanced overall health profiles with minimal score variance ({h_m.health_score:.1f} vs {b_m.health_score:.1f})."
+    elif score_diff > 0:
+        verdict = f"{h_name} demonstrates superior overall health (+{score_diff:.1f} pts) compared to {b_name}."
+    else:
+        verdict = f"{b_name} demonstrates superior overall health (+{abs(score_diff):.1f} pts) compared to {h_name}."
+
+    return insights, verdict
+
+
+@router.get("/compare", response_model=RepoCompareResponse)
+async def compare_repos(
+    base: str | None = Query(default=None, description="Base repository slug"),
+    head: str | None = Query(default=None, description="Head repository slug"),
+    base_slug: str | None = Query(default=None, description="Alias for base repository slug"),
+    head_slug: str | None = Query(default=None, description="Alias for head repository slug"),
+    slug1: str | None = Query(default=None, description="Alias for base repository slug"),
+    slug2: str | None = Query(default=None, description="Alias for head repository slug"),
+    repo1: str | None = Query(default=None, description="Alias for base repository slug"),
+    repo2: str | None = Query(default=None, description="Alias for head repository slug"),
+    db: AsyncSession = Depends(get_db),
+):
+    def _val(param) -> str | None:
+        if isinstance(param, str) and param.strip():
+            return param.strip()
+        return None
+
+    raw_base = _val(base) or _val(base_slug) or _val(slug1) or _val(repo1)
+    raw_head = _val(head) or _val(head_slug) or _val(slug2) or _val(repo2)
+
+    if not raw_base or not raw_head:
+        raise _http_error(
+            422,
+            "Two repository slugs must be specified for comparison (e.g. /api/repos/compare?base=repo1&head=repo2).",
+            "validation_error",
+        )
+
+    def _normalize_slug(slug_val: str) -> str:
+        s = slug_val.strip()
+        s = re.sub(r"^(?:https?://)?(?:www\.)?github\.com/", "", s, flags=re.IGNORECASE)
+        while s.endswith("/") or s.endswith(".git"):
+            s = s[:-1] if s.endswith("/") else s[:-4]
+        return s.strip("/").replace("/", "_").lower()
+
+    clean_base = _normalize_slug(raw_base)
+    clean_head = _normalize_slug(raw_head)
+
+    base_repo_res = await db.execute(
+        select(Repo).where((Repo.repo_slug == clean_base) | (Repo.repo_slug == raw_base.strip()))
+    )
+    base_repo = base_repo_res.scalar_one_or_none()
+    if not base_repo:
+        raise _http_error(404, f"Base repository '{raw_base}' not found.", "repo_not_found")
+
+    head_repo_res = await db.execute(
+        select(Repo).where((Repo.repo_slug == clean_head) | (Repo.repo_slug == raw_head.strip()))
+    )
+    head_repo = head_repo_res.scalar_one_or_none()
+    if not head_repo:
+        raise _http_error(404, f"Head repository '{raw_head}' not found.", "repo_not_found")
+
+    base_item = await _build_repo_compare_item(db, base_repo)
+    head_item = await _build_repo_compare_item(db, head_repo)
+
+    b_m = base_item.metrics_summary
+    h_m = head_item.metrics_summary
+
+    deltas = RepoCompareDelta(
+        health_score_delta=round(h_m.health_score - b_m.health_score, 1),
+        avg_complexity_delta=round(h_m.avg_complexity - b_m.avg_complexity, 2),
+        max_complexity_delta=round(h_m.max_complexity - b_m.max_complexity, 2),
+        churn_rate_delta=round(h_m.churn_rate - b_m.churn_rate, 4),
+        total_loc_delta=h_m.total_loc - b_m.total_loc,
+        bus_factor_min_delta=h_m.bus_factor_min - b_m.bus_factor_min,
+        hotspot_count_delta=h_m.hotspot_count - b_m.hotspot_count,
+        active_contributors_delta=h_m.active_contributors - b_m.active_contributors,
+        total_commits_delta=h_m.total_commits - b_m.total_commits,
+    )
+
+    insights, verdict = _generate_comparison_insights(base_item, head_item)
+
+    return RepoCompareResponse(
+        base=base_item,
+        head=head_item,
+        deltas=deltas,
+        insights=insights,
+        verdict=verdict,
+    )
 
 
 @router.get("/by-slug/{slug}", response_model=RepoOut)

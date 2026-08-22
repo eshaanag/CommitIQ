@@ -15,6 +15,18 @@ from sqlalchemy.sql import func
 
 from backend.database import Base
 
+ACTIVE_JOB_STATUSES = {
+    "queued",
+    "pending",
+    "cloning",
+    "analyzing",
+    "building_graph",
+    "computing_bus_factor",
+    "extracting",
+    "bus_factor",
+    "finalizing",
+}
+
 
 class Repo(Base):
     __tablename__ = "repos"

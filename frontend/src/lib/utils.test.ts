@@ -18,15 +18,15 @@ describe('sanitizeCommitMessage', () => {
     )
   })
 
-  it('strips unsafe HTML script tags and content', () => {
-    expect(sanitizeCommitMessage('<script>alert("xss")</script> Fix bug')).toBe('Fix bug')
-    expect(sanitizeCommitMessage('Fix bug <script src="malicious.js"></script>')).toBe('Fix bug')
-  })
-
-  it('strips HTML tags and escapes raw < and > characters', () => {
-    expect(sanitizeCommitMessage('fix: update <Header /> component')).toBe('fix: update  component')
+  it('safely escapes HTML tags and special characters', () => {
+    expect(sanitizeCommitMessage('<script>alert("xss")</script> Fix bug')).toBe(
+      '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; Fix bug'
+    )
+    expect(sanitizeCommitMessage('fix: update <Header /> component')).toBe(
+      'fix: update &lt;Header /&gt; component'
+    )
     expect(sanitizeCommitMessage('feat: value < 100 && value > 10')).toBe(
-      'feat: value &lt; 100 && value &gt; 10'
+      'feat: value &lt; 100 &amp;&amp; value &gt; 10'
     )
   })
 })

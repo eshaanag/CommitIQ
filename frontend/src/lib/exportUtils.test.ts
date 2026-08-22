@@ -8,10 +8,14 @@ import {
   buildBusFactorJson,
   exportTimelineCsv,
   exportBusFactorJson,
+  buildComparisonReportCsv,
+  exportComparisonReportCsv,
+  buildComparisonReportJson,
+  exportComparisonReportJson,
   escapeCsvCell,
   TIMELINE_CSV_HEADERS,
 } from './exportUtils'
-import type { BusFactorWrapper, HealthSnapshot } from '../types'
+import type { BusFactorWrapper, HealthSnapshot, RepoCompareResponse } from '../types'
 
 function makeSnapshot(overrides: Partial<HealthSnapshot> = {}): HealthSnapshot {
   return {
@@ -269,5 +273,148 @@ describe('exportBusFactorJson', () => {
     expect(exportBusFactorJson(undefined)).toBeNull()
     expect(exportBusFactorJson({ repo_id: 7, modules: [] })).toBeNull()
     expect(globalThis.URL.createObjectURL).not.toHaveBeenCalled()
+  })
+})
+
+describe('Comparison Report Exports', () => {
+  const mockComparison: RepoCompareResponse = {
+    base: {
+      repo: {
+        id: 1,
+        name: 'facebook/react',
+        owner: 'facebook',
+        repo_slug: 'facebook_react',
+        url: 'https://github.com/facebook/react',
+        default_branch: 'main',
+        status: 'ready',
+        total_commits: 100,
+        analyzed_commits: 100,
+        github_stars: 200000,
+        github_language: 'TypeScript',
+        github_description: 'A JavaScript library for building user interfaces',
+        ingested_at: '2026-05-31T00:00:00Z',
+        last_updated_at: '2026-05-31T00:00:00Z',
+        max_commits_setting: 500,
+        error_message: null,
+      },
+      latest_snapshot: makeSnapshot({ health_score: 85.0 }),
+      metrics_summary: {
+        health_score: 85.0,
+        avg_complexity: 3.5,
+        max_complexity: 12.0,
+        churn_rate: 0.08,
+        total_loc: 50000,
+        bus_factor_min: 3,
+        hotspot_count: 2,
+        active_contributors: 10,
+        total_commits: 100,
+        analyzed_commits: 100,
+      },
+      bus_factor: makeBusFactor(),
+      timeline_summary: [makeSnapshot({ health_score: 85.0 })],
+    },
+    head: {
+      repo: {
+        id: 2,
+        name: 'vuejs/vue',
+        owner: 'vuejs',
+        repo_slug: 'vuejs_vue',
+        url: 'https://github.com/vuejs/vue',
+        default_branch: 'main',
+        status: 'ready',
+        total_commits: 90,
+        analyzed_commits: 90,
+        github_stars: 190000,
+        github_language: 'TypeScript',
+        github_description: 'Vue framework',
+        ingested_at: '2026-05-31T00:00:00Z',
+        last_updated_at: '2026-05-31T00:00:00Z',
+        max_commits_setting: 500,
+        error_message: null,
+      },
+      latest_snapshot: makeSnapshot({ health_score: 80.0 }),
+      metrics_summary: {
+        health_score: 80.0,
+        avg_complexity: 4.5,
+        max_complexity: 16.0,
+        churn_rate: 0.12,
+        total_loc: 35000,
+        bus_factor_min: 2,
+        hotspot_count: 4,
+        active_contributors: 6,
+        total_commits: 90,
+        analyzed_commits: 90,
+      },
+      bus_factor: makeBusFactor(),
+      timeline_summary: [makeSnapshot({ health_score: 80.0 })],
+    },
+    deltas: {
+      health_score_delta: -5.0,
+      avg_complexity_delta: 1.0,
+      max_complexity_delta: 4.0,
+      churn_rate_delta: 0.04,
+      total_loc_delta: -15000,
+      bus_factor_min_delta: -1,
+      hotspot_count_delta: 2,
+      active_contributors_delta: -4,
+      total_commits_delta: -10,
+    },
+    insights: [
+      {
+        category: 'Health Score',
+        winner: 'facebook_react',
+        summary: 'facebook/react has a higher health score (85.0 vs 80.0).',
+      },
+    ],
+    verdict:
+      'facebook/react demonstrates superior overall health (+5.0 pts) compared to vuejs/vue.',
+  }
+
+  beforeEach(() => {
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
+    globalThis.URL.revokeObjectURL = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('builds valid comparison CSV matrix including metrics and verdict', () => {
+    const csv = buildComparisonReportCsv(mockComparison)
+    expect(csv).toContain('Overall Health Score')
+    expect(csv).toContain('facebook/react')
+    expect(csv).toContain('vuejs/vue')
+    expect(csv).toContain('Comparison Verdict')
+    expect(csv).toContain(mockComparison.verdict)
+  })
+
+  it('triggers comparison CSV download and returns Blob', () => {
+    const blob = exportComparisonReportCsv(mockComparison)
+    expect(blob).not.toBeNull()
+    expect(blob?.type).toBe('text/csv;charset=utf-8;')
+    expect(globalThis.URL.createObjectURL).toHaveBeenCalledOnce()
+  })
+
+  it('builds structured comparison JSON payload', () => {
+    const payload = buildComparisonReportJson(mockComparison) as Record<string, unknown>
+    expect(payload).not.toBeNull()
+    expect(payload.verdict).toBe(mockComparison.verdict)
+    expect(payload.base).toBeDefined()
+    expect(payload.head).toBeDefined()
+    expect(payload.deltas).toBeDefined()
+  })
+
+  it('triggers comparison JSON download and returns Blob', () => {
+    const blob = exportComparisonReportJson(mockComparison)
+    expect(blob).not.toBeNull()
+    expect(blob?.type).toBe('application/json;charset=utf-8;')
+    expect(globalThis.URL.createObjectURL).toHaveBeenCalledOnce()
+  })
+
+  it('handles empty input gracefully', () => {
+    expect(buildComparisonReportCsv(null)).toBe('')
+    expect(exportComparisonReportCsv(null)).toBeNull()
+    expect(buildComparisonReportJson(null)).toBeNull()
+    expect(exportComparisonReportJson(null)).toBeNull()
   })
 })

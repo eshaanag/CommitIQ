@@ -38,6 +38,7 @@ import {
   ChevronDown,
   FileText,
   FileJson,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { sanitizeCommitMessage } from '../lib/utils'
 import { exportTimelineCsv, exportBusFactorJson } from '../lib/exportUtils'
@@ -274,6 +275,14 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <button
+              onClick={() => navigate(`/compare?base=${repo.repo_slug}`)}
+              className="text-xs font-semibold text-sky-200 hover:text-white bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded-full px-4 py-2 transition-all flex items-center gap-1.5"
+              title="Compare this repository with another codebase side-by-side"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5 text-sky-300" />
+              <span>Compare</span>
+            </button>
             <button
               onClick={handleRescan}
               disabled={isRescanning}

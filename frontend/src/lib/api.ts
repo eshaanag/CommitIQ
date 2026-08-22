@@ -18,6 +18,7 @@ import type {
   DoraMetrics,
   TeamHealthMetrics,
   CodeQualityMetrics,
+  RepoCompareResponse,
 } from '../types'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
@@ -85,6 +86,15 @@ export async function rescanRepo(repoId: string | number): Promise<IngestRespons
 
 export async function getRepoBySlug(slug: string): Promise<Repo> {
   return request<Repo>(client.get(`/repos/by-slug/${slug}`))
+}
+
+export async function compareRepos(
+  baseSlug: string,
+  headSlug: string
+): Promise<RepoCompareResponse> {
+  return request<RepoCompareResponse>(
+    client.get('/repos/compare', { params: { base: baseSlug, head: headSlug } })
+  )
 }
 
 export async function getRepo(repoId: string | number): Promise<Repo> {

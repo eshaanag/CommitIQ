@@ -11,7 +11,12 @@
  *     distributions for data-pipeline / API consumers.
  */
 
-import type { BusFactorEntry, BusFactorWrapper, HealthSnapshot } from '../types'
+import type {
+  BusFactorEntry,
+  BusFactorWrapper,
+  HealthSnapshot,
+  RepoCompareResponse,
+} from '../types'
 
 // ---------------------------------------------------------------------------
 // CSV helpers
@@ -169,6 +174,119 @@ export function exportBusFactorJson(data: BusFactorWrapper | null | undefined): 
   const json = JSON.stringify(payload, null, 2)
   const blob = new Blob([json], { type: 'application/json;charset=utf-8;' })
   triggerDownload(blob, 'bus_factor_index.json')
+  return blob
+}
+
+// ---------------------------------------------------------------------------
+// Comparison Report Export
+// ---------------------------------------------------------------------------
+
+export function buildComparisonReportCsv(data: RepoCompareResponse | null | undefined): string {
+  if (!data) return ''
+
+  const baseName = data.base.repo.name
+  const headName = data.head.repo.name
+  const b = data.base.metrics_summary
+  const h = data.head.metrics_summary
+  const d = data.deltas
+
+  const rows: Array<[string, unknown, unknown, unknown]> = [
+    ['Metric', `Base: ${baseName}`, `Head: ${headName}`, 'Delta (Head - Base)'],
+    ['Overall Health Score', b.health_score, h.health_score, d.health_score_delta],
+    ['Average Complexity', b.avg_complexity, h.avg_complexity, d.avg_complexity_delta],
+    ['Maximum Complexity', b.max_complexity, h.max_complexity, d.max_complexity_delta],
+    [
+      'Churn Rate',
+      `${(b.churn_rate * 100).toFixed(1)}%`,
+      `${(h.churn_rate * 100).toFixed(1)}%`,
+      `${(d.churn_rate_delta * 100).toFixed(1)}%`,
+    ],
+    ['Total LOC', b.total_loc, h.total_loc, d.total_loc_delta],
+    ['Min Bus Factor', b.bus_factor_min, h.bus_factor_min, d.bus_factor_min_delta],
+    ['Hotspot Count', b.hotspot_count, h.hotspot_count, d.hotspot_count_delta],
+    [
+      'Active Contributors',
+      b.active_contributors,
+      h.active_contributors,
+      d.active_contributors_delta,
+    ],
+    ['Total Commits', b.total_commits, h.total_commits, d.total_commits_delta],
+    [
+      'Dependency Density',
+      b.dependency_density ?? 0,
+      h.dependency_density ?? 0,
+      (h.dependency_density ?? 0) - (b.dependency_density ?? 0),
+    ],
+    [
+      'Semantic Health Score',
+      b.semantic_health_score ?? 100,
+      h.semantic_health_score ?? 100,
+      (h.semantic_health_score ?? 100) - (b.semantic_health_score ?? 100),
+    ],
+  ]
+
+  const tableCsv = rows.map((r) => buildCsvRow(r)).join('\r\n')
+  const verdictSection = [
+    '',
+    'Comparison Verdict',
+    buildCsvRow([data.verdict]),
+    '',
+    'Key Insights',
+    buildCsvRow(['Category', 'Advantage / Winner', 'Summary']),
+    ...data.insights.map((ins) =>
+      buildCsvRow([ins.category, ins.winner || 'Tie / Comparable', ins.summary])
+    ),
+  ].join('\r\n')
+
+  return `${tableCsv}\r\n${verdictSection}`
+}
+
+export function exportComparisonReportCsv(
+  data: RepoCompareResponse | null | undefined
+): Blob | null {
+  if (!data) return null
+  const csv = buildComparisonReportCsv(data)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const baseSlug = data.base.repo.repo_slug
+  const headSlug = data.head.repo.repo_slug
+  triggerDownload(blob, `comparison_${baseSlug}_vs_${headSlug}.csv`)
+  return blob
+}
+
+export function buildComparisonReportJson(
+  data: RepoCompareResponse | null | undefined
+): object | null {
+  if (!data) return null
+  return {
+    exported_at: new Date().toISOString(),
+    base: {
+      repo_slug: data.base.repo.repo_slug,
+      name: data.base.repo.name,
+      metrics: data.base.metrics_summary,
+      bus_factor_modules_count: data.base.bus_factor.modules.length,
+    },
+    head: {
+      repo_slug: data.head.repo.repo_slug,
+      name: data.head.repo.name,
+      metrics: data.head.metrics_summary,
+      bus_factor_modules_count: data.head.bus_factor.modules.length,
+    },
+    deltas: data.deltas,
+    insights: data.insights,
+    verdict: data.verdict,
+  }
+}
+
+export function exportComparisonReportJson(
+  data: RepoCompareResponse | null | undefined
+): Blob | null {
+  const payload = buildComparisonReportJson(data)
+  if (!payload || !data) return null
+  const json = JSON.stringify(payload, null, 2)
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8;' })
+  const baseSlug = data.base.repo.repo_slug
+  const headSlug = data.head.repo.repo_slug
+  triggerDownload(blob, `comparison_${baseSlug}_vs_${headSlug}.json`)
   return blob
 }
 

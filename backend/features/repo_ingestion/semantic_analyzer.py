@@ -22,35 +22,35 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "microsoft/graphcodebert-base"
 EMBEDDING_CACHE_DIR = Path(".cache/embeddings")
 
-_tokenizer = None
-_model = None
-_model_loaded = False
-_model_attempted = False
+class _ModelHolder:
+    tokenizer = None
+    model = None
+    loaded: bool = False
+    attempted: bool = False
 
 
 def _load_model() -> bool:
     """Load GraphCodeBERT once per ingestion process."""
-    global _tokenizer, _model, _model_loaded, _model_attempted
     if not ENABLE_SEMANTIC_ANALYSIS or not ENABLE_GRAPHCODEBERT:
         return False
-    if _model_loaded:
+    if _ModelHolder.loaded:
         return True
-    if _model_attempted:
+    if _ModelHolder.attempted:
         return False
 
     try:
-        _model_attempted = True
+        _ModelHolder.attempted = True
         from transformers import AutoModel, AutoTokenizer
 
         logger.info("Loading %s for semantic drift analysis.", MODEL_NAME)
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModel.from_pretrained(MODEL_NAME)
-        _model.eval()
-        _model_loaded = True
+        _ModelHolder.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        _ModelHolder.model = AutoModel.from_pretrained(MODEL_NAME)
+        _ModelHolder.model.eval()
+        _ModelHolder.loaded = True
         return True
     except Exception as exc:
         logger.warning("GraphCodeBERT unavailable; using semantic fallback: %s", exc)
-        _model_loaded = False
+        _ModelHolder.loaded = False
         return False
 
 
@@ -91,7 +91,7 @@ def get_code_embedding(code: str, max_tokens: int = 512) -> Optional[list[float]
     try:
         import torch
 
-        inputs = _tokenizer(
+        inputs = _ModelHolder.tokenizer(
             code[:4000],
             return_tensors="pt",
             truncation=True,
@@ -99,7 +99,7 @@ def get_code_embedding(code: str, max_tokens: int = 512) -> Optional[list[float]
             padding="max_length",
         )
         with torch.no_grad():
-            outputs = _model(**inputs)
+            outputs = _ModelHolder.model(**inputs)
 
         embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
         _save_embedding(code, embedding)

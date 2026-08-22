@@ -135,6 +135,12 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-6">
             <button
+              onClick={() => navigate('/compare')}
+              className="text-slate-300 hover:text-white text-sm font-medium tracking-wide transition-colors"
+            >
+              Compare
+            </button>
+            <button
               onClick={() => navigate('/demo')}
               className="text-slate-300 hover:text-white text-sm font-medium tracking-wide transition-colors"
             >

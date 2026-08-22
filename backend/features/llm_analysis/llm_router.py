@@ -45,17 +45,6 @@ def model_for_provider(provider: LLMProvider | str) -> str:
     return "none"
 
 
-def provider_from_model(model_used: str | None) -> str:
-    model = (model_used or "").lower()
-    if "gemini" in model:
-        return LLMProvider.GEMINI.value
-    if "claude" in model or "anthropic" in model:
-        return LLMProvider.ANTHROPIC.value
-    if "cache" in model:
-        return "cache"
-    return LLMProvider.NONE.value
-
-
 async def stream_narrative(
     prompt: str,
     max_tokens: int = 600,

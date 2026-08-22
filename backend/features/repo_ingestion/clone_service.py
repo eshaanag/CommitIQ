@@ -44,42 +44,45 @@ def sanitize_repo_url(url: str) -> str:
 def parse_github_url(url: str) -> tuple[str, str]:
     """Parse GitHub URL or shorthand to ('owner', 'repo')."""
     s = sanitize_repo_url(url).strip()
+    if not s:
+        raise ValueError("Cannot parse empty GitHub URL.")
 
+    # Strip trailing slashes and .git
     while s.endswith("/") or s.endswith(".git"):
         if s.endswith("/"):
             s = s[:-1]
         elif s.endswith(".git"):
             s = s[:-4]
 
-    explicit_host = False
+    # Normalize to full URL for urlsplit
+    has_scheme = s.startswith("http://") or s.startswith("https://")
+    url_to_parse = s if has_scheme else f"https://{s}"
 
-    if s.startswith("https://"):
-        s = s[len("https://") :]
-        explicit_host = True
-    elif s.startswith("http://"):
-        s = s[len("http://") :]
-        explicit_host = True
+    parsed = urllib.parse.urlsplit(url_to_parse)
+    netloc = (parsed.netloc or "").lower()
+    if netloc.startswith("www."):
+        netloc = netloc[4:]
 
-    if s.startswith("www."):
-        s = s[4:]
+    path = parsed.path.strip("/")
+    parts = [p for p in path.split("/") if p]
 
-    if s.startswith("github.com/"):
-        s = s[len("github.com/") :]
-    elif explicit_host:
+    if netloc == "github.com":
+        if len(parts) < 2 or not parts[0] or not parts[1]:
+            raise ValueError(
+                f"Cannot parse GitHub URL: {_redact_secret(url)}. Expected format 'owner/repo' or 'github.com/owner/repo'."
+            )
+        owner, repo = parts[0], parts[1]
+    elif not has_scheme and not netloc and len(parts) == 2:
+        # Shorthand 'owner/repo'
+        owner, repo = parts[0], parts[1]
+    elif not has_scheme and len(parts) == 1 and "/" in s:
+        # Shorthand where netloc caught the owner (e.g. owner/repo without scheme)
+        owner, repo = netloc, parts[0]
+    else:
         raise ValueError(
             f"Cannot parse GitHub URL: {_redact_secret(url)}. Expected a github.com repository URL."
         )
 
-    parts = s.split("/")
-    if len(parts) < 2 or not parts[0] or not parts[1]:
-        raise ValueError(
-            f"Cannot parse GitHub URL: {_redact_secret(url)}. Expected format 'owner/repo' or 'github.com/owner/repo'."
-        )
-
-    owner = parts[0]
-    repo = parts[1]
-
-    # Validate owner/repo format to avoid invalid directory names or bad parameters
     if not _is_valid_github_name(owner) or not _is_valid_github_name(repo):
         raise ValueError(f"Invalid owner or repository name in URL: {_redact_secret(url)}")
 
@@ -100,8 +103,8 @@ def get_storage_usage_mb(path: Path) -> float:
         try:
             if p.is_file() and not p.is_symlink():
                 total += p.stat().st_size
-        except OSError:
-            pass
+        except OSError as exc:
+            logger.debug("Could not read file size for %s: %s", p, exc)
     return total / (1024 * 1024)
 
 
@@ -217,8 +220,8 @@ def _remove_readonly(func, path, _excinfo):
     try:
         os.chmod(path, stat.S_IWRITE)
         func(path)
-    except Exception:
-        pass
+    except OSError as exc:
+        logger.debug("Could not change file permissions on %s: %s", path, exc)
 
 
 def cleanup_repo(repo_id: int) -> bool:
@@ -240,7 +243,7 @@ def cleanup_repo(repo_id: int) -> bool:
 
 async def fetch_github_metadata(owner: str, repo: str) -> dict:
     """Optional metadata fetch — cosmetic only, skipped on rate limit."""
-    if not _is_valid_github_name(owner) or not _is_valid_github_name(repo):
+    if not re.fullmatch(r"^[a-zA-Z0-9_.-]{1,100}$", owner) or not re.fullmatch(r"^[a-zA-Z0-9_.-]{1,100}$", repo):
         return {"github_stars": None, "github_language": None, "github_description": None}
 
     headers = {"Accept": "application/vnd.github+json"}
@@ -260,8 +263,8 @@ async def fetch_github_metadata(owner: str, repo: str) -> dict:
                     "github_language": data.get("language"),
                     "github_description": data.get("description", "")[:300],
                 }
-    except Exception:
-        pass  # Metadata is cosmetic — never fail ingestion for this
+    except Exception as exc:
+        logger.debug("Failed to fetch GitHub metadata: %s", exc)
     return {"github_stars": None, "github_language": None, "github_description": None}
 
 

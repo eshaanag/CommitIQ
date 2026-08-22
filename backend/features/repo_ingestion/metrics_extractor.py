@@ -181,8 +181,8 @@ def count_repo_files_and_loc(repo_path: Path) -> tuple[int, int]:
                         loc = sum(1 for line in f if line.strip())
                     total_loc += loc
                     file_count += 1
-                except OSError:
-                    pass
+                except OSError as exc:
+                    logger.debug("Failed to read file %s for LOC estimation: %s", full_path, exc)
 
     return file_count, total_loc
 

@@ -22,14 +22,13 @@ export function formatDateShort(iso: string): string {
 export function sanitizeCommitMessage(message?: string | null): string {
   if (!message) return 'No commit message'
 
-  let cleaned = message.replace(
-    /<\s*(?:script|style|iframe)[\s\S]*?<\s*\/\s*(?:script|style|iframe)\s*>/gi,
-    ''
-  )
-  while (/<\s*\/?[a-zA-Z][^>]*>/i.test(cleaned)) {
-    cleaned = cleaned.replace(/<\s*\/?[a-zA-Z][^>]*>/gi, '')
-  }
-  cleaned = cleaned.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim()
+  const escaped = message
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim()
 
-  return cleaned || 'No commit message'
+  return escaped || 'No commit message'
 }

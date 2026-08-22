@@ -112,14 +112,11 @@ def resolve_author_email(raw_email: str | None) -> str:
 
 def sanitize_commit_message(message: str | None) -> str:
     """
-    Sanitizes commit messages to strip unsafe HTML tags and escape < / > characters.
+    Sanitizes commit messages to safely escape HTML characters.
     """
     if not message:
         return ""
-    msg = re.sub(r"(?is)<\s*(?:script|style|iframe)\b[^>]*>.*?<\s*/\s*(?:script|style|iframe)\s*>", "", message)
-    msg = re.sub(r"<[^>]+>", "", msg)
-    msg = msg.replace("<", "&lt;").replace(">", "&gt;")
-    return msg.strip()[:500]
+    return html.escape(message.strip())[:500]
 
 
 def stream_git_diff_lines(

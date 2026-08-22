@@ -444,3 +444,58 @@ export interface CodeQualityMetrics {
   ai_assisted_commits: number
   ai_impact_score: string
 }
+
+export interface RepoCompareMetrics {
+  health_score: number
+  avg_complexity: number
+  max_complexity: number
+  churn_rate: number
+  total_loc: number
+  bus_factor_min: number
+  hotspot_count: number
+  active_contributors: number
+  total_commits: number
+  analyzed_commits: number
+  dependency_density?: number
+  has_cycles?: boolean
+  avg_semantic_drift?: number
+  cc_score?: number
+  churn_score?: number
+  bus_score?: number
+  loc_score?: number
+  semantic_health_score?: number
+}
+
+export interface RepoCompareItem {
+  repo: Repo
+  latest_snapshot: HealthSnapshot | null
+  metrics_summary: RepoCompareMetrics
+  bus_factor: BusFactorWrapper
+  timeline_summary: HealthSnapshot[]
+}
+
+export interface RepoCompareDelta {
+  health_score_delta: number
+  avg_complexity_delta: number
+  max_complexity_delta: number
+  churn_rate_delta: number
+  total_loc_delta: number
+  bus_factor_min_delta: number
+  hotspot_count_delta: number
+  active_contributors_delta: number
+  total_commits_delta: number
+}
+
+export interface RepoCompareInsight {
+  category: string
+  winner: string | null
+  summary: string
+}
+
+export interface RepoCompareResponse {
+  base: RepoCompareItem
+  head: RepoCompareItem
+  deltas: RepoCompareDelta
+  insights: RepoCompareInsight[]
+  verdict: string
+}

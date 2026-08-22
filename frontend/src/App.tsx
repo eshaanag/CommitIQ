@@ -8,6 +8,7 @@ const AnalyzePage = lazy(() => import('./pages/AnalyzePage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const CommitDetailPage = lazy(() => import('./pages/CommitDetailPage'))
 const DemoPage = lazy(() => import('./pages/DemoPage'))
+const ComparePage = lazy(() => import('./pages/ComparePage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 function RouteFallback() {
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/analyze" element={<AnalyzePage />} />
             <Route path="/dashboard/:repoSlug" element={<DashboardPage />} />
             <Route path="/dashboard/:repoSlug/commit/:sha" element={<CommitDetailPage />} />
+            <Route path="/compare" element={<ComparePage />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

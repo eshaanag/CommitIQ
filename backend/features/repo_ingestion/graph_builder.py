@@ -10,6 +10,14 @@ from collections import defaultdict
 from pathlib import Path
 
 
+# ---------------------------------------------------------------------------
+# Common file-extension lists used by resolvers
+# ---------------------------------------------------------------------------
+_TS_EXTS = ["", ".ts", ".tsx", ".js", ".jsx", ".d.ts", ".mjs", ".cjs"]
+_GO_EXTS = ["", ".go"]
+_ALL_EXTS = ["", ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".d.ts", ".mjs", ".cjs"]
+
+
 def extract_python_imports(file_content: str) -> list[str]:
     try:
         tree = ast.parse(file_content)
@@ -61,11 +69,130 @@ def extract_js_imports(file_content: str) -> list[str]:
     return unique_imports
 
 
-def resolve_import_to_file(import_path: str, source_file: str, all_files: list[str]) -> str | None:
+# ---------------------------------------------------------------------------
+# Issue #348: Go import extraction
+# ---------------------------------------------------------------------------
+
+
+def _strip_go_comments(content: str) -> str:
+    """Remove // single-line and /* */ block comments from Go source.
+
+    This prevents commented-out import lines (// import "fmt") from
+    being picked up by the regex patterns.
     """
-    Try to resolve an import path to an actual file in the repo.
-    Supports relative imports, direct match, and suffix/sub-path match (e.g. monorepo packages).
-    Returns the resolved path or None if not resolvable.
+    # Remove block comments /* ... */ (non-greedy, multiline)
+    content = re.sub(r"/\*[\s\S]*?\*/", "", content)
+    # Remove single-line comments // ...
+    lines = []
+    for line in content.split("\n"):
+        # Find // that's not inside a string (basic heuristic: split on //)
+        # Go strings use double quotes; raw strings use backticks.
+        # We only strip // that appears outside of a string literal.
+        in_string = False
+        in_raw_string = False
+        stripped = []
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            if ch == '"' and not in_raw_string:
+                in_string = not in_string
+            elif ch == "`" and not in_string:
+                in_raw_string = not in_raw_string
+            elif (
+                ch == "/"
+                and i + 1 < len(line)
+                and line[i + 1] == "/"
+                and not in_string
+                and not in_raw_string
+            ):
+                break  # Rest of the line is a comment
+            stripped.append(ch)
+            i += 1
+        lines.append("".join(stripped))
+    return "\n".join(lines)
+
+
+def extract_go_imports(file_content: str) -> list[str]:
+    """Extract Go import paths from source code.
+
+    Handles two syntax forms:
+      1. Single import:  import "fmt"  /  import alias "pkg/path"
+      2. Grouped import block:
+         import (
+             "net/http"
+             "internal/service"
+             f "fmt"           // aliased
+             _ "image/png"     // blank identifier (side-effect import)
+         )
+
+    Commented-out imports (// import "fmt") are ignored.
+
+    Args:
+        file_content: The full text of a .go file.
+
+    Returns:
+        A de-duplicated list of import path strings (e.g. "fmt",
+        "net/http", "internal/service").  Package aliases and blank
+        identifiers are stripped — only the path is returned.
+    """
+    # Strip comments first so commented-out imports aren't picked up.
+    cleaned = _strip_go_comments(file_content)
+
+    imports: list[str] = []
+
+    # 1. Single-line imports: import "path" or import alias "path"
+    #    Matches: import "fmt"
+    #             import f "fmt"
+    #             import _ "image/png"
+    #             import . "math"    (dot import)
+    single_pattern = r"""^\s*import\s+(?:\.\s+|_\s+|\w+\s+)?["`]([^"`]+)["`]"""
+    for match in re.finditer(single_pattern, cleaned, re.MULTILINE):
+        imports.append(match.group(1))
+
+    # 2. Grouped import blocks: import ( ... )
+    #    Extract everything between import ( and the closing )
+    block_pattern = r"""^\s*import\s*\(([\s\S]*?)\)"""
+    for block_match in re.finditer(block_pattern, cleaned, re.MULTILINE):
+        block = block_match.group(1)
+        # Within the block, each line is either:
+        #   "path"
+        #   alias "path"
+        #   _ "path"
+        #   . "path"
+        line_pattern = r"""(?:\.\s+|_\s+|\w+\s+)?["`]([^"`]+)["`]"""
+        for line_match in re.finditer(line_pattern, block):
+            imports.append(line_match.group(1))
+
+    # De-duplicate while preserving order
+    seen: set[str] = set()
+    unique: list[str] = []
+    for imp in imports:
+        imp = imp.strip()
+        if imp and imp not in seen:
+            seen.add(imp)
+            unique.append(imp)
+
+    return unique
+
+
+# ---------------------------------------------------------------------------
+# Issue #348: Extended import resolver with path-alias support
+# ---------------------------------------------------------------------------
+
+
+def resolve_import_to_file(
+    import_path: str, source_file: str, all_files: list[str]
+) -> str | None:
+    """Resolve an import path to an actual file in the repo.
+
+    Supports:
+      - Relative imports (./  ../)
+      - Direct match against all_files
+      - Suffix / sub-path match (monorepo packages)
+      - TypeScript path aliases (@/, ~/, #/)
+      - Go package paths matched against repo directory structure
+
+    Returns the resolved relative file path, or None if not resolvable.
     """
     import_path_clean = import_path.replace("\\", "/").strip()
     if not import_path_clean:
@@ -74,12 +201,13 @@ def resolve_import_to_file(import_path: str, source_file: str, all_files: list[s
     # Helper set of files for O(1) lookup
     file_set = set(all_files)
 
+    # ── 1. Relative imports (./ or ../) ──────────────────────────────
     if import_path_clean.startswith("."):
         source_dir = os.path.dirname(source_file)
         candidate = os.path.normpath(os.path.join(source_dir, import_path_clean))
         candidate_clean = candidate.replace("\\", "/")
 
-        for ext in ["", ".js", ".ts", ".jsx", ".tsx", ".py"]:
+        for ext in _ALL_EXTS:
             with_ext = candidate_clean + ext
             if with_ext in file_set:
                 return with_ext
@@ -91,8 +219,79 @@ def resolve_import_to_file(import_path: str, source_file: str, all_files: list[s
                 return index_norm
         return None
 
-    # 2. Handle absolute/package/module-alias imports (e.g. monorepo sub-paths)
-    for ext in ["", ".js", ".ts", ".jsx", ".tsx", ".py"]:
+    # ── 2. TypeScript / JavaScript path aliases ──────────────────────
+    # Common alias prefixes: @/, ~/, #/, @/, @@/, src/
+    # Strategy: strip the alias prefix and try to match the remainder
+    # against the project root, src/, and other common source dirs.
+    alias_prefixes = ["@/", "~/", "#/", "@@/", "@/"]
+    stripped = None
+    for prefix in alias_prefixes:
+        if import_path_clean.startswith(prefix):
+            stripped = import_path_clean[len(prefix) :]
+            break
+
+    if stripped is not None:
+        # Try matching the stripped path against common source roots
+        candidate_roots = [
+            stripped,  # project root
+            f"src/{stripped}",  # src/
+            f"app/{stripped}",  # app/ (Next.js)
+            f"lib/{stripped}",  # lib/
+            f"packages/{stripped}",  # monorepo packages
+        ]
+        for candidate in candidate_roots:
+            for ext in _TS_EXTS:
+                with_ext = candidate + ext
+                if with_ext in file_set:
+                    return with_ext
+                index = f"{candidate}/index{ext}"
+                if index in file_set:
+                    return index
+
+        # Suffix match for aliased paths (e.g. @/components/Button → src/components/Button.tsx)
+        for f in all_files:
+            f_clean = f.replace("\\", "/")
+            for ext in _TS_EXTS:
+                suffix = stripped + ext
+                if f_clean.endswith("/" + suffix):
+                    return f
+
+    # ── 3. Go package path resolution ────────────────────────────────
+    # Go imports look like "internal/service/handler" or "github.com/user/repo/pkg".
+    # We try to match the last N path segments against the repo's directory structure.
+    if "/" in import_path_clean:
+        parts = import_path_clean.split("/")
+        # Try matching progressively shorter suffixes of the import path
+        # against file paths in the repo.
+        # e.g. "github.com/user/repo/internal/service" → try:
+        #   - "internal/service" as a directory → "internal/service/*.go"
+        #   - "service" as a directory → "service/*.go"
+        for start in range(len(parts)):
+            suffix_path = "/".join(parts[start:])
+            if not suffix_path:
+                continue
+
+            # Direct file match (e.g. "internal/service/handler" → "internal/service/handler.go")
+            for ext in _GO_EXTS:
+                with_ext = suffix_path + ext
+                if with_ext in file_set:
+                    return with_ext
+
+            # Suffix match (e.g. "internal/service" → "cmd/server/internal/service/handler.go")
+            for f in all_files:
+                f_clean = f.replace("\\", "/")
+                for ext in _GO_EXTS:
+                    suffix = suffix_path + ext
+                    if f_clean.endswith("/" + suffix):
+                        return f
+                    # Also try matching the directory: if import is "internal/service"
+                    # and file is "internal/service/handler.go", match the directory.
+                    if f_clean.startswith(suffix_path + "/") and f_clean.endswith(".go"):
+                        # Return the first .go file found in that directory
+                        return f
+
+    # ── 4. Direct / package-path match (original logic) ─────────────
+    for ext in _ALL_EXTS:
         with_ext = import_path_clean + ext
         if with_ext in file_set:
             return with_ext
@@ -101,7 +300,7 @@ def resolve_import_to_file(import_path: str, source_file: str, all_files: list[s
     if "/" in import_path_clean:
         for f in all_files:
             f_clean = f.replace("\\", "/")
-            for ext in ["", ".js", ".ts", ".jsx", ".tsx", ".py"]:
+            for ext in _ALL_EXTS:
                 suffix = import_path_clean + ext
                 if f_clean.endswith("/" + suffix):
                     return f
@@ -126,6 +325,8 @@ def build_import_edges(repo_path: Path, all_files: list[str]) -> list[dict]:
             raw_imports = extract_python_imports(content)
         elif ext in {".js", ".ts", ".jsx", ".tsx"}:
             raw_imports = extract_js_imports(content)
+        elif ext == ".go":
+            raw_imports = extract_go_imports(content)
         else:
             continue
 

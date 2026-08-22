@@ -341,3 +341,59 @@ class WebhookResponse(BaseModel):
     deployment_id: int | None = None
     repo_id: int | None = None
 
+
+class RepoCompareMetrics(BaseModel):
+    health_score: float = 0.0
+    avg_complexity: float = 0.0
+    max_complexity: float = 0.0
+    churn_rate: float = 0.0
+    total_loc: int = 0
+    bus_factor_min: int = 1
+    hotspot_count: int = 0
+    active_contributors: int = 0
+    total_commits: int = 0
+    analyzed_commits: int = 0
+    dependency_density: float = 0.0
+    has_cycles: bool = False
+    avg_semantic_drift: float = 0.0
+    cc_score: float = 0.0
+    churn_score: float = 0.0
+    bus_score: float = 0.0
+    loc_score: float = 0.0
+    semantic_health_score: float = 100.0
+
+
+class RepoCompareItem(BaseModel):
+    repo: RepoOut
+    latest_snapshot: HealthSnapshotOut | None = None
+    metrics_summary: RepoCompareMetrics
+    bus_factor: BusFactorWrapper
+    timeline_summary: list[HealthSnapshotOut] = Field(default_factory=list)
+
+
+class RepoCompareDelta(BaseModel):
+    health_score_delta: float = 0.0
+    avg_complexity_delta: float = 0.0
+    max_complexity_delta: float = 0.0
+    churn_rate_delta: float = 0.0
+    total_loc_delta: int = 0
+    bus_factor_min_delta: int = 0
+    hotspot_count_delta: int = 0
+    active_contributors_delta: int = 0
+    total_commits_delta: int = 0
+
+
+class RepoCompareInsight(BaseModel):
+    category: str
+    winner: str | None = None
+    summary: str
+
+
+class RepoCompareResponse(BaseModel):
+    base: RepoCompareItem
+    head: RepoCompareItem
+    deltas: RepoCompareDelta
+    insights: list[RepoCompareInsight] = Field(default_factory=list)
+    verdict: str
+
+

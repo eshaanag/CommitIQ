@@ -214,6 +214,23 @@ async def check_database_migrations(
         }
 
 
+async def _ensure_sqlite_columns(conn) -> None:
+    """Ensure newly added columns in SQLAlchemy models exist in SQLite tables."""
+    if not _IS_SQLITE:
+        return
+    for table_name, table in Base.metadata.tables.items():
+        existing_cols = await _sqlite_columns(conn, table_name)
+        if not existing_cols:
+            continue
+        for column in table.columns:
+            if column.name not in existing_cols:
+                col_type = column.type.compile(engine.sync_engine.dialect)
+                try:
+                    await conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}"))
+                except Exception as exc:
+                    logger.debug(f"Column {column.name} check on {table_name}: {exc}")
+
+
 async def init_db(env: str = ENVIRONMENT):
     """Initialize database schema for local SQLite and hosted Postgres."""
     from backend.shared import models  # noqa: F401
@@ -223,20 +240,11 @@ async def init_db(env: str = ENVIRONMENT):
             await conn.execute(text("PRAGMA foreign_keys=ON"))
 
         await conn.run_sync(Base.metadata.create_all)
+        await _ensure_sqlite_columns(conn)
         migration_res = await check_database_migrations(conn, env=env)
 
     logger.info("Database initialized", extra={"migration_status": migration_res})
     await mark_stale_jobs_as_error()
-
-    # Auto-seed the facebook-react demo data if database is empty
-    from backend.demo_seeder import seed_demo_data_if_empty
-
-    async with AsyncSessionLocal() as session:
-        try:
-            await seed_demo_data_if_empty(session)
-        except Exception as exc:
-            logger.error(f"Failed to auto-seed demo data: {exc}", exc_info=True)
-
     return migration_res
 
 
@@ -249,8 +257,7 @@ async def mark_stale_jobs_as_error() -> None:
     from sqlalchemy import select
 
     from backend.features.repo_ingestion.clone_service import REPO_STORAGE_PATH, cleanup_repo
-    from backend.features.repo_ingestion.router import ACTIVE_JOB_STATUSES
-    from backend.shared.models import AnalysisJob
+    from backend.shared.models import ACTIVE_JOB_STATUSES, AnalysisJob
 
     logger.info("Checking for stale/orphaned analysis jobs on startup...")
     async with AsyncSessionLocal() as session:

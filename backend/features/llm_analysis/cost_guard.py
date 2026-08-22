@@ -2,7 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import LLM_BUDGET_PER_REPO_USD, LLM_MAX_CALLS
-from backend.features.llm_analysis.llm_router import provider_from_model
 from backend.shared.models import LLMNarrative
 
 PROVIDER_COSTS_PER_1K_OUTPUT = {
@@ -10,6 +9,17 @@ PROVIDER_COSTS_PER_1K_OUTPUT = {
     "gemini": 0.00035,
     "cache": 0.0,
 }
+
+
+def provider_from_model(model_used: str | None) -> str:
+    model = (model_used or "").lower()
+    if "gemini" in model:
+        return "gemini"
+    if "claude" in model or "anthropic" in model:
+        return "anthropic"
+    if "cache" in model:
+        return "cache"
+    return "none"
 
 
 async def check_budget(repo_id: int, db: AsyncSession) -> bool:
