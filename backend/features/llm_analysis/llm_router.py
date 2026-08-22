@@ -7,7 +7,6 @@ import logging
 from enum import Enum
 from typing import AsyncGenerator
 
-import pybreaker
 from backend.config import ANTHROPIC_API_KEY, GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -15,8 +14,22 @@ logger = logging.getLogger(__name__)
 ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 GEMINI_MODEL = "gemini-2.5-flash"
 
-# Circuit breaker: max 3 failures, reset after 60 seconds
-llm_breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
+try:
+    import pybreaker
+
+    llm_breaker = pybreaker.CircuitBreaker(fail_max=3, reset_timeout=60)
+    CircuitBreakerError = pybreaker.CircuitBreakerError
+except ImportError:
+    pybreaker = None
+
+    def _dummy_decorator(func):
+        return func
+
+    llm_breaker = _dummy_decorator
+
+    class CircuitBreakerError(Exception):
+        pass
+
 
 class LLMProvider(str, Enum):
     ANTHROPIC = "anthropic"
@@ -69,7 +82,7 @@ async def stream_narrative(
                 async for token in _stream_gemini(prompt, max_tokens):
                     yield token, LLMProvider.GEMINI
                 return
-            except pybreaker.CircuitBreakerError:
+            except CircuitBreakerError:
                 raise
             except Exception as exc:
                 logger.error("Gemini fallback failed: %s", exc)
@@ -77,7 +90,7 @@ async def stream_narrative(
         raise RuntimeError(
             "All LLM providers unavailable. Configure ANTHROPIC_API_KEY or GEMINI_API_KEY."
         )
-    except pybreaker.CircuitBreakerError:
+    except CircuitBreakerError:
         logger.error("LLM circuit breaker open. APIs temporarily degraded.")
         fallback_msg = "AI services are temporarily degraded due to high failure rates. Please try again later.\n\nRisk level: Unknown"
         yield fallback_msg, LLMProvider.NONE

@@ -1,23 +1,25 @@
 import hashlib
-import os
 import logging
-import redis.asyncio as redis
+import os
 
 logger = logging.getLogger(__name__)
 
-# Try to get REDIS_URL from env, otherwise fallback to localhost for development
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 _redis_client = None
 
-def _get_redis() -> redis.Redis | None:
+
+def _get_redis():
     global _redis_client
-    if not _redis_client:
-        try:
-            _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
-        except Exception as exc:
-            logger.error("Failed to initialize Redis client: %s", exc)
-            return None
-    return _redis_client
+    if _redis_client is not None:
+        return _redis_client
+    try:
+        import redis.asyncio as redis
+
+        _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        return _redis_client
+    except Exception as exc:
+        logger.debug("Redis client unavailable: %s", exc)
+        return None
 
 
 def make_cache_key(repo_id: int, full_sha: str, prompt_type: str) -> str:
