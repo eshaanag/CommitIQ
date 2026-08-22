@@ -158,6 +158,7 @@ Missing but obviously needed:
 - 2026-05-31: Added repository governance checks for pushes and pull requests, plus PR metadata enforcement, Dependabot, and CODEOWNERS, because open-source-style repositories need automated guardrails beyond test execution.
 - 2026-06-04: Added Playwright Chromium coverage for the landing-to-dashboard flow with intercepted REST/SSE contracts, because the existing jsdom app smoke did not exercise actual browser routing, EventSource, or rendering.
 - 2026-06-04: Made theme persistence non-fatal when browser storage is unavailable, because theme controls should still render and switch under restricted storage environments.
+- 2026-08-22: Implemented high-performance Redis caching layer for LLM narrative responses to prevent redundant API calls (#335).
 - 2026-06-07: Fixed local end-to-end scan regressions after browser testing exposed proxy env loading, a missing SQLAlchemy `greenlet` runtime dependency, SQLite naive timestamp duration math, stale dashboard commit selections after rescans, invalid bus-factor table markup, and progress-stream disconnect errors.
 - 2026-06-07: Made streaming LLM narratives match the non-streaming demo fallback, because a no-key local/demo environment should still show a useful static-metrics explanation instead of a failure card.
 - 2026-06-07: Opted into React Router v7 future flags to remove route deprecation warnings in development; remaining Recharts dev warnings come from the installed `recharts@2.12.7` internals.
