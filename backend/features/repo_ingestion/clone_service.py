@@ -243,7 +243,9 @@ def cleanup_repo(repo_id: int) -> bool:
 
 async def fetch_github_metadata(owner: str, repo: str) -> dict:
     """Optional metadata fetch — cosmetic only, skipped on rate limit."""
-    if not re.fullmatch(r"^[a-zA-Z0-9_.-]{1,100}$", owner) or not re.fullmatch(r"^[a-zA-Z0-9_.-]{1,100}$", repo):
+    if not re.fullmatch(r"^[a-zA-Z0-9_.-]{1,100}$", owner) or not re.fullmatch(
+        r"^[a-zA-Z0-9_.-]{1,100}$", repo
+    ):
         return {"github_stars": None, "github_language": None, "github_description": None}
 
     headers = {"Accept": "application/vnd.github+json"}
@@ -255,7 +257,9 @@ async def fetch_github_metadata(owner: str, repo: str) -> dict:
 
     try:
         async with httpx.AsyncClient(timeout=5) as client:
-            r = await client.get(f"https://api.github.com/repos/{safe_owner}/{safe_repo}", headers=headers)
+            r = await client.get(
+                f"https://api.github.com/repos/{safe_owner}/{safe_repo}", headers=headers
+            )
             if r.status_code == 200:
                 data = r.json()
                 return {
@@ -294,11 +298,14 @@ query GetPullRequests($owner: String!, $repo: String!, $cursor: String) {
 """
 
 
-async def fetch_github_pull_requests_graphql(owner: str, repo: str, limit: int = 500) -> list[dict] | None:
+async def fetch_github_pull_requests_graphql(
+    owner: str, repo: str, limit: int = 500
+) -> list[dict] | None:
     """Fetch pull requests via GitHub GraphQL API to reduce rate limit consumption."""
     try:
         from dateutil.parser import parse as parse_date
     except ImportError:
+
         def parse_date(s: str):
             return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
@@ -322,12 +329,16 @@ async def fetch_github_pull_requests_graphql(owner: str, repo: str, limit: int =
                     headers=headers,
                 )
                 if response.status_code != 200:
-                    logger.warning(f"GraphQL PR query returned status {response.status_code} for {owner}/{repo}")
+                    logger.warning(
+                        f"GraphQL PR query returned status {response.status_code} for {owner}/{repo}"
+                    )
                     return None
 
                 data = response.json()
                 if "errors" in data or "data" not in data or not data["data"].get("repository"):
-                    logger.warning(f"GraphQL PR query errors or empty repository for {owner}/{repo}")
+                    logger.warning(
+                        f"GraphQL PR query errors or empty repository for {owner}/{repo}"
+                    )
                     return None
 
                 pr_data = data["data"]["repository"]["pullRequests"]
@@ -339,7 +350,11 @@ async def fetch_github_pull_requests_graphql(owner: str, repo: str, limit: int =
                     merged_at = item.get("mergedAt")
                     closed_at = item.get("closedAt")
                     author_obj = item.get("author") or {}
-                    author_login = author_obj.get("login", "unknown") if isinstance(author_obj, dict) else "unknown"
+                    author_login = (
+                        author_obj.get("login", "unknown")
+                        if isinstance(author_obj, dict)
+                        else "unknown"
+                    )
 
                     state_raw = (item.get("state") or "unknown").lower()
 
@@ -437,4 +452,3 @@ async def fetch_github_pull_requests(owner: str, repo: str, limit: int = 500) ->
             return graphql_prs
 
     return await fetch_github_pull_requests_rest(owner, repo, limit)
-

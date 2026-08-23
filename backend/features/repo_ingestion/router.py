@@ -44,6 +44,7 @@ def _extract_metrics_in_worktree(repo_path: Path, commit_data: dict) -> tuple[st
                 capture_output=True,
             )
 
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, desc, func, select
@@ -87,14 +88,14 @@ from backend.shared.schemas import (
     IngestResponse,
     JobProgressOut,
     LLMUsageOut,
+    RepoCompareDelta,
+    RepoCompareInsight,
+    RepoCompareItem,
+    RepoCompareMetrics,
+    RepoCompareResponse,
     RepoOut,
     RescanResponse,
     TimelineResponse,
-    RepoCompareResponse,
-    RepoCompareItem,
-    RepoCompareMetrics,
-    RepoCompareDelta,
-    RepoCompareInsight,
 )
 
 logger = logging.getLogger(__name__)
@@ -520,12 +521,16 @@ async def run_ingestion(
             prev_health = None
             prev_avg_complexity = 0.0
 
-            await _update_job(job_id, status="analyzing", current_stage="Extracting metrics in parallel...")
+            await _update_job(
+                job_id, status="analyzing", current_stage="Extracting metrics in parallel..."
+            )
             loop = asyncio.get_running_loop()
             max_workers = min(8, (os.cpu_count() or 4) + 4)
             with ProcessPoolExecutor(max_workers=max_workers) as pool:
                 tasks = [
-                    loop.run_in_executor(pool, _extract_metrics_in_worktree, clone_path, commit_data)
+                    loop.run_in_executor(
+                        pool, _extract_metrics_in_worktree, clone_path, commit_data
+                    )
                     for commit_data in commit_history
                 ]
                 results = await asyncio.gather(*tasks)
@@ -787,7 +792,9 @@ async def run_rescan(repo_id: int, job_id: int, max_commits: int) -> None:
         )
         min_bus_factor = min((entry["contributor_count"] for entry in bus_entries), default=1)
 
-        await _update_job(job_id, status="analyzing", current_stage="Extracting metrics in parallel...")
+        await _update_job(
+            job_id, status="analyzing", current_stage="Extracting metrics in parallel..."
+        )
         loop = asyncio.get_running_loop()
         max_workers = min(8, (os.cpu_count() or 4) + 4)
         with ProcessPoolExecutor(max_workers=max_workers) as pool:

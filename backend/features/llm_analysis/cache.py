@@ -39,7 +39,9 @@ async def get_cached_narrative(cache_key: str) -> str | None:
         return None
 
 
-async def set_cached_narrative(cache_key: str, narrative: str, ttl_seconds: int = 86400 * 30) -> None:
+async def set_cached_narrative(
+    cache_key: str, narrative: str, ttl_seconds: int = 86400 * 30
+) -> None:
     client = _get_redis()
     if not client:
         return
