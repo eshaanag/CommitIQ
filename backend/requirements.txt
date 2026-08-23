@@ -16,4 +16,4 @@ asyncpg>=0.29.0
 python-dateutil>=2.8.2
 pybreaker>=1.2.0
 redis>=5.0.0
-apscheduler>=3.10.0
+apscheduler>=3.11.3
