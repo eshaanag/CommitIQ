@@ -167,6 +167,7 @@ Missing but obviously needed:
 - 2026-07-25: Implemented custom time range selector for Commit Timeline and Hotspots (#223), allowing users to filter codebase health data by preset intervals (7d, 30d, 1y, All Time) or custom start/end dates.
 - 2026-07-26: Added contributor identity resolution for bus factor calculations. Introduced `ContributorIdentityResolver` with `.mailmap` support and normalized contributor identities before both `git blame` and fallback commit-history aggregation to prevent duplicate contributor aliases from distorting ownership metrics.
 - 2026-07-31: Implemented 3-attempt transaction retry helper (commit_with_retry) and busy timeout connection parameter adjustments (timeout=30, PRAGMA busy_timeout=30000) to resolve transient SQLite lock errors during concurrent ingestion runs (#259).
+- 2026-08-23: Integrated APScheduler background job service for periodic automated repository metric re-ingestion every 24 hours (#387).
 
 ## Test coverage status
 
