@@ -245,9 +245,7 @@ def get_scheduler_status() -> dict:
             {
                 "id": job.id,
                 "name": job.name,
-                "next_run_time": (
-                    job.next_run_time.isoformat() if job.next_run_time else None
-                ),
+                "next_run_time": (job.next_run_time.isoformat() if job.next_run_time else None),
             }
             for job in _scheduler.get_jobs()
         ],

@@ -931,7 +931,9 @@ async def test_ingestion_rollback_preserves_old_data_on_mid_ingestion_failure(
 
     fake_metrics_mod = types.ModuleType("backend.features.repo_ingestion.metrics_extractor")
     fake_metrics_mod.checkout_commit = lambda path, sha: None
-    fake_metrics_mod.extract_commit_metrics = lambda path, commit_data: failing_extract_wt(path, commit_data)[1]
+    fake_metrics_mod.extract_commit_metrics = lambda path, commit_data: failing_extract_wt(
+        path, commit_data
+    )[1]
     monkeypatch.setitem(
         sys.modules, "backend.features.repo_ingestion.metrics_extractor", fake_metrics_mod
     )
