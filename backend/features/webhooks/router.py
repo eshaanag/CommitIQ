@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _resolve_repo(db: AsyncSession, repo_id: int | None, payload: dict[str, Any]) -> Repo | None:
+async def _resolve_repo(
+    db: AsyncSession, repo_id: int | None, payload: dict[str, Any]
+) -> Repo | None:
     if repo_id is not None:
         repo = await db.get(Repo, repo_id)
         if repo:
@@ -38,7 +40,9 @@ async def _resolve_repo(db: AsyncSession, repo_id: int | None, payload: dict[str
             return repo
 
     if proj_name:
-        res = await db.execute(select(Repo).where(func.lower(Repo.name).like(f"%{proj_name.lower()}")))
+        res = await db.execute(
+            select(Repo).where(func.lower(Repo.name).like(f"%{proj_name.lower()}"))
+        )
         repo = res.scalar_one_or_none()
         if repo:
             return repo
@@ -87,7 +91,9 @@ async def _process_gitlab_pipeline_webhook(
     attrs = payload.get("object_attributes") or {}
     commit = payload.get("commit") or {}
 
-    status_raw = (attrs.get("status") or attrs.get("detailed_status") or payload.get("status") or "unknown").lower()
+    status_raw = (
+        attrs.get("status") or attrs.get("detailed_status") or payload.get("status") or "unknown"
+    ).lower()
     pipeline_id = str(attrs.get("id") or payload.get("deployment_id") or "")
     ref = attrs.get("ref") or payload.get("ref")
     sha = commit.get("id") or attrs.get("sha")
