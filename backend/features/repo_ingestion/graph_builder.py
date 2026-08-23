@@ -9,7 +9,6 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Common file-extension lists used by resolvers
 # ---------------------------------------------------------------------------
@@ -180,9 +179,7 @@ def extract_go_imports(file_content: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def resolve_import_to_file(
-    import_path: str, source_file: str, all_files: list[str]
-) -> str | None:
+def resolve_import_to_file(import_path: str, source_file: str, all_files: list[str]) -> str | None:
     """Resolve an import path to an actual file in the repo.
 
     Supports:
