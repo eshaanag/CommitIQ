@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "microsoft/graphcodebert-base"
 EMBEDDING_CACHE_DIR = Path(".cache/embeddings")
 
+
 class _ModelHolder:
     tokenizer = None
     model = None

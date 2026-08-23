@@ -72,9 +72,7 @@ class Deployment(Base):
 
     repo = relationship("Repo", back_populates="deployments")
 
-    __table_args__ = (
-        Index("idx_deployments_repo_time", "repo_id", "deployed_at"),
-    )
+    __table_args__ = (Index("idx_deployments_repo_time", "repo_id", "deployed_at"),)
 
 
 class Commit(Base):
