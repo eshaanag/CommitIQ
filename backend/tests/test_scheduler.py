@@ -17,10 +17,11 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from backend.database import Base
-from backend.shared.models import Repo
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+
+from backend.database import Base
+from backend.shared.models import Repo
 
 pytestmark = pytest.mark.anyio
 
@@ -187,9 +188,7 @@ class TestRefreshAllDueRepos:
         with patch("backend.scheduler.AsyncSessionLocal") as mock_factory:
             mock_session = _setup_session_mock(mock_factory)
             mock_session.execute = AsyncMock(
-                side_effect=OperationalError(
-                    "SELECT 1", {}, Exception("DB down")
-                )
+                side_effect=OperationalError("SELECT 1", {}, Exception("DB down"))
             )
 
             from backend.scheduler import refresh_all_due_repos
@@ -300,9 +299,7 @@ class TestRefreshSingleRepo:
     @pytest.mark.asyncio
     async def test_handles_exception_gracefully(self):
         """_refresh_single_repo logs but doesn't propagate exceptions."""
-        mock_repo = MagicMock(
-            id=1, repo_slug="error/repo", max_commits_setting=100
-        )
+        mock_repo = MagicMock(id=1, repo_slug="error/repo", max_commits_setting=100)
 
         with patch("backend.scheduler.AsyncSessionLocal") as mock_factory:
             mock_session = _setup_session_mock(mock_factory)
