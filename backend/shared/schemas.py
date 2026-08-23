@@ -395,5 +395,3 @@ class RepoCompareResponse(BaseModel):
     deltas: RepoCompareDelta
     insights: list[RepoCompareInsight] = Field(default_factory=list)
     verdict: str
-
-

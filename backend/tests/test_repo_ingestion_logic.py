@@ -22,7 +22,6 @@ from backend.features.repo_ingestion.clone_service import (
 )
 from backend.features.repo_ingestion.graph_builder import (
     build_cochange_edges,
-    extract_go_imports,
     extract_js_imports,
     extract_python_imports,
     get_top_files_by_frequency,
@@ -398,7 +397,10 @@ def test_sanitize_commit_message():
         sanitize_commit_message("<script>alert('xss')</script> Fix issue")
         == "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt; Fix issue"
     )
-    assert sanitize_commit_message("fix: update <Header /> component") == "fix: update &lt;Header /&gt; component"
+    assert (
+        sanitize_commit_message("fix: update <Header /> component")
+        == "fix: update &lt;Header /&gt; component"
+    )
     assert sanitize_commit_message("feat: value < 100") == "feat: value &lt; 100"
 
 
@@ -576,4 +578,3 @@ async def test_fetch_github_pull_requests_graphql_fallback_to_rest(monkeypatch):
     assert len(prs) == 1
     assert prs[0]["title"] == "REST Fallback PR"
     assert prs[0]["author"] == "fallback-user"
-
