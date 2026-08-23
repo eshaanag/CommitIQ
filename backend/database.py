@@ -226,7 +226,9 @@ async def _ensure_sqlite_columns(conn) -> None:
             if column.name not in existing_cols:
                 col_type = column.type.compile(engine.sync_engine.dialect)
                 try:
-                    await conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}"))
+                    await conn.execute(
+                        text(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {col_type}")
+                    )
                 except Exception as exc:
                     logger.debug(f"Column {column.name} check on {table_name}: {exc}")
 
