@@ -7,7 +7,9 @@ from backend.shared.models import Deployment, PullRequest
 
 
 async def compute_dora_metrics(db: AsyncSession, repo_id: int) -> dict:
-    deploy_stmt = select(Deployment).where(Deployment.repo_id == repo_id, Deployment.status == "success")
+    deploy_stmt = select(Deployment).where(
+        Deployment.repo_id == repo_id, Deployment.status == "success"
+    )
     deploy_res = await db.execute(deploy_stmt)
     deployments = deploy_res.scalars().all()
 
@@ -29,7 +31,11 @@ async def compute_dora_metrics(db: AsyncSession, repo_id: int) -> dict:
 
     # 1. Deployment Frequency (Deployments per week)
     if deployments:
-        now = datetime.now(deployments[0].deployed_at.tzinfo) if deployments[0].deployed_at and deployments[0].deployed_at.tzinfo else datetime.now()
+        now = (
+            datetime.now(deployments[0].deployed_at.tzinfo)
+            if deployments[0].deployed_at and deployments[0].deployed_at.tzinfo
+            else datetime.now()
+        )
         earliest_dep = min(deployments, key=lambda d: d.deployed_at or now)
         days_span = (now - (earliest_dep.deployed_at or now)).days
         weeks_span = max(1, days_span / 7)
