@@ -41,4 +41,12 @@ describe('HotspotMap', () => {
     expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Next page' })).not.toBeDisabled()
   })
+
+  it('renders risk category badges and legend', async () => {
+    render(<HotspotMap repoId={1} sha="sha123" />)
+
+    expect(await screen.findByText('Critical')).toBeInTheDocument()
+    expect(screen.getByText('High')).toBeInTheDocument()
+    expect(screen.getByText('Medium')).toBeInTheDocument()
+  })
 })

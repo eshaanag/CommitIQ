@@ -126,7 +126,7 @@ export function GraphExplorer({
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined)
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const [dimensions, setDimensions] = useState({ width: 300, height: 420 })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -993,21 +993,21 @@ export function GraphExplorer({
   return (
     <div
       ref={wrapperRef}
-      className={`relative w-full overflow-hidden transition-all duration-300 ${
+      className={`relative w-full max-w-full overflow-hidden min-w-0 transition-all duration-300 ${
         isFullscreen
           ? 'fixed inset-0 z-50 h-screen w-screen rounded-none bg-[#07080d]'
-          : 'glass-panel rounded-[32px]'
+          : 'glass-panel rounded-[24px] sm:rounded-[32px]'
       }`}
     >
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 px-6 py-4 border-b border-white/5 bg-white/[0.02] backdrop-blur-xl relative z-30">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 bg-white/[0.02] backdrop-blur-xl relative z-30">
         <div>
-          <div className="flex items-center gap-2.5">
-            <Layers className="w-5 h-5 text-purple-400" />
-            <h2 className="font-head text-[18px] font-semibold text-white tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <Layers className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-purple-400" />
+            <h2 className="font-head text-[16px] sm:text-[18px] font-semibold text-white tracking-tight">
               Software Knowledge Graph
             </h2>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
             <p className="text-slate-400 text-xs font-mono truncate">
               COMMIT: {selectedSha?.slice(0, 8) || 'HEAD'}
@@ -1015,7 +1015,7 @@ export function GraphExplorer({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
           <div className="relative w-full md:w-64">
             <div className="relative">
               <input
@@ -1083,9 +1083,9 @@ export function GraphExplorer({
         </div>
       </div>
 
-      <div className="min-h-[580px] h-[calc(100%-80px)] relative overflow-hidden">
+      <div className="min-h-[420px] sm:min-h-[580px] h-[calc(100%-80px)] relative overflow-hidden w-full max-w-full min-w-0">
         {isLeftSidebarOpen && (
-          <div className="absolute left-4 top-4 bottom-4 w-72 md:w-64 glass-panel rounded-[24px] p-5 flex-shrink-0 z-[45] flex flex-col justify-between overflow-y-auto max-h-[calc(100%-32px)] border border-white/10 shadow-2xl">
+          <div className="absolute left-3 sm:left-4 top-3 sm:top-4 bottom-3 sm:bottom-4 w-[calc(100%-24px)] sm:w-72 md:w-64 max-w-xs glass-panel rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 flex-shrink-0 z-[45] flex flex-col justify-between overflow-y-auto max-h-[calc(100%-24px)] sm:max-h-[calc(100%-32px)] border border-white/10 shadow-2xl">
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-1.5 p-1 bg-white/5 rounded-xl w-full border border-white/5">
@@ -1338,44 +1338,44 @@ export function GraphExplorer({
           </div>
         )}
 
-        <div ref={containerRef} className="absolute inset-0 bg-[#07080d]/40">
-          <div className="absolute top-4 right-4 z-[45] flex flex-col gap-2.5 pointer-events-none items-end">
-            <div className="glass-panel rounded-full px-5 py-3 shadow-2xl flex items-center gap-4 text-xs font-medium pointer-events-auto border border-white/10">
+        <div ref={containerRef} className="absolute inset-0 bg-[#07080d]/40 w-full h-full max-w-full overflow-hidden">
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-[45] flex flex-col gap-2 pointer-events-none items-end max-w-[calc(100%-24px)] sm:max-w-none">
+            <div className="glass-panel rounded-2xl sm:rounded-full px-3 sm:px-5 py-2 sm:py-3 shadow-2xl flex items-center justify-between sm:justify-start gap-2.5 sm:gap-4 text-[11px] sm:text-xs font-medium pointer-events-auto border border-white/10 w-full sm:w-auto">
               <div className="flex flex-col">
-                <span className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">
+                <span className="text-slate-400 text-[8px] sm:text-[9px] uppercase tracking-wider font-semibold">
                   Active Files
                 </span>
-                <span className="text-white text-sm font-bold font-mono mt-0.5">
+                <span className="text-white text-xs sm:text-sm font-bold font-mono mt-0.5">
                   {nodes.length}
                 </span>
               </div>
-              <div className="w-px h-6 bg-white/10" />
+              <div className="w-px h-5 sm:h-6 bg-white/10" />
               <div className="flex flex-col">
-                <span className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">
+                <span className="text-slate-400 text-[8px] sm:text-[9px] uppercase tracking-wider font-semibold">
                   Dependency Cycles
                 </span>
                 <span
-                  className={`text-sm font-bold font-mono mt-0.5 ${cyclicNodesAndEdges.nodes.size > 0 ? 'text-amber-400' : 'text-emerald-400'}`}
+                  className={`text-xs sm:text-sm font-bold font-mono mt-0.5 ${cyclicNodesAndEdges.nodes.size > 0 ? 'text-amber-400' : 'text-emerald-400'}`}
                 >
                   {cyclicNodesAndEdges.nodes.size}
                 </span>
               </div>
-              <div className="w-px h-6 bg-white/10" />
+              <div className="w-px h-5 sm:h-6 bg-white/10" />
               <div className="flex flex-col">
-                <span className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">
+                <span className="text-slate-400 text-[8px] sm:text-[9px] uppercase tracking-wider font-semibold">
                   Stability Score
                 </span>
-                <span className="text-emerald-400 text-sm font-bold font-mono mt-0.5">
+                <span className="text-emerald-400 text-xs sm:text-sm font-bold font-mono mt-0.5">
                   {Math.round(systemStability * 100)}%
                 </span>
               </div>
             </div>
 
             {(selectedNodeId || hoveredNode) && (
-              <div className="glass-panel rounded-full px-4 py-2 shadow-2xl text-[10px] font-mono text-slate-300 flex items-center gap-2 pointer-events-auto border border-white/10 animate-float-slow">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-                <span className="text-slate-400 font-sans font-semibold">Focusing:</span>
-                <span className="truncate max-w-[150px] text-white">
+              <div className="glass-panel rounded-full px-3 sm:px-4 py-1.5 sm:py-2 shadow-2xl text-[10px] font-mono text-slate-300 flex items-center gap-2 pointer-events-auto border border-white/10 animate-float-slow max-w-full truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
+                <span className="text-slate-400 font-sans font-semibold flex-shrink-0">Focusing:</span>
+                <span className="truncate max-w-[120px] sm:max-w-[150px] text-white">
                   {(() => {
                     const activeId = selectedNodeId || hoveredNode
                     const activeNode = nodes.find((n) => n.id === activeId)
@@ -1386,7 +1386,7 @@ export function GraphExplorer({
             )}
           </div>
 
-          <div className="absolute bottom-4 left-4 z-[45] flex items-center gap-1 bg-white/[0.04] backdrop-blur-xl border border-white/10 p-1.5 rounded-full shadow-2xl">
+          <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 z-[45] flex items-center gap-1 bg-white/[0.04] backdrop-blur-xl border border-white/10 p-1 sm:p-1.5 rounded-full shadow-2xl">
             <button
               onClick={() => handleZoom(1.3)}
               title="Zoom In"
@@ -1517,16 +1517,16 @@ export function GraphExplorer({
         </div>
 
         {isSidebarOpen && (
-          <div className="absolute right-4 top-4 bottom-4 w-80 glass-panel rounded-[24px] flex flex-col flex-shrink-0 z-[45] overflow-y-auto max-h-[calc(100%-32px)] border border-white/10 shadow-2xl">
+          <div className="absolute right-3 sm:right-4 top-3 sm:top-4 bottom-3 sm:bottom-4 w-[calc(100%-24px)] sm:w-80 max-w-sm glass-panel rounded-[20px] sm:rounded-[24px] flex flex-col flex-shrink-0 z-[45] overflow-y-auto max-h-[calc(100%-24px)] sm:max-h-[calc(100%-32px)] border border-white/10 shadow-2xl">
             {selectedNodeDetails ? (
-              <div className="p-5 flex-grow flex flex-col justify-between space-y-6">
-                <div className="space-y-5">
+              <div className="p-4 sm:p-5 flex-grow flex flex-col justify-between space-y-5 sm:space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <span className="text-slate-500 font-mono text-[9px] uppercase tracking-wider block">
                         {selectedNodeDetails.module}
                       </span>
-                      <h4 className="font-head text-[16px] font-semibold text-white truncate mt-0.5">
+                      <h4 className="font-head text-[15px] sm:text-[16px] font-semibold text-white truncate mt-0.5">
                         {selectedNodeDetails.file.split('/').pop()}
                       </h4>
                       <p className="text-slate-500 font-mono text-[9px] break-all select-all mt-1 bg-white/5 p-1.5 rounded-lg border border-white/5">
@@ -1546,7 +1546,7 @@ export function GraphExplorer({
 
                   {selectedNodeDetails.isCyclic && (
                     <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300 rounded-[16px] p-3 flex items-start gap-2.5">
-                      <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-400 mt-0.5" />
+                      <AlertTriangle className="w-4.5 h-4.5 flex-shrink-0 text-amber-400 mt-0.5" />
                       <div className="text-[11px] leading-relaxed">
                         <span className="font-bold block mb-0.5">Circular Loop Node</span>
                         This component forms part of a bidirectional cycle. Modifying it may create
@@ -1555,7 +1555,7 @@ export function GraphExplorer({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                     <div className="bg-white/5 border border-white/5 rounded-[16px] p-3">
                       <div className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">
                         Lines of Code
@@ -1574,7 +1574,7 @@ export function GraphExplorer({
                     </div>
                   </div>
 
-                  <div className="bg-white/5 border border-white/5 rounded-[20px] p-4 space-y-3">
+                  <div className="bg-white/5 border border-white/5 rounded-[20px] p-3.5 sm:p-4 space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-slate-300">Coupling Profile</span>
                       <span className="font-mono text-xs font-bold text-purple-400">
@@ -1643,10 +1643,10 @@ export function GraphExplorer({
                 </div>
               </div>
             ) : (
-              <div className="p-6 flex-1 flex flex-col items-center justify-center text-center text-slate-500 relative">
+              <div className="p-4 sm:p-6 flex-1 flex flex-col items-center justify-center text-center text-slate-500 relative">
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+                  className="absolute right-3 sm:right-4 top-3 sm:top-4 text-slate-400 hover:text-white p-1 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
                 >
                   ✕
                 </button>
@@ -1667,40 +1667,42 @@ export function GraphExplorer({
       </div>
 
       {commits.length > 0 && onSelectCommit && (
-        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] backdrop-blur-xl relative z-30 flex flex-col md:flex-row items-center justify-between gap-4 select-none">
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                isPlaying
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-[0_0_15px_rgba(147,51,234,0.35)]'
-                  : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-              }`}
-            >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 fill-white" />
-              ) : (
-                <Play className="w-4 h-4 fill-white translate-x-0.5" />
-              )}
-            </button>
-            <div className="flex items-center gap-1.5">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-white/[0.02] backdrop-blur-xl relative z-30 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 select-none">
+          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2.5 sm:gap-3 w-full lg:w-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <button
-                disabled={activeCommitIndex <= 0}
-                onClick={() => onSelectCommit(commits[activeCommitIndex - 1])}
-                className="px-3 py-1.5 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white rounded-full text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                onClick={() => setIsPlaying(!isPlaying)}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${
+                  isPlaying
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-[0_0_15px_rgba(147,51,234,0.35)]'
+                    : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                }`}
               >
-                ◀ Step
+                {isPlaying ? (
+                  <Pause className="w-4 h-4 fill-white" />
+                ) : (
+                  <Play className="w-4 h-4 fill-white translate-x-0.5" />
+                )}
               </button>
-              <button
-                disabled={activeCommitIndex >= commits.length - 1}
-                onClick={() => onSelectCommit(commits[activeCommitIndex + 1])}
-                className="px-3 py-1.5 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white rounded-full text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-              >
-                Step ▶
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={activeCommitIndex <= 0}
+                  onClick={() => onSelectCommit(commits[activeCommitIndex - 1])}
+                  className="px-2.5 sm:px-3 py-1.5 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white rounded-full text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  ◀ Step
+                </button>
+                <button
+                  disabled={activeCommitIndex >= commits.length - 1}
+                  onClick={() => onSelectCommit(commits[activeCommitIndex + 1])}
+                  className="px-2.5 sm:px-3 py-1.5 border border-white/5 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white rounded-full text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  Step ▶
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 pl-2">
+            <div className="flex items-center gap-1.5 pl-1 sm:pl-2">
               <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
                 Speed:
               </span>
@@ -1725,7 +1727,7 @@ export function GraphExplorer({
             </div>
           </div>
 
-          <div className="flex-grow w-full md:mx-6 flex items-center gap-4">
+          <div className="flex-grow w-full lg:mx-6 flex items-center gap-3 sm:gap-4 my-1 lg:my-0">
             <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">START</span>
             <div className="flex-grow relative flex items-center">
               <input
@@ -1749,8 +1751,8 @@ export function GraphExplorer({
             <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">END</span>
           </div>
 
-          <div className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto justify-end">
-            <div className="bg-white/5 border border-white/5 rounded-full px-3 py-1.5 flex items-center gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0 w-full lg:w-auto justify-between lg:justify-end">
+            <div className="bg-white/5 border border-white/5 rounded-full px-2.5 sm:px-3 py-1.5 flex items-center gap-2">
               <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
               <div className="text-[10px] font-mono">
                 <span className="text-slate-400">DRIFT:</span>{' '}
@@ -1769,7 +1771,7 @@ export function GraphExplorer({
               </div>
             </div>
 
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1.5 flex items-center gap-2 text-purple-300 font-mono text-[11px]">
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-full px-2.5 sm:px-3 py-1.5 flex items-center gap-2 text-purple-300 font-mono text-[10px] sm:text-[11px]">
               <GitCommit className="w-3.5 h-3.5 text-purple-400" />
               <span>
                 {activeCommitIndex + 1} / {commits.length}
