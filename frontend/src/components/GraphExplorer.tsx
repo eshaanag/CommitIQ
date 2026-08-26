@@ -1338,7 +1338,10 @@ export function GraphExplorer({
           </div>
         )}
 
-        <div ref={containerRef} className="absolute inset-0 bg-[#07080d]/40 w-full h-full max-w-full overflow-hidden">
+        <div
+          ref={containerRef}
+          className="absolute inset-0 bg-[#07080d]/40 w-full h-full max-w-full overflow-hidden"
+        >
           <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-[45] flex flex-col gap-2 pointer-events-none items-end max-w-[calc(100%-24px)] sm:max-w-none">
             <div className="glass-panel rounded-2xl sm:rounded-full px-3 sm:px-5 py-2 sm:py-3 shadow-2xl flex items-center justify-between sm:justify-start gap-2.5 sm:gap-4 text-[11px] sm:text-xs font-medium pointer-events-auto border border-white/10 w-full sm:w-auto">
               <div className="flex flex-col">
@@ -1374,7 +1377,9 @@ export function GraphExplorer({
             {(selectedNodeId || hoveredNode) && (
               <div className="glass-panel rounded-full px-3 sm:px-4 py-1.5 sm:py-2 shadow-2xl text-[10px] font-mono text-slate-300 flex items-center gap-2 pointer-events-auto border border-white/10 animate-float-slow max-w-full truncate">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
-                <span className="text-slate-400 font-sans font-semibold flex-shrink-0">Focusing:</span>
+                <span className="text-slate-400 font-sans font-semibold flex-shrink-0">
+                  Focusing:
+                </span>
                 <span className="truncate max-w-[120px] sm:max-w-[150px] text-white">
                   {(() => {
                     const activeId = selectedNodeId || hoveredNode

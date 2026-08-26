@@ -143,7 +143,10 @@ export function HotspotMap({ repoId, sha }: HotspotMapProps) {
       </div>
 
       {/* ── Treemap ─────────────────────────────────────────────── */}
-      <div className="relative z-10 w-full max-w-full overflow-hidden min-w-0" style={{ minHeight: 240 }}>
+      <div
+        className="relative z-10 w-full max-w-full overflow-hidden min-w-0"
+        style={{ minHeight: 240 }}
+      >
         {hotspotState.isLoading ? (
           <div className="h-[240px] sm:h-[280px] flex items-center justify-center text-slate-400 font-mono text-xs animate-pulse">
             Loading hotspots...
@@ -185,7 +188,9 @@ export function HotspotMap({ repoId, sha }: HotspotMapProps) {
                           </p>
                           <p className="text-slate-400">
                             Risk score:{' '}
-                            <span className="text-red-400 font-bold">{item.riskScore ?? 0}/100</span>
+                            <span className="text-red-400 font-bold">
+                              {item.riskScore ?? 0}/100
+                            </span>
                           </p>
                         </div>
                       </div>
