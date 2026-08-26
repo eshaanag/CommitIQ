@@ -448,7 +448,9 @@ describe('DashboardPage', () => {
     const complexityTooltip = screen.getByRole('tooltip')
     expect(complexityTooltip).toBeInTheDocument()
     expect(within(complexityTooltip).getByText('Cyclomatic Complexity')).toBeInTheDocument()
-    expect(within(complexityTooltip).getByText(/Measures structural code complexity/i)).toBeInTheDocument()
+    expect(
+      within(complexityTooltip).getByText(/Measures structural code complexity/i)
+    ).toBeInTheDocument()
     expect(within(complexityTooltip).getByText(/M = E - N \+ 2P/i)).toBeInTheDocument()
     expect(within(complexityTooltip).getByText('25% of Health Score')).toBeInTheDocument()
 
@@ -464,8 +466,12 @@ describe('DashboardPage', () => {
     const busFactorTooltip = screen.getByRole('tooltip')
     expect(busFactorTooltip).toBeInTheDocument()
     expect(within(busFactorTooltip).getByText('Minimum Bus Factor')).toBeInTheDocument()
-    expect(within(busFactorTooltip).getByText(/minimum number of key contributors/i)).toBeInTheDocument()
-    expect(within(busFactorTooltip).getByText(/min\(bus_factor_min × 20, 100\)/i)).toBeInTheDocument()
+    expect(
+      within(busFactorTooltip).getByText(/minimum number of key contributors/i)
+    ).toBeInTheDocument()
+    expect(
+      within(busFactorTooltip).getByText(/min\(bus_factor_min × 20, 100\)/i)
+    ).toBeInTheDocument()
 
     // Close tooltip
     await user.keyboard('{Escape}')
@@ -478,6 +484,8 @@ describe('DashboardPage', () => {
     expect(churnTooltip).toBeInTheDocument()
     expect(within(churnTooltip).getByText('Commit Churn Rate')).toBeInTheDocument()
     expect(within(churnTooltip).getByText(/Measures code volatility/i)).toBeInTheDocument()
-    expect(within(churnTooltip).getByText(/Churn Rate = \(insertions \+ deletions\) \/ total_loc/i)).toBeInTheDocument()
+    expect(
+      within(churnTooltip).getByText(/Churn Rate = \(insertions \+ deletions\) \/ total_loc/i)
+    ).toBeInTheDocument()
   })
 })

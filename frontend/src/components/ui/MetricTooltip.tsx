@@ -137,7 +137,9 @@ export function MetricTooltip({
               <span className="block font-mono text-[9px] uppercase tracking-wider text-purple-300 font-bold mb-1">
                 Formula &amp; Calculation
               </span>
-              <p className="font-mono text-[10px] text-slate-300 leading-normal break-words">{formula}</p>
+              <p className="font-mono text-[10px] text-slate-300 leading-normal break-words">
+                {formula}
+              </p>
             </div>
           )}
 

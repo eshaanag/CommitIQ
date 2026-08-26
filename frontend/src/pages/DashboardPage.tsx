@@ -554,7 +554,7 @@ export default function DashboardPage() {
                     icon: <Layers className="w-4.5 h-4.5 text-purple-400" />,
                     tooltipTitle: 'Semantic Drift',
                     tooltipDescription:
-                      'Measures semantic alignment between the developer\'s commit message intent and the actual code diff modifications using NLP embeddings (e.g. GraphCodeBERT).',
+                      "Measures semantic alignment between the developer's commit message intent and the actual code diff modifications using NLP embeddings (e.g. GraphCodeBERT).",
                     tooltipFormula:
                       'Subscore = max(0, min(semantic_health_score, 100)) based on cosine similarity and semantic distance between intent and code changes.',
                     tooltipWeight: '20% of Health Score',

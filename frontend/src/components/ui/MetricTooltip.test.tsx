@@ -46,12 +46,7 @@ describe('MetricTooltip', () => {
 
   it('toggles tooltip on click and closes on Escape key', async () => {
     const user = userEvent.setup()
-    render(
-      <MetricTooltip
-        title="Commit Churn"
-        description="Percentage of modified lines"
-      />
-    )
+    render(<MetricTooltip title="Commit Churn" description="Percentage of modified lines" />)
 
     const trigger = screen.getByRole('button', { name: /about commit churn/i })
     await user.click(trigger)
@@ -68,10 +63,7 @@ describe('MetricTooltip', () => {
     render(
       <div>
         <div data-testid="outside">Outside area</div>
-        <MetricTooltip
-          title="Semantic Drift"
-          description="NLP embedding similarity"
-        />
+        <MetricTooltip title="Semantic Drift" description="NLP embedding similarity" />
       </div>
     )
 
