@@ -909,7 +909,7 @@ async def test_ingestion_rollback_preserves_old_data_on_mid_ingestion_failure(
 
     call_count = 0
 
-    def failing_extract_wt(path, commit_data):
+    def failing_extract_in_wt(path, commit_data):
         nonlocal call_count
         call_count += 1
         if call_count >= 2:
@@ -926,12 +926,12 @@ async def test_ingestion_rollback_preserves_old_data_on_mid_ingestion_failure(
 
     monkeypatch.setattr(
         "backend.features.repo_ingestion.router._extract_metrics_in_worktree",
-        failing_extract_wt,
+        failing_extract_in_wt,
     )
 
     fake_metrics_mod = types.ModuleType("backend.features.repo_ingestion.metrics_extractor")
     fake_metrics_mod.checkout_commit = lambda path, sha: None
-    fake_metrics_mod.extract_commit_metrics = lambda path, commit_data: failing_extract_wt(
+    fake_metrics_mod.extract_commit_metrics = lambda path, commit_data: failing_extract_in_wt(
         path, commit_data
     )[1]
     monkeypatch.setitem(

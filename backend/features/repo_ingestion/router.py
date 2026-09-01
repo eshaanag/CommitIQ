@@ -44,7 +44,6 @@ def _extract_metrics_in_worktree(repo_path: Path, commit_data: dict) -> tuple[st
                 capture_output=True,
             )
 
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, desc, func, select
