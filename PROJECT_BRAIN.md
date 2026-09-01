@@ -758,4 +758,20 @@ Health endpoint:
 `GET /health` now includes a `scheduler` key with
 `{ running, enabled, jobs: [{ id, name, next_run_time }] }` so operators can verify the
 scheduler is active via a single curl.
-main
+
+### SQLite Concurrency & Ingestion Lock Prevention (Issue #32)
+
+- **Problem**: When multiple users submitted concurrent repository scans, FastAPI spawned parallel background ingestion tasks that performed concurrent write operations on the SQLite database. Because SQLite allows only a single writer at a time and transactions held locks during processing, this triggered `sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked` errors and crashed concurrent jobs.
+- **Implementation**:
+  - `backend/config.py`:
+    - Added `MAX_CONCURRENT_INGESTIONS` (default: `2`) to control background ingestion and rescan worker concurrency.
+  - `backend/database.py`:
+    - Verified SQLite engine connection parameters (`connect_args={"check_same_thread": False, "timeout": 60}`) and connection PRAGMAs (`PRAGMA journal_mode = WAL;`, `PRAGMA busy_timeout = 30000;`, `PRAGMA synchronous = NORMAL;`).
+    - Enhanced `commit_with_retry` with exponential backoff and broadened lock detection (`database is locked`, `locked`, `busy`, `operationalerror`).
+  - `backend/features/repo_ingestion/router.py`:
+    - Added `get_ingestion_semaphore()` to safely limit concurrent repository ingestion and rescan tasks.
+    - Updated `_update_job` to reuse active DB sessions if provided, avoiding simultaneous conflicting writer connections.
+    - Replaced raw `await db.commit()` with `await commit_with_retry(db)` across all ingestion, rescan, cancellation, and deletion endpoints.
+- **Testing**:
+  - Expanded `test_sqlite_concurrency.py` with multi-worker concurrent SQLite write simulation, semaphore verification, and busy timeout checks.
+  - Full backend test suite passing (290 tests).

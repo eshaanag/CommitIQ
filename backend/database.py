@@ -36,16 +36,21 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def commit_with_retry(
-    session: AsyncSession, max_retries: int = 3, initial_delay: float = 0.1
+    session: AsyncSession, max_retries: int = 5, initial_delay: float = 0.1
 ) -> None:
-    """Commit an AsyncSession transaction with a 3-attempt retry loop for transient SQLite database locks."""
+    """Commit an AsyncSession transaction with an exponential backoff retry loop for transient SQLite database locks."""
     for attempt in range(1, max_retries + 1):
         try:
             await session.commit()
             return
         except Exception as exc:
             err_msg = str(exc).lower()
-            is_lock_error = "database is locked" in err_msg or "locked" in err_msg
+            is_lock_error = (
+                "database is locked" in err_msg
+                or "locked" in err_msg
+                or "busy" in err_msg
+                or "operationalerror" in err_msg
+            )
             if is_lock_error and attempt < max_retries:
                 delay = initial_delay * (2 ** (attempt - 1))
                 logger.warning(

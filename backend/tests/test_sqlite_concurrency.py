@@ -1,9 +1,13 @@
+import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import text
 
-from backend.database import _IS_SQLITE, commit_with_retry, engine
+from backend.config import MAX_CONCURRENT_INGESTIONS
+from backend.database import _IS_SQLITE, AsyncSessionLocal, commit_with_retry, engine
+from backend.features.repo_ingestion.router import _update_job, get_ingestion_semaphore
+from backend.shared.models import AnalysisJob, Repo
 
 
 @pytest.mark.anyio
@@ -74,3 +78,63 @@ async def test_sqlite_pragmas_active():
         res_timeout = await conn.execute(text("PRAGMA busy_timeout"))
         timeout_ms = res_timeout.scalar()
         assert timeout_ms >= 10000
+
+
+@pytest.mark.anyio
+async def test_get_ingestion_semaphore():
+    sem = get_ingestion_semaphore()
+    assert isinstance(sem, asyncio.Semaphore)
+    assert sem._value == MAX_CONCURRENT_INGESTIONS
+
+
+@pytest.mark.anyio
+async def test_update_job_with_provided_session():
+    mock_db = AsyncMock()
+    mock_job = AnalysisJob(id=1, status="queued")
+    mock_db.get = AsyncMock(return_value=mock_job)
+    mock_db.commit = AsyncMock()
+
+    await _update_job(1, db=mock_db, status="analyzing", current_stage="Analyzing...")
+
+    assert mock_job.status == "analyzing"
+    assert mock_job.current_stage == "Analyzing..."
+    assert mock_db.commit.call_count == 1
+
+
+@pytest.mark.anyio
+async def test_concurrent_sqlite_writes_with_retry():
+    """Simulate multiple concurrent background tasks writing to the database simultaneously."""
+    import uuid
+
+    if not _IS_SQLITE:
+        pytest.skip("Test requires SQLite database")
+
+    test_run_id = uuid.uuid4().hex[:6]
+
+    async def write_worker(worker_id: int):
+        async with AsyncSessionLocal() as session:
+            repo = Repo(
+                name=f"test/concurrent-repo-{test_run_id}-{worker_id}",
+                owner="test",
+                url=f"https://github.com/test/concurrent-repo-{test_run_id}-{worker_id}",
+                repo_slug=f"test-concurrent-repo-{test_run_id}-{worker_id}",
+                status="pending",
+            )
+            session.add(repo)
+            await commit_with_retry(session, max_retries=5, initial_delay=0.05)
+            await session.refresh(repo)
+
+            job = AnalysisJob(
+                repo_id=repo.id,
+                status="queued",
+                triggered_by=f"worker-{worker_id}",
+            )
+            session.add(job)
+            await commit_with_retry(session, max_retries=5, initial_delay=0.05)
+
+    # Launch 6 concurrent workers simultaneously
+    tasks = [write_worker(i) for i in range(6)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    for res in results:
+        assert not isinstance(res, Exception), f"Concurrent worker failed: {res}"
