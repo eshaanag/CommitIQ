@@ -83,4 +83,30 @@ describe('NarrativeCard', () => {
     })
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
   })
+
+  it('copies narrative markdown to clipboard on button click', async () => {
+    const user = userEvent.setup()
+    const writeTextMock = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: writeTextMock,
+      },
+      configurable: true,
+    })
+
+    streamNarrativeMock.mockImplementation(async (_repoId, _sha, onChunk) => {
+      onChunk({ token: 'Hello Markdown', done: false })
+      onChunk({ done: true, explanation: 'Hello Markdown' })
+    })
+
+    render(<NarrativeCard repoId={7} commitSha="abcdef123456" />)
+    await user.click(screen.getByRole('button', { name: /generate narrative/i }))
+
+    expect(await screen.findByText('Hello Markdown')).toBeInTheDocument()
+    const copyBtn = screen.getByRole('button', { name: /copy markdown/i })
+    await user.click(copyBtn)
+
+    expect(writeTextMock).toHaveBeenCalledWith('Hello Markdown')
+    expect(await screen.findByText('Copied!')).toBeInTheDocument()
+  })
 })
