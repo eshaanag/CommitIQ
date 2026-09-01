@@ -303,6 +303,7 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-08-31: Added real-time search filter for analyzed repositories on the Landing Page (#205, #490).
 - 2026-08-30: Added Deployment Timeline Dashboard with deployment history, sparklines, environment badges, and provider metrics (#488, #489).
 - 2026-08-30: Added Commit Message Quality Linter & Dashboard with Conventional Commit validation, 10 violation rules, and contributor quality leaderboard (#485, #487).
 - 2026-08-30: Added Velocity & Delivery Cadence Dashboard with 12-week commit throughput, cadence consistency score, and contributor distribution (#481, #482).
@@ -658,12 +659,9 @@ backend/tests/test_pdf_report.py covers: service raises ValueError for missing r
 
 Testing:
 backend/tests/test_pdf_report.py covers: service raises ValueError for missing repo, returns valid %PDF bytes, PDF content includes section labels, router returns 404 for missing repo, router returns 200 + application/pdf with correct headers for a valid repo.
- feature/landing-page-repo-filter-205
+feature/landing-page-repo-filter-205
 
-
-
-
- main
+main
 
 backend/tests/test_pdf_report.py covers: service raisesValueError for missing repo, returns valid %PDF bytes, PDFcontent includes section labels, router returns 404 for missing repo,router returns 200 + application/pdf with correct headers for avalid repo.
 
@@ -684,10 +682,10 @@ backend/tests/test_pdf_report.py covers: service raisesValueError for missing re
   - `GraphExplorer.tsx`: Mobile-safe canvas dimensions, responsive stats HUD, and sidebar wrapping.
 - **Testing**: Verified with full test suite (`npm run test`, 17 test files, 83 tests passing).
 
- feature/landing-page-repo-filter-205
+feature/landing-page-repo-filter-205
 
+main
 
- main
 ### Support Time Window Parameters in DORA Metrics (Issue #375)
 
 - **Problem**: `compute_dora_metrics` previously analyzed all historical deployments and merged pull requests, preventing users and teams from viewing DORA performance for specific sprints, quarters, or custom date ranges.
@@ -734,10 +732,10 @@ backend/tests/test_pdf_report.py covers: service raisesValueError for missing re
   - Expanded `HotspotMap.test.tsx` with unit tests for empty states, risk badges, and pagination under responsive layouts.
   - Verified with full test suite (`npm run test`, 16 test files, 78 tests passing).
 
- feature/landing-page-repo-filter-205
+feature/landing-page-repo-filter-205
 
+main
 
- main
 > > > > > > > origin/main
 > > > > > > > \=======
 > > > > > > > <<<<<<< HEAD

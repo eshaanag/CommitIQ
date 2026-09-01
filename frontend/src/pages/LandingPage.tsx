@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Search, X } from 'lucide-react'
 import { ingestRepo, listRepos } from '../lib/api'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { ConfirmDeleteRepoModal } from '../components/ConfirmDeleteRepoModal'
@@ -59,11 +59,21 @@ export default function LandingPage() {
   const [phIdx, setPhIdx] = useState(0)
   const [maxCommits, setMaxCommits] = useState('500')
   const [branch, setBranch] = useState('')
+  const [repoSearch, setRepoSearch] = useState('')
   const [pendingDelete, setPendingDelete] = useState<{ id: number; slug: string } | null>(null)
   const navigate = useNavigate()
 
   const reposState = useSWR('recent-repos', () => listRepos())
   const recentRepos = reposState.data || []
+
+  const filteredRepos = recentRepos.filter((repo) => {
+    const q = repoSearch.toLowerCase().trim()
+    if (!q) return true
+    return (
+      repo.repo_slug.toLowerCase().includes(q) ||
+      (repo.github_description && repo.github_description.toLowerCase().includes(q))
+    )
+  })
 
   useEffect(() => {
     const timer = setInterval(() => setPhIdx((idx) => (idx + 1) % PLACEHOLDERS.length), 2800)
@@ -292,61 +302,99 @@ export default function LandingPage() {
               className="mt-12 text-left max-w-4xl mx-auto"
               aria-label="Analyzed repositories list"
             >
-              <h2 className="font-head text-lg font-semibold text-white mb-4 tracking-tight flex items-center justify-between">
-                <span>Analyzed Repositories</span>
-                <span className="text-xs font-mono text-slate-400 font-normal">
-                  {recentRepos.length} Total
-                </span>
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {recentRepos.map((r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => navigate(`/dashboard/${r.repo_slug}`)}
-                    className="relative glass-panel rounded-[20px] p-4 border border-white/10 hover:border-purple-500/40 hover:bg-white/[0.04] transition-all cursor-pointer flex flex-col justify-between group"
-                  >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <h2 className="font-head text-lg font-semibold text-white tracking-tight flex items-center gap-3">
+                  <span>Analyzed Repositories</span>
+                  <span className="text-xs font-mono text-slate-400 font-normal">
+                    {filteredRepos.length} of {recentRepos.length}
+                  </span>
+                </h2>
+
+                {/* Real-time search filter */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={repoSearch}
+                    onChange={(e) => setRepoSearch(e.target.value)}
+                    placeholder="Search repositories..."
+                    className="w-full bg-white/5 border border-white/10 rounded-full pl-8 pr-8 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-purple-500/50 transition-all font-mono"
+                  />
+                  {repoSearch && (
                     <button
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setPendingDelete({ id: r.id, slug: r.repo_slug })
-                      }}
-                      aria-label={`Delete ${r.repo_slug}`}
-                      className="absolute top-3 right-3 p-1.5 rounded-full text-slate-500 opacity-0 group-hover:opacity-100 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                      onClick={() => setRepoSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <X className="w-3 h-3" />
                     </button>
-                    <div>
-                      <div className="font-mono text-sm font-bold text-white group-hover:text-purple-300 transition-colors truncate pr-6">
-                        {r.repo_slug}
-                      </div>
-                      {r.github_description && (
-                        <p className="text-slate-400 text-xs mt-1 line-clamp-2">
-                          {r.github_description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                      <span>{r.analyzed_commits} commits</span>
-                      <span className="flex items-center gap-1 text-purple-300 font-semibold bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/15">
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                          />
-                        </svg>
-                        {r.active_contributors_count ?? 0} active contributors
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
+
+              {filteredRepos.length === 0 ? (
+                <div className="glass-panel rounded-[20px] p-8 text-center border border-white/5">
+                  <p className="text-slate-400 text-sm">
+                    No repositories matching "
+                    <span className="text-purple-300 font-mono">{repoSearch}</span>"
+                  </p>
+                  <button
+                    onClick={() => setRepoSearch('')}
+                    className="mt-3 text-xs text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Clear filter
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {filteredRepos.map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => navigate(`/dashboard/${r.repo_slug}`)}
+                      className="relative glass-panel rounded-[20px] p-4 border border-white/10 hover:border-purple-500/40 hover:bg-white/[0.04] transition-all cursor-pointer flex flex-col justify-between group"
+                    >
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setPendingDelete({ id: r.id, slug: r.repo_slug })
+                        }}
+                        aria-label={`Delete ${r.repo_slug}`}
+                        className="absolute top-3 right-3 p-1.5 rounded-full text-slate-500 opacity-0 group-hover:opacity-100 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                      <div>
+                        <div className="font-mono text-sm font-bold text-white group-hover:text-purple-300 transition-colors truncate pr-6">
+                          {r.repo_slug}
+                        </div>
+                        {r.github_description && (
+                          <p className="text-slate-400 text-xs mt-1 line-clamp-2">
+                            {r.github_description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                        <span>{r.analyzed_commits} commits</span>
+                        <span className="flex items-center gap-1 text-purple-300 font-semibold bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/15">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                          </svg>
+                          {r.active_contributors_count ?? 0} active contributors
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
