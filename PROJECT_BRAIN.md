@@ -303,6 +303,7 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-08-31: Added real-time author search filter to CommitList component in Dashboard (#308, #493).
 - 2026-08-31: Added Copy Markdown action button and feedback state to LLM Narrative Card (#310, #492).
 - 2026-08-31: Added Escape and Enter keyboard shortcut accessibility support to modals (#311, #491).
 - 2026-08-31: Added real-time search filter for analyzed repositories on the Landing Page (#205, #490).

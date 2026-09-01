@@ -6,25 +6,25 @@ import { GitCommit, ExternalLink, Search, X } from 'lucide-react'
 import { sanitizeCommitMessage } from '../lib/utils'
 
 export function CommitList({ commits, repoSlug, selectedSha, onSelect }: CommitListProps) {
- const [authorFilter, setAuthorFilter] = useState('')
+  const [authorFilter, setAuthorFilter] = useState('')
 
-const filteredCommits = useMemo(() => {
-  const recent = [...commits].reverse()
-  const query = authorFilter.trim().toLowerCase()
+  const filteredCommits = useMemo(() => {
+    const recent = [...commits].reverse()
+    const query = authorFilter.trim().toLowerCase()
 
-  if (!query) {
-    return recent.slice(0, 30)
-  }
+    if (!query) {
+      return recent.slice(0, 30)
+    }
 
-  // Search across all commits, then slice the top matching results
-  return recent
-    .filter((commit) => {
-      // Safely check author field, or author_name if available in your type
-      const author = (commit.author || '').toLowerCase()
-      return author.includes(query)
-    })
-    .slice(0, 30)
-}, [commits, authorFilter])
+    // Search across all commits, then slice the top matching results
+    return recent
+      .filter((commit) => {
+        // Safely check author field, or author_name if available in your type
+        const author = (commit.author || '').toLowerCase()
+        return author.includes(query)
+      })
+      .slice(0, 30)
+  }, [commits, authorFilter])
 
   return (
     <div className="flex flex-col h-full space-y-3 relative">
