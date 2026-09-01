@@ -18,14 +18,6 @@ export function ConfirmDeleteRepoModal({
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !deleting) onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [deleting, onClose])
-
   const handleConfirm = async () => {
     if (deleting) return
     setDeleting(true)
@@ -38,6 +30,24 @@ export function ConfirmDeleteRepoModal({
       setDeleting(false)
     }
   }
+
+  // Keyboard shortcut listeners (Escape to close, Enter to confirm submit)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (deleting) return
+
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        handleConfirm()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [deleting, onClose, handleConfirm])
 
   return (
     <div
