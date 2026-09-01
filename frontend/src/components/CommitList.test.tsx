@@ -35,7 +35,7 @@ describe('CommitList component', () => {
     render(
       <MemoryRouter>
         <CommitList
-          commits={mockCommits}
+          commits={mockCommits as unknown as Parameters<typeof CommitList>[0]['commits']}
           repoSlug="facebook/react"
           selectedSha={null}
           onSelect={onSelect}
