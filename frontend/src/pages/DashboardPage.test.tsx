@@ -359,14 +359,36 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Commit detail route')).toBeInTheDocument()
   })
 
-  it('shows an empty timeline state without requesting a graph', async () => {
+  it('shows an empty commits warning banner and timeline state without requesting a graph', async () => {
     getHealthTimelineMock.mockResolvedValue([])
 
     renderDashboard()
 
-    expect(await screen.findByText(/no analyzed commits/i)).toBeInTheDocument()
+    expect(await screen.findByTestId('empty-commits-warning-banner')).toBeInTheDocument()
+    expect(screen.getByText('No Commits Analyzed for This Repository')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Try increasing the Maximum Commits setting during ingestion/i)
+    ).toBeInTheDocument()
+    expect(screen.getByText(/no analyzed commits/i)).toBeInTheDocument()
     expect(screen.getByTestId('graph-explorer')).toHaveTextContent('graph none nodes 0')
     expect(getGraphMock).not.toHaveBeenCalled()
+  })
+
+  it('shows filtered warning banner when 0 commits returned for active time filter', async () => {
+    const user = userEvent.setup()
+    getHealthTimelineMock.mockResolvedValue([])
+
+    renderDashboard()
+
+    expect(await screen.findByTestId('empty-commits-warning-banner')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /last 7 days/i }))
+
+    expect(await screen.findByText('No Commits in Selected Time Window')).toBeInTheDocument()
+    expect(screen.getByTestId('reset-time-filter-button')).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('reset-time-filter-button'))
+    expect(screen.getByRole('button', { name: /all time/i })).toHaveClass('bg-purple-500/20')
   })
 
   it('renders time range selector buttons and handles preset switching', async () => {
