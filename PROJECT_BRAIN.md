@@ -303,6 +303,7 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-09-01: Added SQLite concurrency controls, ingestion semaphores, and commit retry backoff (#32, #494).
 - 2026-09-01: Added EmptyCommitsWarningBanner component to guide users when 0 commits exist in analyzed range (#208, #495).
 - 2026-08-31: Added real-time author search filter to CommitList component in Dashboard (#308, #493).
 - 2026-08-31: Added Copy Markdown action button and feedback state to LLM Narrative Card (#310, #492).
@@ -729,35 +730,8 @@ main
   - `DoraMetricsDashboard.tsx` & `CodeQualityDashboard.tsx`:
     - Replaced the generic loading block with `<DoraMetricsSkeleton />` and `<CodeQualitySkeleton />`.
 - **Testing**:
-  <<<<<<< HEAD
   - Added unit test suites `DoraMetricsSkeleton.test.tsx`, `CodeQualitySkeleton.test.tsx`, `DoraMetricsDashboard.test.tsx`, and `CodeQualityDashboard.test.tsx`.
-  - Verified with full frontend suite (21 test files, 91 tests passing) and production build.
-    \=======
-  - Expanded `HotspotMap.test.tsx` with unit tests for empty states, risk badges, and pagination under responsive layouts.
-  - Verified with full test suite (`npm run test`, 16 test files, 78 tests passing).
-
-feature/landing-page-repo-filter-205
-
-main
-
-> > > > > > > origin/main
-> > > > > > > \=======
-> > > > > > > <<<<<<< HEAD
-> > > > > > > origin/main
-> > > > > > > \=======
-> > > > > > > <<<<<<< HEAD
-> > > > > > > origin/main
-> > > > > > > \=======
-> > > > > > > <<<<<<< HEAD
-
-### Landing Page Repository Name Validation (Issue #326)
-
-- **Problem**: The "Analyze" submit button on the Landing Page did not properly disable when the repository name input field was empty or consisted solely of spaces.
-- **Implementation**:
-  - `LandingPage.tsx`:
-    - Bound the submit button's `disabled` attribute directly to the text field state (`url.trim().length === 0`).
-    - This ensures users cannot submit a blank repository for ingestion.
-- **Testing**:
+  - Verified with full frontend suite and production build.
 
 ### Empty Commits Warning Banner (Issue #208)
 
@@ -774,4 +748,21 @@ main
 - **Testing**:
   - Added unit test suite `EmptyCommitsWarningBanner.test.tsx` verifying default warning, filtered warning, button actions, and rescan loading states.
   - Expanded `DashboardPage.test.tsx` to verify banner appearance and filter reset interactions.
-  - 100% test pass rate (121 frontend vitest tests across 35 test files; 287 backend pytest tests).
+  - 100% test pass rate (126 frontend vitest tests across 37 test files; 287 backend pytest tests).
+
+### SQLite Concurrency & Ingestion Lock Prevention (Issue #32)
+
+- **Problem**: When multiple users submitted concurrent repository scans, FastAPI spawned parallel background ingestion tasks that performed concurrent write operations on the SQLite database. Because SQLite allows only a single writer at a time and transactions held locks during processing, this triggered `sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) database is locked` errors and crashed concurrent jobs.
+- **Implementation**:
+  - `backend/config.py`:
+    - Added `MAX_CONCURRENT_INGESTIONS` (default: `2`) to control background ingestion and rescan worker concurrency.
+  - `backend/database.py`:
+    - Verified SQLite engine connection parameters (`connect_args={"check_same_thread": False, "timeout": 60}`) and connection PRAGMAs (`PRAGMA journal_mode = WAL;`, `PRAGMA busy_timeout = 30000;`, `PRAGMA synchronous = NORMAL;`).
+    - Enhanced `commit_with_retry` with exponential backoff and broadened lock detection (`database is locked`, `locked`, `busy`, `operationalerror`).
+  - `backend/features/repo_ingestion/router.py`:
+    - Added `get_ingestion_semaphore()` to safely limit concurrent repository ingestion and rescan tasks.
+    - Updated `_update_job` to reuse active DB sessions if provided, avoiding simultaneous conflicting writer connections.
+    - Replaced raw `await db.commit()` with `await commit_with_retry(db)` across all ingestion, rescan, cancellation, and deletion endpoints.
+- **Testing**:
+  - Expanded `test_sqlite_concurrency.py` with multi-worker concurrent SQLite write simulation, semaphore verification, and busy timeout checks.
+  - Full backend test suite passing.
