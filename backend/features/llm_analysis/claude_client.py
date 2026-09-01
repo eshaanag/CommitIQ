@@ -110,7 +110,7 @@ async def get_or_create_narrative(
 
     cache_key = make_cache_key(repo_id, commit.full_sha, prompt_type)
 
-    # 1.5 Check Redis cache first
+    # 1.5. Check Redis cache first
     from backend.features.llm_analysis.cache import get_cached_narrative, set_cached_narrative
 
     redis_cached = await get_cached_narrative(cache_key)
@@ -128,12 +128,13 @@ async def get_or_create_narrative(
             "demo_mode": False,
         }
 
-    # 2. Check cache — most important guard
+    # 2. Check Postgres cache
     cached_result = await db.execute(
         select(LLMNarrative).where(LLMNarrative.cache_key == cache_key)
     )
     cached = cached_result.scalar_one_or_none()
     if cached:
+        # Backfill Redis
         await set_cached_narrative(cache_key, cached.response_text)
         return {
             "repo_id": repo_id,
@@ -149,6 +150,7 @@ async def get_or_create_narrative(
         }
 
     # 3. Check budget — hard limit
+
     if not await check_budget(repo_id, db):
         raise PermissionError("LLM budget exhausted for this repository.")
 
@@ -248,7 +250,8 @@ async def get_or_create_narrative(
     )
     db.add(narrative)
     await db.commit()
-
+    
+    # Update Redis cache
     if not demo_mode:
         await set_cached_narrative(cache_key, response_text)
 

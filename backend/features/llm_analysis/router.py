@@ -113,7 +113,6 @@ async def _resolve_commit(db: AsyncSession, repo_id: int, commit_sha: str) -> Co
         raise HTTPException(status_code=404, detail=f"Commit {commit_sha} not found")
     return commit
 
-
 async def _build_before_after(
     db: AsyncSession, repo_id: int, commit: Commit
 ) -> tuple[dict, dict, HealthSnapshot]:
@@ -246,7 +245,6 @@ async def _generate_live_stream(
                 )
                 local_db.add(narrative)
                 await local_db.commit()
-
             # Also seed Redis so the next request hits cache fast.
             await set_cached_narrative(cache_key, response_text)
 
