@@ -105,9 +105,13 @@ async def test_update_job_with_provided_session():
 async def test_concurrent_sqlite_writes_with_retry():
     """Simulate multiple concurrent background tasks writing to the database simultaneously."""
     import uuid
+    from backend.database import Base
 
     if not _IS_SQLITE:
         pytest.skip("Test requires SQLite database")
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     test_run_id = uuid.uuid4().hex[:6]
 

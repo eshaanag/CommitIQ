@@ -254,7 +254,8 @@ export default function DashboardPage() {
 
   const latestScore = commits.length ? commits[commits.length - 1].health_score : 0
   // last_analyzed_at may not be defined on the Repo type in some builds; fall back to last_job_completed_at
-  const lastUpdatedTimestamp = (repo as any).last_analyzed_at || repo.last_job_completed_at
+  const lastUpdatedTimestamp =
+    (repo as { last_analyzed_at?: string | null }).last_analyzed_at || repo.last_job_completed_at
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col relative z-10 font-body">
