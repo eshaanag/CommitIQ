@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Sparkles, Loader2, AlertCircle, RefreshCw, Copy, Check } from 'lucide-react'
 
 import { streamNarrative, type NarrativeStreamChunk } from '../lib/api'
 
@@ -22,8 +22,20 @@ export function NarrativeCard({ repoId, commitSha }: NarrativeCardProps) {
   const [error, setError] = useState<string | null>(null)
   const [meta, setMeta] = useState<NarrativeStreamChunk | null>(null)
   const [controller, setController] = useState<AbortController | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const disabled = !commitSha || state === 'streaming' || state === 'loading'
+
+  async function handleCopy() {
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy text: ', err)
+    }
+  }
 
   async function handleGenerate() {
     if (!commitSha) return
@@ -100,6 +112,27 @@ export function NarrativeCard({ repoId, commitSha }: NarrativeCardProps) {
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-indigo-500" />
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">AI Narrative</h3>
+          
+          {text && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="ml-2 inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700"
+              title="Copy narrative markdown to clipboard"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
+                  <span>Copy Markdown</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {meta?.cached && (
