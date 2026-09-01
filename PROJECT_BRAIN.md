@@ -303,6 +303,7 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-09-01: Added robust regex fallback parser for structured JSON LLM responses (#318, #498).
 - 2026-09-01: Implemented Redis caching layer for LLM narratives with deterministic SHA256 cache keys (#335, #496).
 - 2026-09-01: Added SQLite concurrency controls, ingestion semaphores, and commit retry backoff (#32, #494).
 - 2026-09-01: Added EmptyCommitsWarningBanner component to guide users when 0 commits exist in analyzed range (#208, #495).
