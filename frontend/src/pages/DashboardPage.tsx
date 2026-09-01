@@ -28,6 +28,7 @@ import { RecommendationsCard } from '../components/RecommendationsCard'
 import { CommitQualityDashboard } from '../components/CommitQualityDashboard'
 import { DeploymentTimeline } from '../components/DeploymentTimeline'
 import { TimeRangeSelector, type TimeRangePreset } from '../components/TimeRangeSelector'
+import { EmptyCommitsWarningBanner } from '../components/EmptyCommitsWarningBanner'
 import { HealthBadge } from '../components/ui/HealthBadge'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { ScrollToTop } from '../components/ui/ScrollToTop'
@@ -254,7 +255,10 @@ export default function DashboardPage() {
 
   const latestScore = commits.length ? commits[commits.length - 1].health_score : 0
   // last_analyzed_at may not be defined on the Repo type in some builds; fall back to last_job_completed_at
-  const lastUpdatedTimestamp = (repo as any).last_analyzed_at || repo.last_job_completed_at
+  const lastUpdatedTimestamp =
+    (repo as { last_analyzed_at?: string | null }).last_analyzed_at || repo.last_job_completed_at
+  const isTimeFiltered =
+    timeRangePreset !== 'all' || Boolean(customStartDate) || Boolean(customEndDate)
 
   return (
     <div className="min-h-screen bg-transparent flex flex-col relative z-10 font-body">
@@ -505,6 +509,23 @@ export default function DashboardPage() {
               />
             </div>
           </ErrorBoundary>
+
+          {!timelineState.isLoading && commits.length === 0 && (
+            <ErrorBoundary>
+              <EmptyCommitsWarningBanner
+                isFiltered={isTimeFiltered}
+                repoName={repo.name}
+                onResetFilter={() => {
+                  setTimeRangePreset('all')
+                  setCustomStartDate('')
+                  setCustomEndDate('')
+                }}
+                onRescan={handleRescan}
+                isRescanning={isRescanning}
+                onReingest={() => navigate('/')}
+              />
+            </ErrorBoundary>
+          )}
           <ErrorBoundary>
             {timelineState.isLoading ? (
               <div className="glass-panel rounded-[28px] p-6 h-64 flex items-center justify-center text-slate-400 border border-white/10">

@@ -757,20 +757,20 @@ main
     - Bound the submit button's `disabled` attribute directly to the text field state (`url.trim().length === 0`).
     - This ensures users cannot submit a blank repository for ingestion.
 - **Testing**:
-  - Prettier formatting applied to ensure adherence to styling rules.
-    \=======
 
-> > > > > > > origin/main
-> > > > > > > origin/main
-> > > > > > > origin/main
-> > > > > > > origin/main
-> > > > > > > origin/main
-> > > > > > > origin/main
-> > > > > > > origin/main
+### Empty Commits Warning Banner (Issue #208)
 
-Health endpoint:
-
-`GET /health` now includes a `scheduler` key with
-`{ running, enabled, jobs: [{ id, name, next_run_time }] }` so operators can verify the
-scheduler is active via a single curl.
-main
+- **Problem**: When a repository exists but has 0 commits in the analyzed range (or when a date filter excludes all commits), the dashboard previously displayed empty/blank states without guidance on how to fix or adjust settings.
+- **Implementation**:
+  - `EmptyCommitsWarningBanner.tsx`:
+    - Created a glassmorphic amber banner with icon, context-aware title, and descriptive message.
+    - Dynamically detects whether 0 commits is caused by an active time filter vs 0 analyzed commits in the repo overall.
+    - Provides quick action buttons: "Reset to All Time" (for filtered views), "Update Analysis" (triggers rescan), and "Adjust Settings" (navigates to landing page to re-ingest with higher max commits or different branch).
+    - Accessible with `role="alert"` and `data-testid="empty-commits-warning-banner"`.
+  - `DashboardPage.tsx`:
+    - Integrated `<EmptyCommitsWarningBanner />` conditionally when `!timelineState.isLoading && commits.length === 0`.
+    - Wired callbacks for resetting time range filter, rescanning repository, and navigating to settings.
+- **Testing**:
+  - Added unit test suite `EmptyCommitsWarningBanner.test.tsx` verifying default warning, filtered warning, button actions, and rescan loading states.
+  - Expanded `DashboardPage.test.tsx` to verify banner appearance and filter reset interactions.
+  - 100% test pass rate (121 frontend vitest tests across 35 test files; 287 backend pytest tests).
