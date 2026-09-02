@@ -4,6 +4,7 @@ GraphCodeBERT-based semantic drift detection.
 Runs during ingestion only. Request handlers should read the stored drift
 scores from SQLite rather than invoking this module.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -21,35 +22,36 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "microsoft/graphcodebert-base"
 EMBEDDING_CACHE_DIR = Path(".cache/embeddings")
 
-_tokenizer = None
-_model = None
-_model_loaded = False
-_model_attempted = False
+
+class _ModelHolder:
+    tokenizer = None
+    model = None
+    loaded: bool = False
+    attempted: bool = False
 
 
 def _load_model() -> bool:
     """Load GraphCodeBERT once per ingestion process."""
-    global _tokenizer, _model, _model_loaded, _model_attempted
     if not ENABLE_SEMANTIC_ANALYSIS or not ENABLE_GRAPHCODEBERT:
         return False
-    if _model_loaded:
+    if _ModelHolder.loaded:
         return True
-    if _model_attempted:
+    if _ModelHolder.attempted:
         return False
 
     try:
-        _model_attempted = True
+        _ModelHolder.attempted = True
         from transformers import AutoModel, AutoTokenizer
 
         logger.info("Loading %s for semantic drift analysis.", MODEL_NAME)
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModel.from_pretrained(MODEL_NAME)
-        _model.eval()
-        _model_loaded = True
+        _ModelHolder.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        _ModelHolder.model = AutoModel.from_pretrained(MODEL_NAME)
+        _ModelHolder.model.eval()
+        _ModelHolder.loaded = True
         return True
     except Exception as exc:
         logger.warning("GraphCodeBERT unavailable; using semantic fallback: %s", exc)
-        _model_loaded = False
+        _ModelHolder.loaded = False
         return False
 
 
@@ -90,7 +92,7 @@ def get_code_embedding(code: str, max_tokens: int = 512) -> Optional[list[float]
     try:
         import torch
 
-        inputs = _tokenizer(
+        inputs = _ModelHolder.tokenizer(
             code[:4000],
             return_tensors="pt",
             truncation=True,
@@ -98,7 +100,7 @@ def get_code_embedding(code: str, max_tokens: int = 512) -> Optional[list[float]
             padding="max_length",
         )
         with torch.no_grad():
-            outputs = _model(**inputs)
+            outputs = _ModelHolder.model(**inputs)
 
         embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
         _save_embedding(code, embedding)
@@ -162,7 +164,11 @@ def compute_repo_semantic_health(file_drifts: list[dict]) -> dict:
     scores = [float(item.get("semantic_drift_score", 0.0)) for item in file_drifts]
     avg_drift = sum(scores) / max(len(scores), 1)
     max_drift = max(scores)
-    method = "graphcodebert" if any(item.get("method") == "graphcodebert" for item in file_drifts) else file_drifts[0].get("method", "none")
+    method = (
+        "graphcodebert"
+        if any(item.get("method") == "graphcodebert" for item in file_drifts)
+        else file_drifts[0].get("method", "none")
+    )
 
     return {
         "avg_semantic_drift": round(avg_drift, 4),

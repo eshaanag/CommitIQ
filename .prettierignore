@@ -1,0 +1,7 @@
+backend/
+.venv/
+node_modules/
+dist/
+coverage/
+test-results/
+

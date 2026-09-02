@@ -8,11 +8,21 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: commitiq
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d commitiq"]
+      test: ['CMD-SHELL', 'pg_isready -U user -d commitiq']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,15 +32,18 @@ services:
       context: .
       target: backend
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/commitiq
+      - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=development
       - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost,http://127.0.0.1
     volumes:
       - ./backend:/app/backend
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -39,7 +52,7 @@ services:
       context: .
       target: frontend-base
     ports:
-      - "5173:5173"
+      - '5173:5173'
     environment:
       - VITE_DEV_API_PROXY_TARGET=http://backend:8000
       - CHOKIDAR_USEPOLLING=true

@@ -1,29 +1,113 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SWRConfig } from 'swr'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  getBusFactor,
-  getGraph,
-  getHealthTimeline,
-  getLLMUsage,
-  getRepoBySlug,
-} from '../lib/api'
+import { getBusFactor, getGraph, getHealthTimeline, getLLMUsage, getRepoBySlug } from '../lib/api'
 import type { HealthSnapshot, Repo } from '../types'
 import DashboardPage from './DashboardPage'
 
 vi.mock('../lib/api', () => ({
   getBusFactor: vi.fn(),
+  getCycleTime: vi.fn(() => Promise.resolve({ avg_cycle_time_hours: 0, bottlenecks: [] })),
+  getDoraMetrics: vi.fn(() => Promise.resolve({ dora_score: 'Elite' })),
+  getTeamHealthMetrics: vi.fn(() =>
+    Promise.resolve({ burnout_risk_score: 'Low', context_switching_score: 'Low' })
+  ),
+  getCodeQualityMetrics: vi.fn(() =>
+    Promise.resolve({ churn_category: 'Low', ai_impact_score: 'Low' })
+  ),
+  getVelocityMetrics: vi.fn(() =>
+    Promise.resolve({
+      totals: {
+        total_commits: 0,
+        avg_commits_per_week: 0,
+        avg_lines_per_week: 0,
+        cadence_score: 0,
+      },
+      weekly: [],
+      contributors: [],
+    })
+  ),
+  getCommitQuality: vi.fn(() =>
+    Promise.resolve({
+      total_commits: 0,
+      quality_score: 100,
+      convention_rate: 100,
+      error_free_rate: 100,
+      warning_free_rate: 100,
+      severity_breakdown: { error: 0, warning: 0, info: 0 },
+      top_violations: [],
+      contributors: [],
+    })
+  ),
+  getDeploymentTimeline: vi.fn(() =>
+    Promise.resolve({
+      deployments: [],
+      summary: {
+        total_deploys: 0,
+        success_count: 0,
+        failure_count: 0,
+        success_rate: 100,
+        most_recent: '',
+        by_environment: {},
+        by_provider: {},
+      },
+      daily: [],
+    })
+  ),
   getGraph: vi.fn(),
   getHealthTimeline: vi.fn(),
+  getIngestProgress: vi.fn(),
   getLLMUsage: vi.fn(),
   getRepoBySlug: vi.fn(),
+}))
+
+vi.mock('../components/VelocityDashboard', () => ({
+  VelocityDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="velocity-dashboard">velocity: {repoId}</div>
+  ),
+}))
+
+vi.mock('../components/CommitQualityDashboard', () => ({
+  CommitQualityDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="commit-quality-dashboard">commit quality: {repoId}</div>
+  ),
+}))
+
+vi.mock('../components/DeploymentTimeline', () => ({
+  DeploymentTimeline: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="deployment-timeline">deployments: {repoId}</div>
+  ),
 }))
 
 vi.mock('../components/BusFactorTable', () => ({
   BusFactorTable: ({ modules }: { modules: Array<{ module_path: string }> }) => (
     <div data-testid="bus-factor">ownership modules: {modules.length}</div>
+  ),
+}))
+
+vi.mock('../components/CycleTimeDashboard', () => ({
+  CycleTimeDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="cycle-time-dashboard">cycle time: {repoId}</div>
+  ),
+}))
+
+vi.mock('../components/DoraMetricsDashboard', () => ({
+  DoraMetricsDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="dora-metrics-dashboard">dora metrics: {repoId}</div>
+  ),
+}))
+
+vi.mock('../components/TeamHealthDashboard', () => ({
+  TeamHealthDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="team-health-dashboard">team health: {repoId}</div>
+  ),
+}))
+
+vi.mock('../components/CodeQualityDashboard', () => ({
+  CodeQualityDashboard: ({ repoId }: { repoId: string | number }) => (
+    <div data-testid="code-quality-dashboard">code quality: {repoId}</div>
   ),
 }))
 
@@ -69,13 +153,17 @@ vi.mock('../components/HealthTimeline', () => ({
 
 vi.mock('../components/HotspotMap', () => ({
   HotspotMap: ({ repoId, sha }: { repoId: number; sha: string | null }) => (
-    <div data-testid="hotspots">hotspots {repoId}:{sha ?? 'none'}</div>
+    <div data-testid="hotspots">
+      hotspots {repoId}:{sha ?? 'none'}
+    </div>
   ),
 }))
 
 vi.mock('../components/NarrativeCard', () => ({
   NarrativeCard: ({ repoId, commitSha }: { repoId: number; commitSha: string }) => (
-    <div data-testid="narrative-card">narrative {repoId}:{commitSha}</div>
+    <div data-testid="narrative-card">
+      narrative {repoId}:{commitSha}
+    </div>
   ),
 }))
 
@@ -147,7 +235,7 @@ function renderDashboard(path = '/dashboard/example-project') {
           <Route path="/" element={<div>Landing</div>} />
         </Routes>
       </MemoryRouter>
-    </SWRConfig>,
+    </SWRConfig>
   )
 }
 
@@ -161,7 +249,12 @@ describe('DashboardPage', () => {
 
     getRepoBySlugMock.mockResolvedValue(makeRepo())
     getHealthTimelineMock.mockResolvedValue([
-      makeSnapshot({ sha: 'abc123', full_sha: 'abc123', message: 'Initial import', health_score: 76 }),
+      makeSnapshot({
+        sha: 'abc123',
+        full_sha: 'abc123',
+        message: 'Initial import',
+        health_score: 76,
+      }),
       makeSnapshot({
         sha: 'def456',
         full_sha: 'def456',
@@ -266,14 +359,36 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Commit detail route')).toBeInTheDocument()
   })
 
-  it('shows an empty timeline state without requesting a graph', async () => {
+  it('shows an empty commits warning banner and timeline state without requesting a graph', async () => {
     getHealthTimelineMock.mockResolvedValue([])
 
     renderDashboard()
 
-    expect(await screen.findByText(/no analyzed commits/i)).toBeInTheDocument()
+    expect(await screen.findByTestId('empty-commits-warning-banner')).toBeInTheDocument()
+    expect(screen.getByText('No Commits Analyzed for This Repository')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Try increasing the Maximum Commits setting during ingestion/i)
+    ).toBeInTheDocument()
+    expect(screen.getByText(/no analyzed commits/i)).toBeInTheDocument()
     expect(screen.getByTestId('graph-explorer')).toHaveTextContent('graph none nodes 0')
     expect(getGraphMock).not.toHaveBeenCalled()
+  })
+
+  it('shows filtered warning banner when 0 commits returned for active time filter', async () => {
+    const user = userEvent.setup()
+    getHealthTimelineMock.mockResolvedValue([])
+
+    renderDashboard()
+
+    expect(await screen.findByTestId('empty-commits-warning-banner')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /last 7 days/i }))
+
+    expect(await screen.findByText('No Commits in Selected Time Window')).toBeInTheDocument()
+    expect(screen.getByTestId('reset-time-filter-button')).toBeInTheDocument()
+
+    await user.click(screen.getByTestId('reset-time-filter-button'))
+    expect(screen.getByRole('button', { name: /all time/i })).toHaveClass('bg-purple-500/20')
   })
 
   it('renders time range selector buttons and handles preset switching', async () => {
@@ -314,5 +429,142 @@ describe('DashboardPage', () => {
 
     expect(await screen.findByTestId('scroll-to-top')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /scroll back to top/i })).toBeInTheDocument()
+  })
+
+  // ── Issue #349: Export Report dropdown tests ───────────────────────────
+
+  it('shows the Export button on the dashboard when data is loaded', async () => {
+    renderDashboard()
+
+    expect(await screen.findByTestId('export-report-button')).toBeInTheDocument()
+  })
+
+  it('opens the export dropdown and shows both export options', async () => {
+    const user = userEvent.setup()
+    renderDashboard()
+
+    await screen.findByText('Improve ingestion resilience')
+
+    await user.click(screen.getByTestId('export-report-button'))
+
+    expect(screen.getByTestId('export-dropdown-menu')).toBeInTheDocument()
+    expect(screen.getByTestId('export-timeline-csv')).toBeInTheDocument()
+    expect(screen.getByTestId('export-busfactor-json')).toBeInTheDocument()
+    expect(screen.getByText(/2 commit\(s\)/)).toBeInTheDocument()
+    expect(screen.getByText(/1 module\(s\)/)).toBeInTheDocument()
+  })
+
+  it('triggers timeline CSV download when Export Timeline CSV is clicked', async () => {
+    const user = userEvent.setup()
+    const createUrlSpy = vi.spyOn(URL, 'createObjectURL')
+    renderDashboard()
+
+    await screen.findByText('Improve ingestion resilience')
+
+    await user.click(screen.getByTestId('export-report-button'))
+    await user.click(screen.getByTestId('export-timeline-csv'))
+
+    expect(createUrlSpy).toHaveBeenCalledTimes(1)
+    const blob = createUrlSpy.mock.calls[0][0] as Blob
+    expect(blob.type).toBe('text/csv;charset=utf-8;')
+    createUrlSpy.mockRestore()
+  })
+
+  it('triggers bus factor JSON download when Export Bus Factor JSON is clicked', async () => {
+    const user = userEvent.setup()
+    const createUrlSpy = vi.spyOn(URL, 'createObjectURL')
+    renderDashboard()
+
+    await screen.findByText('Improve ingestion resilience')
+
+    await user.click(screen.getByTestId('export-report-button'))
+    await user.click(screen.getByTestId('export-busfactor-json'))
+
+    expect(createUrlSpy).toHaveBeenCalledTimes(1)
+    const blob = createUrlSpy.mock.calls[0][0] as Blob
+    expect(blob.type).toBe('application/json;charset=utf-8;')
+    createUrlSpy.mockRestore()
+  })
+
+  it('disables export button when there is no data (empty timeline + no bus factor)', async () => {
+    getHealthTimelineMock.mockResolvedValue([])
+    getBusFactorMock.mockResolvedValue({ repo_id: 7, modules: [] })
+
+    renderDashboard()
+
+    const exportBtn = await screen.findByTestId('export-report-button')
+    expect(exportBtn).toBeDisabled()
+  })
+
+  it('closes the export dropdown when clicking outside', async () => {
+    const user = userEvent.setup()
+    renderDashboard()
+
+    await screen.findByText('Improve ingestion resilience')
+
+    await user.click(screen.getByTestId('export-report-button'))
+    expect(screen.getByTestId('export-dropdown-menu')).toBeInTheDocument()
+
+    await user.click(document.body)
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('export-dropdown-menu')).not.toBeInTheDocument()
+    })
+  })
+
+  it('renders metric help tooltips explaining Cyclomatic Complexity, Churn, and Bus Factor', async () => {
+    const user = userEvent.setup()
+    renderDashboard()
+
+    await screen.findByText('Improve ingestion resilience')
+
+    // Find help icon for Cyclomatic Complexity
+    const complexityHelp = screen.getByRole('button', { name: /about cyclomatic complexity/i })
+    expect(complexityHelp).toBeInTheDocument()
+
+    // Open complexity tooltip
+    await user.click(complexityHelp)
+    const complexityTooltip = screen.getByRole('tooltip')
+    expect(complexityTooltip).toBeInTheDocument()
+    expect(within(complexityTooltip).getByText('Cyclomatic Complexity')).toBeInTheDocument()
+    expect(
+      within(complexityTooltip).getByText(/Measures structural code complexity/i)
+    ).toBeInTheDocument()
+    expect(within(complexityTooltip).getByText(/M = E - N \+ 2P/i)).toBeInTheDocument()
+    expect(within(complexityTooltip).getByText('25% of Health Score')).toBeInTheDocument()
+
+    // Close by clicking outside
+    await user.click(document.body)
+    await waitFor(() => {
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    })
+
+    // Check Minimum Bus Factor tooltip
+    const busFactorHelp = screen.getByRole('button', { name: /about minimum bus factor/i })
+    await user.click(busFactorHelp)
+    const busFactorTooltip = screen.getByRole('tooltip')
+    expect(busFactorTooltip).toBeInTheDocument()
+    expect(within(busFactorTooltip).getByText('Minimum Bus Factor')).toBeInTheDocument()
+    expect(
+      within(busFactorTooltip).getByText(/minimum number of key contributors/i)
+    ).toBeInTheDocument()
+    expect(
+      within(busFactorTooltip).getByText(/min\(bus_factor_min × 20, 100\)/i)
+    ).toBeInTheDocument()
+
+    // Close tooltip
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
+    // Check Commit Churn Rate tooltip
+    const churnHelp = screen.getByRole('button', { name: /about commit churn rate/i })
+    await user.click(churnHelp)
+    const churnTooltip = screen.getByRole('tooltip')
+    expect(churnTooltip).toBeInTheDocument()
+    expect(within(churnTooltip).getByText('Commit Churn Rate')).toBeInTheDocument()
+    expect(within(churnTooltip).getByText(/Measures code volatility/i)).toBeInTheDocument()
+    expect(
+      within(churnTooltip).getByText(/Churn Rate = \(insertions \+ deletions\) \/ total_loc/i)
+    ).toBeInTheDocument()
   })
 })

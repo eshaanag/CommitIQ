@@ -1,5 +1,5 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: Security report
-    url: https://github.com/eshaanag/CommitIQ---/security/advisories/new
-    about: Please report suspected vulnerabilities privately.
+  - name: Support & Questions
+    url: https://github.com/eshaanag/CommitIQ---/discussions
+    about: Please ask questions or seek support in the Discussions tab.

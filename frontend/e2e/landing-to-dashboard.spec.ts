@@ -136,7 +136,12 @@ async function mockApi(page: Page) {
       return
     }
     if (path === '/api/repos/17/graph') {
-      await json(route, { repo_id: 17, commit_sha: url.searchParams.get('sha'), nodes: [], edges: [] })
+      await json(route, {
+        repo_id: 17,
+        commit_sha: url.searchParams.get('sha'),
+        nodes: [],
+        edges: [],
+      })
       return
     }
     if (path === '/api/repos/17/hotspots') {
@@ -170,8 +175,10 @@ test('moves from repository submission through ingestion into the dashboard', as
   await page.getByPlaceholder(/search or enter/i).fill('example/project')
   await page.getByPlaceholder('500').fill('25')
 
-  const ingestRequest = page.waitForRequest((request) =>
-    request.method() === 'POST' && new URL(request.url()).pathname === '/api/repos/ingest')
+  const ingestRequest = page.waitForRequest(
+    (request) =>
+      request.method() === 'POST' && new URL(request.url()).pathname === '/api/repos/ingest'
+  )
   await page.getByRole('button', { name: 'Analyze' }).click()
 
   expect((await ingestRequest).postDataJSON()).toEqual({

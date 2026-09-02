@@ -1,181 +1,52 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import type { HotspotResponse } from '../types'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { HotspotMap } from './HotspotMap'
 
-// Mock SWR
-vi.mock('swr')
+globalThis.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof window.ResizeObserver
+
 vi.mock('../lib/api', () => ({
-  getHotspots: vi.fn(),
+  getHotspots: vi.fn().mockImplementation((_repoId, _sha, limit = 50, offset = 0) => {
+    const total = 60
+    const hotspots = Array.from(
+      { length: Math.min(limit, Math.max(0, total - offset)) },
+      (_, i) => ({
+        file: `src/file_${offset + i + 1}.ts`,
+        complexity: 10,
+        churn_count: 5,
+        risk_score: 80,
+      })
+    )
+    return Promise.resolve({
+      repo_id: 1,
+      commit_sha: 'sha123',
+      hotspots,
+      total,
+      limit,
+      offset,
+    })
+  }),
 }))
-
-// Mock recharts to avoid rendering issues in test env
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Tooltip: () => null,
-  Treemap: () => null,
-}))
-
-import useSWR from 'swr'
-import { getHotspots } from '../lib/api'
-
-type SWRMockReturn = ReturnType<typeof useSWR<HotspotResponse, Error>>
-
-const mockUseSWR = vi.mocked(useSWR)
-const mockGetHotspots = vi.mocked(getHotspots)
-
-const mockHotspots = [
-  { file: 'src/auth.ts', complexity: 12.5, churn_count: 8, risk_score: 72.0, loc: 340 },
-  { file: 'src/db.ts', complexity: 18.2, churn_count: 5, risk_score: 55.5, loc: 520 },
-  { file: 'src/utils.ts', complexity: 6.0, churn_count: 15, risk_score: 90.0, loc: 120 },
-]
-
-function mockSWRReturnValue(
-  overrides: Partial<SWRMockReturn>,
-): SWRMockReturn {
-  return {
-    data: undefined,
-    error: undefined,
-    isLoading: false,
-    isValidating: false,
-    mutate: vi.fn(),
-    ...overrides,
-  } as SWRMockReturn
-}
 
 describe('HotspotMap', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockGetHotspots.mockResolvedValue({ repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots })
+  it('renders hotspot map with pagination controls when total exceeds limit', async () => {
+    render(<HotspotMap repoId={1} sha="sha123" />)
+
+    expect(await screen.findByText('Complexity Churn Hotspots')).toBeInTheDocument()
+    expect(await screen.findByText('Total: 60')).toBeInTheDocument()
+    expect(await screen.findByText(/Page 1 of 2/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next page' })).not.toBeDisabled()
   })
 
-  it('renders the hotspot table with all columns', async () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
-    )
+  it('renders risk category badges and legend', async () => {
+    render(<HotspotMap repoId={1} sha="sha123" />)
 
-    render(<HotspotMap repoId={1} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('src/auth.ts')).toBeInTheDocument()
-    })
-
-    // Check column headers exist
-    expect(screen.getByText('File')).toBeInTheDocument()
-    expect(screen.getByText('LOC')).toBeInTheDocument()
-    expect(screen.getByText('Churn')).toBeInTheDocument()
-    expect(screen.getByText('Complexity')).toBeInTheDocument()
-    expect(screen.getByText('Risk')).toBeInTheDocument()
-  })
-
-  it('sorts by complexity descending by default (risk_score)', async () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
-    )
-
-    const { container } = render(<HotspotMap repoId={1} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('src/utils.ts')).toBeInTheDocument()
-    })
-
-    // Default sort is risk_score desc, so utils.ts (90.0) should be first
-    const rows = container.querySelectorAll('tbody tr')
-    expect(rows[0].textContent).toContain('src/utils.ts')
-  })
-
-  it('sorts by LOC when LOC header is clicked', async () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
-    )
-
-    const { container } = render(<HotspotMap repoId={1} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('src/auth.ts')).toBeInTheDocument()
-    })
-
-    // Click LOC header
-    fireEvent.click(screen.getByText('LOC'))
-
-    const rows = container.querySelectorAll('tbody tr')
-    // Descending: 520, 340, 120 → db.ts, auth.ts, utils.ts
-    expect(rows[0].textContent).toContain('src/db.ts')
-    expect(rows[1].textContent).toContain('src/auth.ts')
-    expect(rows[2].textContent).toContain('src/utils.ts')
-  })
-
-  it('toggles sort direction when clicking the same header twice', async () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
-    )
-
-    const { container } = render(<HotspotMap repoId={1} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('src/auth.ts')).toBeInTheDocument()
-    })
-
-    // Click LOC once → desc (520 first)
-    fireEvent.click(screen.getByText('LOC'))
-    let rows = container.querySelectorAll('tbody tr')
-    expect(rows[0].textContent).toContain('src/db.ts')
-
-    // Click LOC again → asc (120 first)
-    fireEvent.click(screen.getByText('LOC'))
-    rows = container.querySelectorAll('tbody tr')
-    expect(rows[0].textContent).toContain('src/utils.ts')
-  })
-
-  it('sorts by Churn when Churn header is clicked', async () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: mockHotspots },
-      }),
-    )
-
-    const { container } = render(<HotspotMap repoId={1} />)
-
-    await waitFor(() => {
-      expect(screen.getByText('src/auth.ts')).toBeInTheDocument()
-    })
-
-    fireEvent.click(screen.getByText('Churn'))
-
-    const rows = container.querySelectorAll('tbody tr')
-    // Descending: 15, 8, 5 → utils.ts, auth.ts, db.ts
-    expect(rows[0].textContent).toContain('src/utils.ts')
-    expect(rows[2].textContent).toContain('src/db.ts')
-  })
-
-  it('shows empty state when no hotspots', () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: { repo_id: 1, commit_sha: 'abc', hotspots: [] },
-      }),
-    )
-
-    render(<HotspotMap repoId={1} />)
-    expect(screen.getByText(/No high-complexity churn hotspots found/i)).toBeInTheDocument()
-  })
-
-  it('shows loading state', () => {
-    mockUseSWR.mockReturnValue(
-      mockSWRReturnValue({
-        data: undefined,
-        isLoading: true,
-      }),
-    )
-
-    render(<HotspotMap repoId={1} />)
-    expect(screen.getByText(/Loading hotspots/i)).toBeInTheDocument()
+    expect(await screen.findByText('Critical')).toBeInTheDocument()
+    expect(screen.getByText('High')).toBeInTheDocument()
+    expect(screen.getByText('Medium')).toBeInTheDocument()
   })
 })

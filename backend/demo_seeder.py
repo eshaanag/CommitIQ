@@ -1,20 +1,34 @@
+import json
 import logging
 from datetime import datetime, timedelta, timezone
-import json
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.shared.models import Repo, Commit, HealthSnapshot, GraphNode, GraphEdge, BusFactor, LLMNarrative
+
+from backend.shared.models import (
+    BusFactor,
+    Commit,
+    GraphEdge,
+    GraphNode,
+    HealthSnapshot,
+    LLMNarrative,
+    Repo,
+)
 
 logger = logging.getLogger(__name__)
+
 
 async def seed_demo_data_if_empty(session: AsyncSession) -> None:
     # Check if facebook-react repo already exists
     existing = await session.execute(select(Repo).where(Repo.repo_slug == "facebook-react"))
     if existing.scalar_one_or_none():
-        logger.info("Demo repository 'facebook-react' already exists in the database. Skipping seeder.")
+        logger.info(
+            "Demo repository 'facebook-react' already exists in the database. Skipping seeder."
+        )
         return
 
     import os
+
     fixture_path = os.path.join("backend", "fixtures", "facebook-react.json")
     if os.path.exists(fixture_path):
         logger.info(f"Seeding database using real analyzed demo fixture from {fixture_path}...")
@@ -70,10 +84,15 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
                 session.add(bf)
 
             await session.commit()
-            logger.info("Successfully seeded database using real analyzed 'facebook-react' demo data!")
+            logger.info(
+                "Successfully seeded database using real analyzed 'facebook-react' demo data!"
+            )
             return
         except Exception as exc:
-            logger.error(f"Failed to seed demo data using real fixture: {exc}. Falling back to generating mock data...", exc_info=True)
+            logger.error(
+                f"Failed to seed demo data using real fixture: {exc}. Falling back to generating mock data...",
+                exc_info=True,
+            )
 
     logger.info("Seeding database with generated fallback 'facebook-react' demo data...")
 
@@ -95,7 +114,7 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
     session.add(repo)
     await session.flush()
 
-    # Define authors and files
+    # Define authors
     authors = [
         {"name": "Dan Abramov", "email": "dan@gaearon.mobi"},
         {"name": "Sebastian Markbåge", "email": "seb@fb.com"},
@@ -104,21 +123,10 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
         {"name": "Lauren Tan", "email": "lauren@fb.com"},
     ]
 
-    files = [
-        "packages/react/src/React.js",
-        "packages/react/src/ReactBaseClasses.js",
-        "packages/react/src/ReactHooks.js",
-        "packages/react-reconciler/src/ReactFiber.js",
-        "packages/react-reconciler/src/ReactFiberBeginWork.js",
-        "packages/react-reconciler/src/ReactFiberCommitWork.js",
-        "packages/react-dom/src/client/ReactDOM.js",
-        "packages/shared/ReactSharedInternals.js",
-    ]
-
     # 2. Generate timeline commits & snapshots
     base_time = datetime(2026, 6, 1, tzinfo=timezone.utc)
     commit_instances = []
-    
+
     # We will generate 40 commits to make a nice timeline
     health_scores = []
     for i in range(40):
@@ -126,7 +134,7 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
         author = authors[i % len(authors)]
         sha_hex = f"{i:012x}"
         full_sha = f"{sha_hex}7890abc123def4567890abc123def4567890abc"
-        
+
         # Calculate mock health metrics
         # Fluctuate health score
         if i < 10:
@@ -149,14 +157,22 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
             repo_id=repo.id,
             sha=sha_hex,
             full_sha=full_sha,
-            message=f"perf: optimize render pathway in concurrent mode part {i}" if i % 5 == 0 else f"fix: resolve memory leak in hooks lifecycle (attempt {i})" if i % 3 == 0 else f"chore: update internal package dependency mapping {i}",
+            message=(
+                f"perf: optimize render pathway in concurrent mode part {i}"
+                if i % 5 == 0
+                else (
+                    f"fix: resolve memory leak in hooks lifecycle (attempt {i})"
+                    if i % 3 == 0
+                    else f"chore: update internal package dependency mapping {i}"
+                )
+            ),
             author_name=author["name"],
             author_email=author["email"],
             committed_at=committed_at,
             insertions=120 + i * 5,
             deletions=45 + i * 2,
             files_changed=num_files_changed,
-            parent_sha=commit_instances[-1].full_sha if commit_instances else None
+            parent_sha=commit_instances[-1].full_sha if commit_instances else None,
         )
         session.add(commit)
         await session.flush()
@@ -190,23 +206,42 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
             semantic_health_score=85.0 + (i % 3) * 3,
             high_drift_files=1 if i % 10 == 0 else 0,
             semantic_drift_method="fallback_levenshtein",
-            risk_reasons_json=json.dumps([
-                {
-                    "code": "single_owner",
-                    "severity": "high" if bus_factor_min == 1 else "medium",
-                    "label": "Single-point-of-failure risk",
-                    "detail": "Critical component ReactFiber.js relies entirely on a single contributor.",
-                    "impact": 20.0
-                }
-            ]) if bus_factor_min == 1 else "[]",
+            risk_reasons_json=(
+                json.dumps(
+                    [
+                        {
+                            "code": "single_owner",
+                            "severity": "high" if bus_factor_min == 1 else "medium",
+                            "label": "Single-point-of-failure risk",
+                            "detail": "Critical component ReactFiber.js relies entirely on a single contributor.",
+                            "impact": 20.0,
+                        }
+                    ]
+                )
+                if bus_factor_min == 1
+                else "[]"
+            ),
             hotspot_persistence_score=45.0,
-            persistent_hotspots_json=json.dumps([
-                {"path": "packages/react-reconciler/src/ReactFiber.js", "recent_commit_count": 8, "complexity": 18.5, "loc": 1200}
-            ]),
-            top_files_json=json.dumps([
-                {"path": "packages/react-reconciler/src/ReactFiber.js", "complexity": 18.5, "loc": 1200},
-                {"path": "packages/react/src/ReactHooks.js", "complexity": 12.0, "loc": 450}
-            ])
+            persistent_hotspots_json=json.dumps(
+                [
+                    {
+                        "path": "packages/react-reconciler/src/ReactFiber.js",
+                        "recent_commit_count": 8,
+                        "complexity": 18.5,
+                        "loc": 1200,
+                    }
+                ]
+            ),
+            top_files_json=json.dumps(
+                [
+                    {
+                        "path": "packages/react-reconciler/src/ReactFiber.js",
+                        "complexity": 18.5,
+                        "loc": 1200,
+                    },
+                    {"path": "packages/react/src/ReactHooks.js", "complexity": 12.0, "loc": 450},
+                ]
+            ),
         )
         session.add(snapshot)
         await session.flush()
@@ -225,22 +260,70 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
                 tokens_output=350,
                 cost_usd=0.00,
                 model_used="claude-sonnet-4-20250514",
-                is_pre_cached=True
+                is_pre_cached=True,
             )
             session.add(narrative)
 
     # 3. Create GraphNodes & GraphEdges (using the latest commit)
     latest_commit = commit_instances[-1]
-    
+
     nodes_data = [
-        {"file": "packages/react/src/React.js", "complexity": 3.2, "loc": 180, "color": "green", "entry": True},
-        {"file": "packages/react/src/ReactBaseClasses.js", "complexity": 4.1, "loc": 220, "color": "green", "entry": False},
-        {"file": "packages/react/src/ReactHooks.js", "complexity": 12.0, "loc": 450, "color": "yellow", "entry": False},
-        {"file": "packages/react-reconciler/src/ReactFiber.js", "complexity": 18.5, "loc": 1200, "color": "red", "entry": False},
-        {"file": "packages/react-reconciler/src/ReactFiberBeginWork.js", "complexity": 14.2, "loc": 950, "color": "orange", "entry": False},
-        {"file": "packages/react-reconciler/src/ReactFiberCommitWork.js", "complexity": 9.8, "loc": 750, "color": "yellow", "entry": False},
-        {"file": "packages/react-dom/src/client/ReactDOM.js", "complexity": 5.0, "loc": 320, "color": "green", "entry": True},
-        {"file": "packages/shared/ReactSharedInternals.js", "complexity": 1.5, "loc": 80, "color": "green", "entry": False},
+        {
+            "file": "packages/react/src/React.js",
+            "complexity": 3.2,
+            "loc": 180,
+            "color": "green",
+            "entry": True,
+        },
+        {
+            "file": "packages/react/src/ReactBaseClasses.js",
+            "complexity": 4.1,
+            "loc": 220,
+            "color": "green",
+            "entry": False,
+        },
+        {
+            "file": "packages/react/src/ReactHooks.js",
+            "complexity": 12.0,
+            "loc": 450,
+            "color": "yellow",
+            "entry": False,
+        },
+        {
+            "file": "packages/react-reconciler/src/ReactFiber.js",
+            "complexity": 18.5,
+            "loc": 1200,
+            "color": "red",
+            "entry": False,
+        },
+        {
+            "file": "packages/react-reconciler/src/ReactFiberBeginWork.js",
+            "complexity": 14.2,
+            "loc": 950,
+            "color": "orange",
+            "entry": False,
+        },
+        {
+            "file": "packages/react-reconciler/src/ReactFiberCommitWork.js",
+            "complexity": 9.8,
+            "loc": 750,
+            "color": "yellow",
+            "entry": False,
+        },
+        {
+            "file": "packages/react-dom/src/client/ReactDOM.js",
+            "complexity": 5.0,
+            "loc": 320,
+            "color": "green",
+            "entry": True,
+        },
+        {
+            "file": "packages/shared/ReactSharedInternals.js",
+            "complexity": 1.5,
+            "loc": 80,
+            "color": "green",
+            "entry": False,
+        },
     ]
 
     for nd in nodes_data:
@@ -255,23 +338,62 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
             health_color=nd["color"],
             is_entry_point=nd["entry"],
             semantic_drift_score=0.05,
-            drift_method="fallback_levenshtein"
+            drift_method="fallback_levenshtein",
         )
         session.add(node)
-    
+
     await session.flush()
 
     edges_data = [
-        {"source": "packages/react/src/React.js", "target": "packages/react/src/ReactBaseClasses.js", "type": "import"},
-        {"source": "packages/react/src/React.js", "target": "packages/react/src/ReactHooks.js", "type": "import"},
-        {"source": "packages/react-reconciler/src/ReactFiber.js", "target": "packages/react-reconciler/src/ReactFiberBeginWork.js", "type": "import"},
-        {"source": "packages/react-reconciler/src/ReactFiber.js", "target": "packages/react-reconciler/src/ReactFiberCommitWork.js", "type": "import"},
-        {"source": "packages/react-dom/src/client/ReactDOM.js", "source_file": "packages/react-dom/src/client/ReactDOM.js", "target": "packages/react/src/React.js", "type": "import"},
-        {"source": "packages/react-reconciler/src/ReactFiber.js", "target": "packages/shared/ReactSharedInternals.js", "type": "import"},
-        {"source": "packages/react/src/ReactHooks.js", "target": "packages/shared/ReactSharedInternals.js", "type": "import"},
+        {
+            "source": "packages/react/src/React.js",
+            "target": "packages/react/src/ReactBaseClasses.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react/src/React.js",
+            "target": "packages/react/src/ReactHooks.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react-reconciler/src/ReactFiber.js",
+            "target": "packages/react-reconciler/src/ReactFiberBeginWork.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react-reconciler/src/ReactFiber.js",
+            "target": "packages/react-reconciler/src/ReactFiberCommitWork.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react-dom/src/client/ReactDOM.js",
+            "source_file": "packages/react-dom/src/client/ReactDOM.js",
+            "target": "packages/react/src/React.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react-reconciler/src/ReactFiber.js",
+            "target": "packages/shared/ReactSharedInternals.js",
+            "type": "import",
+        },
+        {
+            "source": "packages/react/src/ReactHooks.js",
+            "target": "packages/shared/ReactSharedInternals.js",
+            "type": "import",
+        },
         # Co-change
-        {"source": "packages/react-reconciler/src/ReactFiber.js", "target": "packages/react-reconciler/src/ReactFiberBeginWork.js", "type": "co_change", "weight": 5},
-        {"source": "packages/react/src/React.js", "target": "packages/react/src/ReactHooks.js", "type": "co_change", "weight": 3},
+        {
+            "source": "packages/react-reconciler/src/ReactFiber.js",
+            "target": "packages/react-reconciler/src/ReactFiberBeginWork.js",
+            "type": "co_change",
+            "weight": 5,
+        },
+        {
+            "source": "packages/react/src/React.js",
+            "target": "packages/react/src/ReactHooks.js",
+            "type": "co_change",
+            "weight": 3,
+        },
     ]
 
     for ed in edges_data:
@@ -282,16 +404,44 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
             source_file=ed["source"],
             target_file=ed["target"],
             edge_type=ed["type"],
-            weight=ed.get("weight", 1)
+            weight=ed.get("weight", 1),
         )
         session.add(edge)
 
     # 4. Create BusFactor modules
     bus_data = [
-        {"path": "packages/react", "count": 12, "top": "Dan Abramov", "pct": 0.45, "commits": 150, "risk": "low"},
-        {"path": "packages/react-reconciler", "count": 1, "top": "Sebastian Markbåge", "pct": 0.95, "commits": 300, "risk": "critical"},
-        {"path": "packages/react-dom", "count": 5, "top": "Andrew Clark", "pct": 0.60, "commits": 200, "risk": "medium"},
-        {"path": "packages/shared", "count": 8, "top": "Sophie Alpert", "pct": 0.50, "commits": 80, "risk": "low"},
+        {
+            "path": "packages/react",
+            "count": 12,
+            "top": "Dan Abramov",
+            "pct": 0.45,
+            "commits": 150,
+            "risk": "low",
+        },
+        {
+            "path": "packages/react-reconciler",
+            "count": 1,
+            "top": "Sebastian Markbåge",
+            "pct": 0.95,
+            "commits": 300,
+            "risk": "critical",
+        },
+        {
+            "path": "packages/react-dom",
+            "count": 5,
+            "top": "Andrew Clark",
+            "pct": 0.60,
+            "commits": 200,
+            "risk": "medium",
+        },
+        {
+            "path": "packages/shared",
+            "count": 8,
+            "top": "Sophie Alpert",
+            "pct": 0.50,
+            "commits": 80,
+            "risk": "low",
+        },
     ]
 
     for bd in bus_data:
@@ -304,7 +454,7 @@ async def seed_demo_data_if_empty(session: AsyncSession) -> None:
             top_contributor_pct=bd["pct"],
             total_commits_to_module=bd["commits"],
             risk_level=bd["risk"],
-            last_commit_sha=latest_commit.sha
+            last_commit_sha=latest_commit.sha,
         )
         session.add(bf)
 

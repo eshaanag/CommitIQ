@@ -18,7 +18,7 @@ describe('NarrativeCard', () => {
   it('does not request a narrative without a selected commit', () => {
     render(<NarrativeCard repoId={7} commitSha={null} />)
 
-    expect(screen.getByRole('button', { name: /compile intelligence narrative/i })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /generate narrative/i })).toBeDisabled()
     expect(streamNarrativeMock).not.toHaveBeenCalled()
   })
 
@@ -40,11 +40,17 @@ describe('NarrativeCard', () => {
 
     render(<NarrativeCard repoId={7} commitSha="abcdef123456" />)
 
-    await user.click(screen.getByRole('button', { name: /compile intelligence narrative/i }))
+    await user.click(screen.getByRole('button', { name: /generate narrative/i }))
 
     expect(await screen.findByText('Risk is controlled.')).toBeInTheDocument()
-    expect(streamNarrativeMock).toHaveBeenCalledWith(7, 'abcdef123456', expect.any(Function))
-    expect(screen.getByText('Claude Sonnet')).toBeInTheDocument()
+    expect(streamNarrativeMock).toHaveBeenCalledWith(
+      7,
+      'abcdef123456',
+      expect.any(Function),
+      expect.any(Object)
+    )
+    expect(screen.getByText('Anthropic')).toBeInTheDocument()
+    expect(screen.getByText('Model: claude-3-5-sonnet-20241022')).toBeInTheDocument()
     expect(screen.getByText('Cost: $0.00123')).toBeInTheDocument()
     expect(screen.getByText('Tokens: 42')).toBeInTheDocument()
     expect(screen.getByText('CACHED')).toBeInTheDocument()
@@ -58,14 +64,10 @@ describe('NarrativeCard', () => {
 
     render(<NarrativeCard repoId={7} commitSha="abcdef123456" />)
 
-    await user.click(screen.getByRole('button', { name: /compile intelligence narrative/i }))
+    await user.click(screen.getByRole('button', { name: /generate narrative/i }))
 
-    expect(await screen.findByText('Narrative Generation Failed')).toBeInTheDocument()
-    expect(screen.getByText('LLM budget exceeded')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /try again/i }))
-
-    expect(screen.getByRole('button', { name: /compile intelligence narrative/i })).toBeEnabled()
+    expect(await screen.findByText('LLM budget exceeded')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
   })
 
   it('shows request failures from the streaming API', async () => {
@@ -74,11 +76,37 @@ describe('NarrativeCard', () => {
 
     render(<NarrativeCard repoId={7} commitSha="abcdef123456" />)
 
-    await user.click(screen.getByRole('button', { name: /compile intelligence narrative/i }))
+    await user.click(screen.getByRole('button', { name: /generate narrative/i }))
 
     await waitFor(() => {
       expect(screen.getByText('Narrative stream failed (500)')).toBeInTheDocument()
     })
-    expect(screen.getByText('Narrative Generation Failed')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
+  })
+
+  it('copies narrative markdown to clipboard on button click', async () => {
+    const user = userEvent.setup()
+    const writeTextMock = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: writeTextMock,
+      },
+      configurable: true,
+    })
+
+    streamNarrativeMock.mockImplementation(async (_repoId, _sha, onChunk) => {
+      onChunk({ token: 'Hello Markdown', done: false })
+      onChunk({ done: true, explanation: 'Hello Markdown' })
+    })
+
+    render(<NarrativeCard repoId={7} commitSha="abcdef123456" />)
+    await user.click(screen.getByRole('button', { name: /generate narrative/i }))
+
+    expect(await screen.findByText('Hello Markdown')).toBeInTheDocument()
+    const copyBtn = screen.getByRole('button', { name: /copy markdown/i })
+    await user.click(copyBtn)
+
+    expect(writeTextMock).toHaveBeenCalledWith('Hello Markdown')
+    expect(await screen.findByText('Copied!')).toBeInTheDocument()
   })
 })

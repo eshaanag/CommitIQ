@@ -1,0 +1,56 @@
+name: Bug Report
+description: Create a report to help us improve CommitIQ
+title: '[BUG] '
+labels: ['bug', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please provide as much detail as possible.
+  - type: input
+    id: version
+    attributes:
+      label: CommitIQ Version
+      description: Which version of CommitIQ are you using? (e.g. latest main branch, v1.0.0, or SaaS)
+      placeholder: 'e.g. main branch'
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      value: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: If applicable, add terminal logs or screenshots to help explain your problem.
+      render: shell
+  - type: checkboxes
+    id: context
+    attributes:
+      label: Additional Context
+      options:
+        - label: I am running CommitIQ locally (Docker/Python).
+        - label: I am using the cloud/demo version.

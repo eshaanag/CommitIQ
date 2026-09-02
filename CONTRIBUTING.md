@@ -1,6 +1,6 @@
 # Contributing to CommitIQ
 
-Thank you for your interest in contributing to **CommitIQ**! We warmly welcome contributions from open-source developers, including participants in **ESOC** (Extramarks Summer of Code) and **ELUSOC**. 
+Thank you for your interest in contributing to **CommitIQ**! We warmly welcome contributions from open-source developers, including participants in **ESOC** (Extramarks Summer of Code) and **ELUSOC**.
 
 CommitIQ turns raw GitHub repository commit history into actionable maintainability and code health signals. This project is in active development, so we prioritize **correctness, observability, and test coverage** alongside feature development.
 
@@ -37,7 +37,7 @@ Before starting, ensure you have the following installed on your local system:
 - **Node.js**: 18.x or 20.x (LTS recommended)
 - **npm**: 9.x or higher
 - **Git**: 2.30+
-- *(Optional)* API keys for Anthropic Claude, Google Gemini, and GitHub for LLM narrative generation and high-rate-limit ingestion.
+- _(Optional)_ API keys for Anthropic Claude, Google Gemini, and GitHub for LLM narrative generation and high-rate-limit ingestion.
 
 ---
 
@@ -46,8 +46,8 @@ Before starting, ensure you have the following installed on your local system:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/eshaanag/CommitIQ---.git
-cd CommitIQ---
+git clone https://github.com/eshaanag/CommitIQ.git
+cd CommitIQ
 ```
 
 ### 2. Backend Setup
@@ -82,6 +82,7 @@ The backend is built with FastAPI, SQLAlchemy (async ORM), and SQLite/Postgres.
    ```
 
    Default `.env` configuration for local development:
+
    ```env
    DATABASE_URL=sqlite+aiosqlite:///./commitiq.db
    ENVIRONMENT=development
@@ -126,6 +127,7 @@ The frontend is built with React 18, TypeScript, Vite, Tailwind CSS, and SWR.
    ```
 
    Default `frontend/.env` configuration:
+
    ```env
    VITE_API_BASE_URL=
    VITE_DEV_API_PROXY_TARGET=http://127.0.0.1:8000
@@ -156,16 +158,19 @@ All pull requests must pass backend and frontend quality checks.
 Backend unit and integration tests use **pytest**.
 
 - **Run all backend tests**:
+
   ```bash
   python -m pytest
   ```
 
 - **Run tests with verbose output**:
+
   ```bash
   python -m pytest -v
   ```
 
 - **Run a specific test file**:
+
   ```bash
   python -m pytest backend/tests/test_repo_ingestion_logic.py
   ```
@@ -182,6 +187,7 @@ Backend unit and integration tests use **pytest**.
 Frontend unit and component tests use **Vitest** and `@testing-library/react`.
 
 - **Run unit tests once**:
+
   ```bash
   cd frontend
   npm run test
@@ -200,6 +206,7 @@ Frontend unit and component tests use **Vitest** and `@testing-library/react`.
 End-to-end tests use **Playwright**.
 
 1. **Install Chromium browser binary for Playwright** (first-time setup):
+
    ```bash
    cd frontend
    npx playwright install chromium
@@ -220,6 +227,7 @@ End-to-end tests use **Playwright**.
 We enforce standard formatting using **Black** and linting with **Ruff**.
 
 - **Black formatting** (line length 100):
+
   ```bash
   black --config pyproject.toml backend/
   ```
@@ -234,12 +242,14 @@ We enforce standard formatting using **Black** and linting with **Ruff**.
 We use **Prettier** for code formatting and **ESLint** for code quality.
 
 - **Check ESLint rules**:
+
   ```bash
   cd frontend
   npm run lint
   ```
 
 - **Format frontend code with Prettier**:
+
   ```bash
   npx prettier --config frontend/.prettierrc --write "frontend/src/**/*.{ts,tsx,js,jsx,css}" "frontend/public/**/*"
   ```

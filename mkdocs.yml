@@ -1,0 +1,51 @@
+site_name: CommitIQ
+repo_url: https://github.com/eshaanag/CommitIQ
+repo_name: eshaanag/CommitIQ
+site_description: Repository health intelligence for professional engineering teams.
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+
+nav:
+  - Home: index.md
+  - Architecture: ARCHITECTURE.md
+  - Metrics & Health Formulas: REPO_HEALTH_METRICS.md
+  - DORA & Cycle Time: DORA_AND_CYCLE_TIME.md
+  - REST API Reference: API_REFERENCE.md
+  - Developer Guide: DEVELOPER_GUIDE.md
+  - Deployment & Operations: DEPLOYMENT_AND_OPERATIONS.md
+  - Troubleshooting & FAQ: TROUBLESHOOTING_AND_FAQ.md

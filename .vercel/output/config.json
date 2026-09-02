@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "routes": [
+    {
+      "handle": "error"
+    },
+    {
+      "status": 404,
+      "src": "^(?!/api).*$",
+      "dest": "/404.html"
+    }
+  ],
+  "framework": {
+    "slug": "vite",
+    "version": "8.0.14"
+  },
+  "crons": []
+}

@@ -1,5 +1,3 @@
-import pytest
-
 from backend.features.repo_ingestion.identity_normalizer import ContributorIdentityResolver
 
 
@@ -18,7 +16,10 @@ class TestContributorIdentityResolver:
             encoding="utf-8",
         )
         resolver = ContributorIdentityResolver(tmp_path)
-        assert resolver.resolve("John Old", "john.old@personal.com") == ("John New", "john.new@company.com")
+        assert resolver.resolve("John Old", "john.old@personal.com") == (
+            "John New",
+            "john.new@company.com",
+        )
 
     def test_mailmap_maps_without_email(self, tmp_path):
         mailmap = tmp_path / ".mailmap"
@@ -73,17 +74,22 @@ class TestContributorIdentityResolver:
             encoding="utf-8",
         )
         resolver = ContributorIdentityResolver(tmp_path)
-        assert resolver.resolve("John Old", "john.old@personal.com") == ("John New", "john.new@company.com")
+        assert resolver.resolve("John Old", "john.old@personal.com") == (
+            "John New",
+            "john.new@company.com",
+        )
 
     def test_mailmap_invalid_short_lines_ignored(self, tmp_path):
         mailmap = tmp_path / ".mailmap"
         mailmap.write_text(
-            "bad\n"
-            "John New <john.new@company.com> John Old <john.old@personal.com>\n",
+            "bad\n" "John New <john.new@company.com> John Old <john.old@personal.com>\n",
             encoding="utf-8",
         )
         resolver = ContributorIdentityResolver(tmp_path)
-        assert resolver.resolve("John Old", "john.old@personal.com") == ("John New", "john.new@company.com")
+        assert resolver.resolve("John Old", "john.old@personal.com") == (
+            "John New",
+            "john.new@company.com",
+        )
 
     def test_distinct_contributors_do_not_merge(self):
         resolver = ContributorIdentityResolver()
@@ -93,7 +99,9 @@ class TestContributorIdentityResolver:
 
     def test_same_contributor_repeated_emails_map_to_same_identity(self):
         resolver = ContributorIdentityResolver()
-        assert resolver.resolve("Alice", "alice@work.com") == resolver.resolve("Alice", "alice@work.com")
+        assert resolver.resolve("Alice", "alice@work.com") == resolver.resolve(
+            "Alice", "alice@work.com"
+        )
 
     def test_mailmap_unicode_name(self, tmp_path):
         mailmap = tmp_path / ".mailmap"
@@ -123,7 +131,11 @@ class TestContributorIdentityResolver:
 
     def test_resolve_many_returns_raw_to_canonical_mapping(self):
         resolver = ContributorIdentityResolver()
-        identities = [("Alice", "alice@work.com"), ("Alice", "alice@personal.com"), ("Bob", "bob@example.com")]
+        identities = [
+            ("Alice", "alice@work.com"),
+            ("Alice", "alice@personal.com"),
+            ("Bob", "bob@example.com"),
+        ]
         mapping = resolver.resolve_many(identities)
         assert mapping[("Alice", "alice@work.com")] == ("Alice", "alice@work.com")
         assert mapping[("Alice", "alice@personal.com")] == ("Alice", "alice@personal.com")
@@ -135,7 +147,10 @@ class TestContributorIdentityResolver:
             encoding="utf-8",
         )
         resolver = ContributorIdentityResolver(tmp_path)
-        assert resolver.resolve("John Old", "  john.old@personal.com  ") == ("John New", "john.new@company.com")
+        assert resolver.resolve("John Old", "  john.old@personal.com  ") == (
+            "John New",
+            "john.new@company.com",
+        )
 
     def test_mailmap_preserves_canonical_name_when_no_canonical_email(self, tmp_path):
         mailmap = tmp_path / ".mailmap"
@@ -147,12 +162,21 @@ class TestContributorIdentityResolver:
         assert resolver.resolve("John Old", None) == ("John Canonical", "john@canonical.com")
         # Also verify distinct contributors don't merge
         assert resolver.resolve("Jane Doe", None) == ("Jane Doe", None)
-        assert resolver.resolve("Someone Else", "other@example.com") == ("Someone Else", "other@example.com")
+        assert resolver.resolve("Someone Else", "other@example.com") == (
+            "Someone Else",
+            "other@example.com",
+        )
 
     def test_normalize_collapses_duplicate_spaces_in_name(self):
         resolver = ContributorIdentityResolver()
-        assert resolver.resolve("John   Doe", "john@example.com") == ("John Doe", "john@example.com")
-        assert resolver.resolve("  Jane    Doe  ", "jane@example.com") == ("Jane Doe", "jane@example.com")
+        assert resolver.resolve("John   Doe", "john@example.com") == (
+            "John Doe",
+            "john@example.com",
+        )
+        assert resolver.resolve("  Jane    Doe  ", "jane@example.com") == (
+            "Jane Doe",
+            "jane@example.com",
+        )
 
     def test_normalize_collapses_duplicate_spaces_in_mailmap_lookup(self, tmp_path):
         mailmap = tmp_path / ".mailmap"
@@ -162,4 +186,7 @@ class TestContributorIdentityResolver:
         )
         resolver = ContributorIdentityResolver(tmp_path)
         # Even with extra spaces in the input, the normalized key should match
-        assert resolver.resolve("John   Old", "  john.old@personal.com  ") == ("John New", "john.new@company.com")
+        assert resolver.resolve("John   Old", "  john.old@personal.com  ") == (
+            "John New",
+            "john.new@company.com",
+        )

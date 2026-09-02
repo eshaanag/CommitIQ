@@ -14,9 +14,12 @@ vi.mock('../lib/api', () => ({
 const ingestRepoMock = vi.mocked(ingestRepo)
 const getRepoBySlugMock = vi.mocked(getRepoBySlug)
 
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
+const { mockNavigate } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+}))
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>()
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -49,7 +52,7 @@ function renderDemoPage() {
   return render(
     <MemoryRouter>
       <DemoPage />
-    </MemoryRouter>,
+    </MemoryRouter>
   )
 }
 
@@ -77,7 +80,12 @@ describe('DemoPage', () => {
     await waitFor(() => {
       expect(ingestRepoMock).toHaveBeenCalledWith('https://github.com/facebook/react', 100)
     })
-    expect(mockNavigate).toHaveBeenCalledWith('/analyze?repo_id=31&name=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact', { replace: true })
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/analyze?repo_id=31&name=https%3A%2F%2Fgithub.com%2Ffacebook%2Freact',
+        { replace: true }
+      )
+    })
   })
 
   it('navigates directly to the dashboard when the demo repo is already completed', async () => {

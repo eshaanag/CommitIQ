@@ -1,15 +1,25 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from backend.shared.models import LLMNarrative
-from backend.config import LLM_BUDGET_PER_REPO_USD, LLM_MAX_CALLS
-from backend.features.llm_analysis.llm_router import provider_from_model
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import LLM_BUDGET_PER_REPO_USD, LLM_MAX_CALLS
+from backend.shared.models import LLMNarrative
 
 PROVIDER_COSTS_PER_1K_OUTPUT = {
     "anthropic": 0.015,
     "gemini": 0.00035,
     "cache": 0.0,
 }
+
+
+def provider_from_model(model_used: str | None) -> str:
+    model = (model_used or "").lower()
+    if "gemini" in model:
+        return "gemini"
+    if "claude" in model or "anthropic" in model:
+        return "anthropic"
+    if "cache" in model:
+        return "cache"
+    return "none"
 
 
 async def check_budget(repo_id: int, db: AsyncSession) -> bool:
@@ -44,8 +54,12 @@ async def get_usage_summary(repo_id: int, db: AsyncSession) -> dict:
     cached_rows = [row for row in rows if row.is_pre_cached]
     total_tokens = sum(row.tokens_input + row.tokens_output for row in provider_rows)
     total_cost = sum(float(row.cost_usd or 0.0) for row in provider_rows)
-    anthropic_calls = sum(1 for row in provider_rows if provider_from_model(row.model_used) == "anthropic")
-    gemini_calls = sum(1 for row in provider_rows if provider_from_model(row.model_used) == "gemini")
+    anthropic_calls = sum(
+        1 for row in provider_rows if provider_from_model(row.model_used) == "anthropic"
+    )
+    gemini_calls = sum(
+        1 for row in provider_rows if provider_from_model(row.model_used) == "gemini"
+    )
     cached_tokens = sum(row.tokens_input + row.tokens_output for row in cached_rows)
     cache_hits = len(cached_rows)
     return {
@@ -56,7 +70,9 @@ async def get_usage_summary(repo_id: int, db: AsyncSession) -> dict:
         "gemini_calls": gemini_calls,
         "total_tokens": total_tokens,
         "total_cost_usd": round(float(total_cost or 0.0), 6),
-        "cache_savings_usd": round((cached_tokens / 1000.0) * PROVIDER_COSTS_PER_1K_OUTPUT["anthropic"], 6),
+        "cache_savings_usd": round(
+            (cached_tokens / 1000.0) * PROVIDER_COSTS_PER_1K_OUTPUT["anthropic"], 6
+        ),
         "budget_remaining": max(0, LLM_MAX_CALLS - len(provider_rows)),
         "max_calls": LLM_MAX_CALLS,
     }

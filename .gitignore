@@ -15,3 +15,14 @@ test-results/
 *.tsbuildinfo
 .DS_Store
 *.log
+.coverage
+coverage.xml
+coverage/
+scratch/
+
+# Agent Rules
+AGENTS.md
+.agents/
+backend/.coverage
+backend/coverage.xml
+

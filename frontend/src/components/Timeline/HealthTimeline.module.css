@@ -1,0 +1,33 @@
+/* Container element framing the overflow timeline canvas */
+.timelineScrollContainer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.75rem;
+
+  /* Modern standard property integration for Firefox support */
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0f172a;
+}
+
+/* Custom WebKit Scrollbar engine definitions targeting Chrome, Safari, and Edge */
+.timelineScrollContainer::-webkit-scrollbar {
+  height: 8px; /* Control vertical footprint thickness for horizontal tracks */
+}
+
+/* Background canvas track channel rule */
+.timelineScrollContainer::-webkit-scrollbar-track {
+  background: #0f172a; /* Slate 900 background frame matching dark theme boundaries */
+  border-radius: 9999px;
+}
+
+/* Foreground sliding indicator handle thumb module */
+.timelineScrollContainer::-webkit-scrollbar-thumb {
+  background: #334155; /* Slate 700 tone configuration */
+  border-radius: 9999px;
+  border: 2px solid #0f172a; /* Inner padding separation barrier to mimic breathing room gaps */
+}
+
+/* Dynamic hover interface micro-interaction feedback step */
+.timelineScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #475569; /* Illuminates to Slate 600 color scale on cursor intersection */
+}
