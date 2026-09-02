@@ -90,15 +90,13 @@ describe('DemoPage', () => {
 
   it('navigates directly to the dashboard when the demo repo is already completed', async () => {
     const user = userEvent.setup()
-    getRepoBySlugMock.mockResolvedValue(
-      makeRepo({
-        id: 31,
-        name: 'facebook/react',
-        owner: 'facebook',
-        repo_slug: 'facebook-react',
-        status: 'ready',
-      })
-    )
+    getRepoBySlugMock.mockResolvedValue(makeRepo({
+      id: 31,
+      name: 'facebook/react',
+      owner: 'facebook',
+      repo_slug: 'facebook-react',
+      status: 'ready',
+    }))
     renderDemoPage()
 
     await user.click(screen.getByRole('button', { name: /start demo analysis/i }))

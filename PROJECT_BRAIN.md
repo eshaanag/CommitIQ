@@ -298,48 +298,12 @@ Missing but obviously needed:
 - 2026-07-25: Implemented custom time range selector for Commit Timeline and Hotspots (#223), allowing users to filter codebase health data by preset intervals (7d, 30d, 1y, All Time) or custom start/end dates.
 - 2026-07-26: Added contributor identity resolution for bus factor calculations. Introduced `ContributorIdentityResolver` with `.mailmap` support and normalized contributor identities before both `git blame` and fallback commit-history aggregation to prevent duplicate contributor aliases from distorting ownership metrics.
 - 2026-07-31: Implemented 3-attempt transaction retry helper (commit_with_retry) and busy timeout connection parameter adjustments (timeout=30, PRAGMA busy_timeout=30000) to resolve transient SQLite lock errors during concurrent ingestion runs (#259).
-- 2026-08-28: Added skeleton loader components for dashboard metric cards during data fetch (#378).
-- 2026-08-28: Added custom default branch name support in repository ingestion and clone analysis (#381).
-- 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
-- 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
-- 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
-- 2026-09-01: Parallelized metrics extraction using git worktrees and ProcessPoolExecutor for high-throughput repository ingestion (#334, #497).
-- 2026-09-01: Added robust regex fallback parser for structured JSON LLM responses (#318, #498).
-- 2026-09-01: Implemented Redis caching layer for LLM narratives with deterministic SHA256 cache keys (#335, #496).
-- 2026-09-01: Added SQLite concurrency controls, ingestion semaphores, and commit retry backoff (#32, #494).
-- 2026-09-01: Added EmptyCommitsWarningBanner component to guide users when 0 commits exist in analyzed range (#208, #495).
-- 2026-08-31: Added real-time author search filter to CommitList component in Dashboard (#308, #493).
-- 2026-08-31: Added Copy Markdown action button and feedback state to LLM Narrative Card (#310, #492).
-- 2026-08-31: Added Escape and Enter keyboard shortcut accessibility support to modals (#311, #491).
-- 2026-08-31: Added real-time search filter for analyzed repositories on the Landing Page (#205, #490).
-- 2026-08-30: Added Deployment Timeline Dashboard with deployment history, sparklines, environment badges, and provider metrics (#488, #489).
-- 2026-08-30: Added Commit Message Quality Linter & Dashboard with Conventional Commit validation, 10 violation rules, and contributor quality leaderboard (#485, #487).
-- 2026-08-30: Added Velocity & Delivery Cadence Dashboard with 12-week commit throughput, cadence consistency score, and contributor distribution (#481, #482).
-- 2026-08-30: Added CI/CD Pipeline Monitor dashboard with stage metrics, deployment status, and runner analytics (#483).
-- 2026-08-30: Added Team Collaboration Hub with activity feed, reviewer metrics, PR tracking, and sprint goals (#479, #480).
-- 2026-08-30: Added Commit Health Radar 5-tab dashboard with quality gate monitoring, team performance insights, and radar visualization (#477, #478).
-- 2026-08-30: Added real-time module path and owner search filter input to Bus Factor table (#384, #466).
-- 2026-08-30: Implemented local storage theme persistence and cross-tab synchronization with FOUC prevention (#383, #465).
-- 2026-08-30: Added relative 'Last updated' timestamp with detailed hover tooltip to dashboard header navigation (#382, #462).
-- 2026-08-30: Added informative hover tooltips for DORA metrics performance tiers and thresholds (#365, #464).
-- 2026-08-30: Standardized interactive element curvature dimensions and added typed Button primitive with `rounded-full` layout restrictions (#366, #463).
-- 2026-08-29: Added Actionable Health Recommendations Engine with multi-vector health analysis and severity-ranked suggestions (#460, #461).
-- 2026-08-29: Added Weekly Health Digest with trend analysis and regression alerts (#458, #459).
-- 2026-08-29: Added Scheduled Health Reports system with cron scheduling, webhook delivery, and history UI (#456, #457).
-- 2026-08-29: Implemented Server-Sent Events (SSE) streaming for LLM narrative generation via `/api/explain/stream` and `/api/predict/stream` (#394, #452).
-- 2026-08-29: Added custom CSS scrollbar for Health Timeline component (#370, #455).
-- 2026-08-29: Sorted Bus Factor table rows by ownership percentage descending (#371, #454).
-- 2026-08-29: Added backend setup and startup guide in backend/README.md (#374, #453).
-- 2026-08-29: Bounded Graph Explorer node labels to prevent clipping on canvas (#316, #451).
-- 2026-08-29: Added Release Impact Analyzer dashboard and `/releases` route (#446).
-- 2026-08-29: Added Team Collaboration Hub analytics and `/team` route (#444).
-- 2026-08-29: Added Commit Health Radar multi-dimensional visualization and `/health` route (#442).
-- 2026-08-29: Created complete Wiki documentation system (Architecture, DORA & Cycle Time, REST API Reference, Developer Guide, Deployment & Operations, Troubleshooting & FAQ) in /wiki and expanded MkDocs documentation in /docs.
-- 2026-08-26: Added metric explanation tooltips for Bus Factor, Churn, and Cyclomatic Complexity metrics across dashboard cards (#265).
-- 2026-08-26: Made Hotspot Map and Knowledge Graph Explorer components responsive on mobile viewports (#377).
-- 2026-08-26: Created unified PDF report export for developer health and repository maintainability metrics (#389).
+- feat: add branch selection support (#210). Users can now specify a Git branch from the frontend during repository ingestion, falling back to default branch if unspecified.
+- 2026-08-13: Added SyntaxError exception handling during AST complexity calculation in complexity.py, returning a baseline default complexity of 1.0 when encountering invalid Python syntax (#323).
 
 ## Test coverage status
+- Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults, boolean env parsing, repo URL parsing/validation, max-commit cap validation, slug generation, clone cleanup success/failure, import extraction/resolution, co-change edge generation, top-file frequency, bus-factor file filtering, semantic fallback behavior, health snapshot aggregation, risk reasons/hotspot persistence, LLM cache keys, provider mapping, cost estimation, usage/budget accounting, prompt builders, contributor identity normalization, `.mailmap` parsing, canonical identity resolution, bus factor contributor deduplication, commit-walker author identity fallback resolution (#266), and AST complexity calculation with SyntaxError fallback (#323).
+- Backend integration/API tests: database-backed coverage exists for repo listing/lookup with pagination, timeline payloads including risk reasons and persistent hotspots, timeline and hotspots date-range filtering (`start_date`/`end_date`), graph payloads, bus factor payloads, LLM usage payloads, commit detail composition, active ingestion job reuse, background job scheduling arguments, ingestion cancellation, SQLite-safe duration math, ingestion progress SSE payloads for missing/terminal/polled jobs, and streaming narrative demo fallback.
 
 - Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults
   (including dev-environment merging, empty-string fallback, deduplication, and

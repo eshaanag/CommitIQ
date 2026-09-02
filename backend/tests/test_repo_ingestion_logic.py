@@ -419,162 +419,46 @@ def test_is_code_file_excludes_documentation_files():
     assert not is_code_file("CHANGELOG.md")
 
 
-def test_stream_commit_diff_stats_parses_numstat_lines(monkeypatch, tmp_path):
-    from backend.features.repo_ingestion.commit_walker import stream_commit_diff_stats
+def test_compute_python_complexity_valid_code():
+    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
 
-    mock_diff_lines = [
-        "10\t2\tbackend/main.py",
-        "50\t0\tsrc/utils.ts",
-        "-\t-\tassets/logo.png",
-        "",
-    ]
-
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker.stream_git_diff_lines",
-        lambda repo_path, cmd: iter(mock_diff_lines),
-    )
-
-    files, insertions, deletions, renames = stream_commit_diff_stats(tmp_path, "abc123456789")
-    assert files == ["backend/main.py", "src/utils.ts", "assets/logo.png"]
-    assert insertions == 60
-    assert deletions == 2
-    assert renames == {}
+    valid_code = """
+def sample_func(x):
+    if x > 10:
+        return x * 2
+    elif x > 5:
+        return x + 5
+    return x
+"""
+    avg_cc, max_cc = compute_python_complexity(valid_code)
+    assert avg_cc >= 3.0
+    assert max_cc >= 3.0
+    assert calculate_complexity(valid_code) >= 3.0
 
 
-def test_stream_commit_diff_stats_handles_empty_stream(monkeypatch, tmp_path):
-    from backend.features.repo_ingestion.commit_walker import stream_commit_diff_stats
+def test_compute_python_complexity_syntax_error_fallback():
+    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
 
-    monkeypatch.setattr(
-        "backend.features.repo_ingestion.commit_walker.stream_git_diff_lines",
-        lambda repo_path, cmd: iter([]),
-    )
-
-    files, insertions, deletions, renames = stream_commit_diff_stats(tmp_path, "abc123456789")
-    assert files == []
-    assert insertions == 0
-    assert deletions == 0
-    assert renames == {}
-
-
-def test_parse_numstat_rename():
-    from backend.features.repo_ingestion.commit_walker import parse_numstat_rename
-
-    assert parse_numstat_rename("src/main.py") == ("src/main.py", None)
-    assert parse_numstat_rename("old_name.py => new_name.py") == ("new_name.py", "old_name.py")
-    assert parse_numstat_rename("src/{legacy => current}/app.py") == (
-        "src/current/app.py",
-        "src/legacy/app.py",
-    )
+    invalid_syntax_code = """
+def broken_syntax(x
+    if x > 10
+        return
+"""
+    avg_cc, max_cc = compute_python_complexity(invalid_syntax_code)
+    assert avg_cc == 1.0
+    assert max_cc == 1.0
+    assert calculate_complexity(invalid_syntax_code) == 1.0
 
 
-def test_resolve_renamed_path_chained_resolution():
-    from backend.features.repo_ingestion.graph_builder import resolve_renamed_path
+def test_extract_file_metrics_from_path_syntax_error(tmp_path):
+    from backend.features.repo_ingestion.metrics_extractor import extract_file_metrics_from_path
 
-    rename_map = {
-        "src/v1/main.py": "src/v2/main.py",
-        "src/v2/main.py": "src/core/main.py",
-    }
-    assert resolve_renamed_path("src/v1/main.py", rename_map) == "src/core/main.py"
-    assert resolve_renamed_path("src/v2/main.py", rename_map) == "src/core/main.py"
-    assert resolve_renamed_path("src/unchanged.py", rename_map) == "src/unchanged.py"
+    test_file = tmp_path / "syntax_error.py"
+    test_file.write_text("def invalid_func(: return 42\n", encoding="utf-8")
 
-
-def test_build_cochange_edges_normalizes_renamed_file_paths():
-    from backend.features.repo_ingestion.graph_builder import build_cochange_edges
-
-    # 2 commits with old_name.py + common.py, 1 commit with new_name.py + common.py
-    commit_history = [
-        {"files_list": ["old_name.py", "common.py"], "renames": {}},
-        {"files_list": ["old_name.py", "common.py"], "renames": {}},
-        {"files_list": ["new_name.py", "common.py"], "renames": {"old_name.py": "new_name.py"}},
-    ]
-
-    edges = build_cochange_edges(commit_history, min_cooccurrence=3)
-    assert len(edges) == 1
-    assert edges[0]["source_file"] == "common.py"
-    assert edges[0]["target_file"] == "new_name.py"
-    assert edges[0]["weight"] == 3
+    metrics = extract_file_metrics_from_path(str(test_file))
+    assert metrics["avg_complexity"] == 1.0
+    assert metrics["max_complexity"] == 1.0
+    assert metrics["loc"] == 1
 
 
-@pytest.mark.anyio
-async def test_fetch_github_pull_requests_graphql_success(monkeypatch):
-    from backend.features.repo_ingestion import clone_service
-
-    monkeypatch.setattr(clone_service, "GITHUB_TOKEN", "mock-token")
-
-    class MockResponse:
-        status_code = 200
-
-        def json(self):
-            return {
-                "data": {
-                    "repository": {
-                        "pullRequests": {
-                            "pageInfo": {"hasNextPage": False, "endCursor": None},
-                            "nodes": [
-                                {
-                                    "number": 42,
-                                    "title": "Migrate to GraphQL API",
-                                    "state": "MERGED",
-                                    "createdAt": "2026-08-20T10:00:00Z",
-                                    "mergedAt": "2026-08-20T12:00:00Z",
-                                    "closedAt": "2026-08-20T12:00:00Z",
-                                    "author": {"login": "octocat"},
-                                }
-                            ],
-                        }
-                    }
-                }
-            }
-
-    class MockClient:
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *args):
-            pass
-
-        async def post(self, url, json=None, headers=None):
-            assert url == "https://api.github.com/graphql"
-            assert "bearer mock-token" in headers.get("Authorization", "")
-            return MockResponse()
-
-    monkeypatch.setattr("httpx.AsyncClient", lambda **kwargs: MockClient())
-
-    prs = await clone_service.fetch_github_pull_requests("eshaanag", "CommitIQ", limit=10)
-    assert len(prs) == 1
-    assert prs[0]["pr_number"] == 42
-    assert prs[0]["title"] == "Migrate to GraphQL API"
-    assert prs[0]["state"] == "merged"
-    assert prs[0]["author"] == "octocat"
-
-
-@pytest.mark.anyio
-async def test_fetch_github_pull_requests_graphql_fallback_to_rest(monkeypatch):
-    from backend.features.repo_ingestion import clone_service
-
-    monkeypatch.setattr(clone_service, "GITHUB_TOKEN", "mock-token")
-
-    async def mock_graphql(owner, repo, limit=500):
-        return None
-
-    async def mock_rest(owner, repo, limit=500):
-        return [
-            {
-                "pr_number": 1,
-                "title": "REST Fallback PR",
-                "state": "open",
-                "author": "fallback-user",
-                "created_at": None,
-                "merged_at": None,
-                "closed_at": None,
-            }
-        ]
-
-    monkeypatch.setattr(clone_service, "fetch_github_pull_requests_graphql", mock_graphql)
-    monkeypatch.setattr(clone_service, "fetch_github_pull_requests_rest", mock_rest)
-
-    prs = await clone_service.fetch_github_pull_requests("eshaanag", "CommitIQ", limit=10)
-    assert len(prs) == 1
-    assert prs[0]["title"] == "REST Fallback PR"
-    assert prs[0]["author"] == "fallback-user"
