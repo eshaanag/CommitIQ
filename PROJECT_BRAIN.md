@@ -769,3 +769,16 @@ main
 - **Testing**:
   - Expanded `test_sqlite_concurrency.py` with multi-worker concurrent SQLite write simulation, semaphore verification, and busy timeout checks.
   - Full backend test suite passing.
+
+### Pull Request Data CSV Export Route (Issue #379)
+
+- **Problem**: External stakeholders and analysis pipelines needed raw pull request and delivery metric datasets exported directly in standard CSV format.
+- **Implementation**:
+  - `backend/features/metrics/pr_export.py`:
+    - Created `export_prs_to_csv(db, repo_id, state=None, start_date=None, end_date=None)` to serialize PR records into RFC-4180-compliant CSV format with properly escaped values and calculated cycle times.
+    - Formats all core attributes: `id`, `repo_id`, `pr_number`, `title`, `state`, `author`, `created_at`, `merged_at`, `closed_at`, `first_review_at`, `cycle_time_hours`, `coding_time_sec`, `pickup_time_sec`, and `review_time_sec`.
+  - `backend/features/metrics/router.py`:
+    - Added `GET /api/metrics/repos/{repo_id}/prs/export` endpoint with 404 validation for missing repos, query filters for `state`, `start_date`, and `end_date`, and `text/csv` attachment response with sanitized filename.
+- **Testing**:
+  - Added `backend/tests/test_pr_export.py` covering populated data export, empty PR list handling, state filtering, date range filtering, HTTP 200 responses with attachment headers, and HTTP 404 handling.
+  - 100% test pass rate across backend and frontend suites.
