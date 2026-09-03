@@ -769,3 +769,15 @@ main
 - **Testing**:
   - Expanded `test_sqlite_concurrency.py` with multi-worker concurrent SQLite write simulation, semaphore verification, and busy timeout checks.
   - Full backend test suite passing.
+
+### Hero Heading Mobile Overflow Prevention (Issue #373)
+
+- **Problem**: On very small mobile screens (such as iPhone SE, 320px–375px width), the primary landing page heading ("Every commit has a story.") overflowed horizontally and created layout distortion due to rigid non-wrapping font sizes and excessive horizontal padding.
+- **Implementation**:
+  - `frontend/src/pages/LandingPage.tsx`:
+    - Switched hero `h1` from fixed `text-[44px]` to fluid responsive typography `text-3xl sm:text-5xl md:text-[62px]` with `break-words` and `leading-tight`.
+    - Made hero subtitle responsive (`text-base sm:text-xl md:text-[24px]`).
+    - Adjusted main container padding to `px-4 sm:px-6` so small screen widths preserve ample space for content.
+- **Testing**:
+  - Expanded `LandingPage.test.tsx` to verify responsive classes and break-words behavior.
+  - 100% test pass rate across frontend vitest and backend pytest suites.

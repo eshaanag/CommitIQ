@@ -163,4 +163,15 @@ describe('LandingPage', () => {
     expect(pixelaryLink).toHaveAttribute('target', '_blank')
     expect(pixelaryLink).toHaveAttribute('rel', 'noopener noreferrer')
   })
+
+  it('renders the responsive hero heading with break-words to prevent overflow on mobile screens', () => {
+    renderLandingPage()
+
+    const heading = screen.getByRole('heading', { level: 1 })
+    expect(heading).toHaveTextContent(/Every commit has a story\./i)
+    expect(heading).toHaveClass('break-words')
+    expect(heading).toHaveClass('text-3xl')
+    expect(heading).toHaveClass('sm:text-5xl')
+    expect(heading).toHaveClass('md:text-[62px]')
+  })
 })
