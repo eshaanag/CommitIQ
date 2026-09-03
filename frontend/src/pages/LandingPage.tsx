@@ -173,22 +173,22 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-20">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-12 md:py-20">
         <div className="max-w-3xl w-full text-center relative">
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-purple-600/10 blur-[90px] rounded-full pointer-events-none" />
 
-          <h1 className="font-head text-[44px] md:text-[62px] leading-tight text-white mb-4 tracking-tight font-light select-none">
+          <h1 className="font-head text-3xl sm:text-5xl md:text-[62px] leading-tight text-white mb-4 tracking-tight font-light select-none break-words">
             Every commit has a{' '}
             <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-200 to-cyan-300">
               story.
             </span>
           </h1>
-          <p className="font-head text-[20px] md:text-[24px] text-slate-300 mb-10 font-light tracking-wide max-w-xl mx-auto select-none">
+          <p className="font-head text-base sm:text-xl md:text-[24px] text-slate-300 mb-10 font-light tracking-wide max-w-xl mx-auto select-none">
             Decipher architecture, complexity shifts, and knowledge dynamics directly from your
             codebase history.
           </p>
 
-          <div className="max-w-xl mx-auto mb-6">
+          <div className="max-w-xl mx-auto mb-6 w-full">
             <div
               className={`glass-panel rounded-full p-1.5 flex items-center transition-all duration-300 ${statusBorderClass}`}
             >
