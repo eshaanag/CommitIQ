@@ -130,7 +130,7 @@ export function WeeklyDigestCard({ repoId }: Props) {
               <span className="text-slate-200 truncate">
                 {i + 1}. {c.author}
               </span>
-              <span className="text-slate-500 flex-shrink-0 ml-3">{c.commits} commits</span>
+              <span className="text-slate-400 flex-shrink-0 ml-3">{c.commits} commits</span>
             </div>
           ))}
         </div>
@@ -143,7 +143,7 @@ export function WeeklyDigestCard({ repoId }: Props) {
               key={h.path}
               className="font-mono text-[10px] bg-white/5 border border-white/5 text-slate-300 px-2 py-1 rounded-lg"
             >
-              {h.path} <span className="text-slate-500">×{h.snapshot_count}</span>
+              {h.path} <span className="text-slate-400">×{h.snapshot_count}</span>
             </span>
           ))}
         </div>
@@ -190,7 +190,7 @@ function Trend({
       </div>
       <div className="flex items-baseline justify-between">
         <span className="font-head text-lg font-bold text-white">{cur.toFixed(1)}</span>
-        <span className="text-[10px] text-slate-500">was {prev.toFixed(1)}</span>
+        <span className="text-[10px] text-slate-400">was {prev.toFixed(1)}</span>
       </div>
     </div>
   )

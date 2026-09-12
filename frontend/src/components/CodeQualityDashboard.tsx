@@ -92,7 +92,7 @@ export function CodeQualityDashboard({ repoId }: CodeQualityDashboardProps) {
             <span className="text-xs text-slate-400 mt-2 flex items-center gap-1 justify-center">
               <Trash2 className="w-3 h-3" /> Deletions vs Insertions
             </span>
-            <p className="text-[10px] text-slate-500 mt-4 leading-relaxed max-w-[90%] mx-auto">
+            <p className="text-[10px] text-slate-400 mt-4 leading-relaxed max-w-[90%] mx-auto">
               Percentage of recently authored code that is subsequently deleted or heavily modified.
               High churn indicates rework or shifting requirements.
             </p>
@@ -120,7 +120,7 @@ export function CodeQualityDashboard({ repoId }: CodeQualityDashboardProps) {
               {metrics.ai_assisted_commits}
             </span>
             <span className="text-xs text-slate-400 mt-2 block">Suspected AI Commits</span>
-            <p className="text-[10px] text-slate-500 mt-4 leading-relaxed max-w-[90%] mx-auto">
+            <p className="text-[10px] text-slate-400 mt-4 leading-relaxed max-w-[90%] mx-auto">
               Anomalously large code blocks committed rapidly across few files. Watch this alongside
               Churn Rate to ensure AI assistants aren't introducing technical debt.
             </p>

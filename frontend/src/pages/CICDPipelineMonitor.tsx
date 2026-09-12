@@ -667,7 +667,7 @@ function StagePipeline({ stages }: { stages: Stage[] }) {
                       ? '○'
                       : '–'}
             </div>
-            <span className="text-[9px] text-slate-500 mt-1 text-center">{stage.name}</span>
+            <span className="text-[9px] text-slate-400 mt-1 text-center">{stage.name}</span>
           </div>
           {i < stages.length - 1 && (
             <div
@@ -807,7 +807,7 @@ export default function CICDPipelineMonitor() {
             <div className="bg-slate-900/60 border border-slate-800/50 rounded-xl p-5">
               <h3 className="text-sm font-semibold text-slate-200 mb-4">Success Rate (7 days)</h3>
               <SuccessRateChart data={successRateData} />
-              <div className="flex justify-between text-[10px] text-slate-500 mt-2 px-2">
+              <div className="flex justify-between text-[10px] text-slate-400 mt-2 px-2">
                 {successRateData.map((d) => (
                   <span key={d.date}>{d.date.split(' ')[1]}</span>
                 ))}
@@ -824,7 +824,7 @@ export default function CICDPipelineMonitor() {
                 Pipeline Stage Durations
               </h3>
               <DurationBarChart data={durationData} />
-              <div className="mt-3 text-xs text-slate-500">
+              <div className="mt-3 text-xs text-slate-400">
                 Total estimated: {durationData.reduce((a, d) => a + d.seconds, 0)}s (
                 {Math.round(durationData.reduce((a, d) => a + d.seconds, 0) / 60)}m{' '}
                 {durationData.reduce((a, d) => a + d.seconds, 0) % 60}s)
@@ -856,8 +856,8 @@ export default function CICDPipelineMonitor() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-slate-200">{pl.name}</span>
-                      <span className="text-xs text-slate-500">#{pl.id}</span>
-                      <span className="text-xs text-slate-500">on {pl.branch}</span>
+                      <span className="text-xs text-slate-400">#{pl.id}</span>
+                      <span className="text-xs text-slate-400">on {pl.branch}</span>
                     </div>
                     <p className="text-xs text-slate-400 truncate">{pl.commitMessage}</p>
                   </div>
@@ -889,7 +889,7 @@ export default function CICDPipelineMonitor() {
                   />
                   <h2 className="text-lg font-bold text-slate-100">
                     {selectedPl.name}{' '}
-                    <span className="text-slate-500 text-sm">#{selectedPl.id}</span>
+                    <span className="text-slate-400 text-sm">#{selectedPl.id}</span>
                   </h2>
                   <span
                     className="text-xs px-2 py-0.5 rounded-full"
@@ -903,23 +903,23 @@ export default function CICDPipelineMonitor() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4 text-xs">
                   <div>
-                    <span className="text-slate-500">Branch:</span>{' '}
+                    <span className="text-slate-400">Branch:</span>{' '}
                     <span className="text-slate-300">{selectedPl.branch}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Commit:</span>{' '}
+                    <span className="text-slate-400">Commit:</span>{' '}
                     <span className="text-slate-300 font-mono">{selectedPl.commit}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Author:</span>{' '}
+                    <span className="text-slate-400">Author:</span>{' '}
                     <span className="text-slate-300">{selectedPl.author}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Duration:</span>{' '}
+                    <span className="text-slate-400">Duration:</span>{' '}
                     <span className="text-slate-300">{selectedPl.duration}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500">Triggered by:</span>{' '}
+                    <span className="text-slate-400">Triggered by:</span>{' '}
                     <span className="text-slate-300">{selectedPl.triggeredBy}</span>
                   </div>
                 </div>
@@ -941,13 +941,13 @@ export default function CICDPipelineMonitor() {
                   {selectedPl.stages.map((stage) => (
                     <div
                       key={stage.name}
-                      className="p-4 rounded-lg bg-slate-800/30 border border-slate-700/20"
+                      className="p-3 rounded-lg bg-slate-800/30 border border-slate-700/20"
                     >
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-2">
                         <div
-                          className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px]"
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                           style={{
-                            borderColor: STAGE_STATUS_COLORS[stage.status],
+                            backgroundColor: `${STAGE_STATUS_COLORS[stage.status]}20`,
                             color: STAGE_STATUS_COLORS[stage.status],
                           }}
                         >
@@ -974,7 +974,7 @@ export default function CICDPipelineMonitor() {
                                 style={{ backgroundColor: STAGE_STATUS_COLORS[job.status] }}
                               />
                               <span className="text-xs text-slate-300">{job.name}</span>
-                              <span className="text-[10px] text-slate-500">{job.duration}</span>
+                              <span className="text-[10px] text-slate-400">{job.duration}</span>
                               <span className="text-[10px] text-slate-600">on {job.runner}</span>
                               <button
                                 onClick={() =>
@@ -1024,8 +1024,8 @@ export default function CICDPipelineMonitor() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm text-slate-200">{pl.name}</span>
-                        <span className="text-xs text-slate-500">#{pl.id}</span>
-                        <span className="text-xs text-slate-500">on {pl.branch}</span>
+                        <span className="text-xs text-slate-400">#{pl.id}</span>
+                        <span className="text-xs text-slate-400">on {pl.branch}</span>
                         <span
                           className="text-xs px-1.5 py-0.5 rounded"
                           style={{
@@ -1041,7 +1041,7 @@ export default function CICDPipelineMonitor() {
                     <StagePipeline stages={pl.stages} />
                     <div className="text-right text-xs text-slate-400">
                       <div>{pl.duration}</div>
-                      <div className="text-[10px] text-slate-500">{pl.author}</div>
+                      <div className="text-[10px] text-slate-400">{pl.author}</div>
                     </div>
                   </div>
                 </div>
@@ -1147,7 +1147,7 @@ export default function CICDPipelineMonitor() {
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1">{alert.description}</p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
+                  <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-400">
                     <span>{alert.source}</span>
                     <span>{new Date(alert.timestamp).toLocaleString()}</span>
                   </div>
@@ -1179,7 +1179,7 @@ export default function CICDPipelineMonitor() {
                       className="w-full bg-blue-500/20 rounded-t"
                       style={{ height: `${count * 8}px` }}
                     />
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-slate-400">
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
                     </span>
                     <span className="text-[10px] text-slate-400">{count}</span>
@@ -1209,7 +1209,7 @@ export default function CICDPipelineMonitor() {
                         style={{ width: `${r.pct}%`, backgroundColor: r.color }}
                       />
                     </div>
-                    <span className="text-[10px] text-slate-500 w-8 text-right">{r.pct}%</span>
+                    <span className="text-[10px] text-slate-400 w-8 text-right">{r.pct}%</span>
                   </div>
                 ))}
               </div>
@@ -1222,7 +1222,7 @@ export default function CICDPipelineMonitor() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-slate-500 border-b border-slate-800/50">
+                  <tr className="text-slate-400 border-b border-slate-800/50">
                     <th className="text-left py-2 px-3">Runner</th>
                     <th className="text-left py-2 px-3">Status</th>
                     <th className="text-left py-2 px-3">Jobs Today</th>

@@ -82,8 +82,8 @@ export function BusFactorTable({ modules }: BusFactorTableProps) {
       {/* Table Body */}
       <div className="overflow-y-auto relative z-10 flex-grow" style={{ height: 420 }}>
         {filteredModules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-500 gap-2">
-            <HelpCircle className="w-8 h-8 text-slate-600 animate-pulse" />
+          <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
+            <HelpCircle className="w-8 h-8 text-slate-500 animate-pulse" />
             <span className="text-sm font-medium">
               {searchQuery
                 ? `No modules matching "${searchQuery}"`

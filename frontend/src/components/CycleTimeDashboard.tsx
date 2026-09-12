@@ -69,7 +69,7 @@ export function CycleTimeDashboard({ repoId }: CycleTimeDashboardProps) {
               {metrics.avg_cycle_time_hours.toFixed(1)}
               <span className="text-sm text-slate-400 ml-1">hrs</span>
             </span>
-            <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">
+            <span className="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">
               Avg Cycle Time
             </span>
           </div>
@@ -82,7 +82,7 @@ export function CycleTimeDashboard({ repoId }: CycleTimeDashboardProps) {
         </h3>
 
         {metrics.bottlenecks.length === 0 ? (
-          <div className="flex-grow flex items-center justify-center text-slate-500 text-sm font-medium">
+          <div className="flex-grow flex items-center justify-center text-slate-400 text-sm font-medium">
             No significant bottlenecks detected.
           </div>
         ) : (
@@ -96,7 +96,7 @@ export function CycleTimeDashboard({ repoId }: CycleTimeDashboardProps) {
                   <span className="text-sm font-medium text-slate-200 truncate" title={pr.title}>
                     #{pr.pr_number} {pr.title}
                   </span>
-                  <span className="text-xs text-slate-500 mt-0.5">by {pr.author}</span>
+                  <span className="text-xs text-slate-400 mt-0.5">by {pr.author}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-mono font-bold">

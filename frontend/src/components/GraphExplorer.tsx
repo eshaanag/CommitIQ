@@ -1289,7 +1289,7 @@ export function GraphExplorer({
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
                     Color-coded by hotspot risk score. Warning icons mark high-risk files. Click to
                     focus in graph.
                   </p>
@@ -1301,7 +1301,7 @@ export function GraphExplorer({
             </div>
 
             <div className="border-t border-white/5 pt-4 space-y-2">
-              <div className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">
+              <div className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">
                 {leftSidebarTab === 'tree' ? 'Hotspot Legend' : 'Hierarchy Legend'}
               </div>
               {leftSidebarTab === 'tree' ? (
@@ -1533,13 +1533,13 @@ export function GraphExplorer({
                 <div className="space-y-4 sm:space-y-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="text-slate-500 font-mono text-[9px] uppercase tracking-wider block">
+                      <span className="text-slate-400 font-mono text-[9px] uppercase tracking-wider block">
                         {selectedNodeDetails.module}
                       </span>
                       <h4 className="font-head text-[15px] sm:text-[16px] font-semibold text-white truncate mt-0.5">
                         {selectedNodeDetails.file.split('/').pop()}
                       </h4>
-                      <p className="text-slate-500 font-mono text-[9px] break-all select-all mt-1 bg-white/5 p-1.5 rounded-lg border border-white/5">
+                      <p className="text-slate-400 font-mono text-[9px] break-all select-all mt-1 bg-white/5 p-1.5 rounded-lg border border-white/5">
                         {selectedNodeDetails.file}
                       </p>
                     </div>
@@ -1567,7 +1567,7 @@ export function GraphExplorer({
 
                   <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                     <div className="bg-white/5 border border-white/5 rounded-[16px] p-3">
-                      <div className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">
+                      <div className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">
                         Lines of Code
                       </div>
                       <div className="font-mono text-base font-bold mt-1 text-white">
@@ -1575,7 +1575,7 @@ export function GraphExplorer({
                       </div>
                     </div>
                     <div className="bg-white/5 border border-white/5 rounded-[16px] p-3">
-                      <div className="text-slate-500 text-[9px] uppercase tracking-wider font-semibold">
+                      <div className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">
                         Complexity Score
                       </div>
                       <div className="font-mono text-base font-bold mt-1 text-white">
@@ -1599,7 +1599,7 @@ export function GraphExplorer({
                       />
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
                       <span>Inbound (Ca): {selectedNodeDetails.ca}</span>
                       <span>Outbound (Ce): {selectedNodeDetails.ce}</span>
                     </div>
@@ -1608,7 +1608,7 @@ export function GraphExplorer({
                   <div className="space-y-4">
                     {selectedNodeDetails.imports.length > 0 && (
                       <div className="space-y-1.5">
-                        <div className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
+                        <div className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
                           <ChevronRight className="w-3.5 h-3.5 text-purple-400 rotate-90" />
                           <span>Outbound Dependencies ({selectedNodeDetails.imports.length})</span>
                         </div>
@@ -1628,7 +1628,7 @@ export function GraphExplorer({
 
                     {selectedNodeDetails.importedBy.length > 0 && (
                       <div className="space-y-1.5">
-                        <div className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
+                        <div className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
                           <ChevronRight className="w-3.5 h-3.5 text-purple-400 rotate-90" />
                           <span>Inbound Dependents ({selectedNodeDetails.importedBy.length})</span>
                         </div>
@@ -1648,12 +1648,12 @@ export function GraphExplorer({
                   </div>
                 </div>
 
-                <div className="text-[10px] text-slate-500 font-mono border-t border-white/5 pt-4">
+                <div className="text-[10px] text-slate-400 font-mono border-t border-white/5 pt-4">
                   Select other nodes inside the spatial graph canvas to inspect their metrics.
                 </div>
               </div>
             ) : (
-              <div className="p-4 sm:p-6 flex-1 flex flex-col items-center justify-center text-center text-slate-500 relative">
+              <div className="p-4 sm:p-6 flex-1 flex flex-col items-center justify-center text-center text-slate-400 relative">
                 <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="absolute right-3 sm:right-4 top-3 sm:top-4 text-slate-400 hover:text-white p-1 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
@@ -1713,7 +1713,7 @@ export function GraphExplorer({
             </div>
 
             <div className="flex items-center gap-1.5 pl-1 sm:pl-2">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
                 Speed:
               </span>
               <select
@@ -1738,7 +1738,7 @@ export function GraphExplorer({
           </div>
 
           <div className="flex-grow w-full lg:mx-6 flex items-center gap-3 sm:gap-4 my-1 lg:my-0">
-            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">START</span>
+            <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">START</span>
             <div className="flex-grow relative flex items-center">
               <input
                 type="range"
@@ -1758,7 +1758,7 @@ export function GraphExplorer({
                 COMMIT #{activeCommitIndex + 1}
               </div>
             </div>
-            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap">END</span>
+            <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap">END</span>
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0 w-full lg:w-auto justify-between lg:justify-end">
