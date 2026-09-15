@@ -340,8 +340,12 @@ Missing but obviously needed:
 - 2026-08-26: Added metric explanation tooltips for Bus Factor, Churn, and Cyclomatic Complexity metrics across dashboard cards (#265).
 - 2026-08-26: Made Hotspot Map and Knowledge Graph Explorer components responsive on mobile viewports (#377).
 - 2026-08-26: Created unified PDF report export for developer health and repository maintainability metrics (#389).
+- 2026-08-13: Added SyntaxError exception handling during AST complexity calculation in complexity.py, returning a baseline default complexity of 1.0 when encountering invalid Python syntax (#323, #350).
 
 ## Test coverage status
+
+- Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults, boolean env parsing, repo URL parsing/validation, max-commit cap validation, slug generation, clone cleanup success/failure, import extraction/resolution, co-change edge generation, top-file frequency, bus-factor file filtering, semantic fallback behavior, health snapshot aggregation, risk reasons/hotspot persistence, LLM cache keys, provider mapping, cost estimation, usage/budget accounting, prompt builders, contributor identity normalization, `.mailmap` parsing, canonical identity resolution, bus factor contributor deduplication, commit-walker author identity fallback resolution (#266), and AST complexity calculation with SyntaxError fallback (#323).
+- Backend integration/API tests: database-backed coverage exists for repo listing/lookup with pagination, timeline payloads including risk reasons and persistent hotspots, timeline and hotspots date-range filtering (`start_date`/`end_date`), graph payloads, bus factor payloads, LLM usage payloads, commit detail composition, active ingestion job reuse, background job scheduling arguments, ingestion cancellation, SQLite-safe duration math, ingestion progress SSE payloads for missing/terminal/polled jobs, and streaming narrative demo fallback.
 
 - Backend unit tests: initial pure-logic coverage exists for config parsing/CORS defaults
   (including dev-environment merging, empty-string fallback, deduplication, and
