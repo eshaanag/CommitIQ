@@ -303,6 +303,8 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-09-03: Added PR data CSV export endpoint for external metric analysis and reporting (#379, #499).
+- 2026-09-03: Prevented hero heading overflow on small mobile screens with responsive fluid typography (#373, #500).
 - 2026-09-01: Parallelized metrics extraction using git worktrees and ProcessPoolExecutor for high-throughput repository ingestion (#334, #497).
 - 2026-09-01: Added robust regex fallback parser for structured JSON LLM responses (#318, #498).
 - 2026-09-01: Implemented Redis caching layer for LLM narratives with deterministic SHA256 cache keys (#335, #496).
@@ -781,3 +783,16 @@ main
 - **Testing**:
   - Expanded `LandingPage.test.tsx` to verify responsive classes and break-words behavior.
   - 100% test pass rate across frontend vitest and backend pytest suites.
+
+### Pull Request Data CSV Export Route (Issue #379)
+
+- **Problem**: External stakeholders and analysis pipelines needed raw pull request and delivery metric datasets exported directly in standard CSV format.
+- **Implementation**:
+  - `backend/features/metrics/pr_export.py`:
+    - Created `export_prs_to_csv(db, repo_id, state=None, start_date=None, end_date=None)` to serialize PR records into RFC-4180-compliant CSV format with properly escaped values and calculated cycle times.
+    - Formats all core attributes: `id`, `repo_id`, `pr_number`, `title`, `state`, `author`, `created_at`, `merged_at`, `closed_at`, `first_review_at`, `cycle_time_hours`, `coding_time_sec`, `pickup_time_sec`, and `review_time_sec`.
+  - `backend/features/metrics/router.py`:
+    - Added `GET /api/metrics/repos/{repo_id}/prs/export` endpoint with 404 validation for missing repos, query filters for `state`, `start_date`, and `end_date`, and `text/csv` attachment response with sanitized filename.
+- **Testing**:
+  - Added `backend/tests/test_pr_export.py` covering populated data export, empty PR list handling, state filtering, date range filtering, HTTP 200 responses with attachment headers, and HTTP 404 handling.
+  - 100% test pass rate across backend and frontend suites.

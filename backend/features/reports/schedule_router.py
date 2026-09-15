@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -286,7 +286,12 @@ async def update_schedule(
     return _serialize_schedule(schedule)
 
 
-@router.delete("/repos/{repo_id}/schedules/{schedule_id}", status_code=204)
+@router.delete(
+    "/repos/{repo_id}/schedules/{schedule_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    response_class=Response,
+)
 async def delete_schedule(
     repo_id: int,
     schedule_id: int,
