@@ -303,6 +303,7 @@ Missing but obviously needed:
 - 2026-08-28: Implemented in-memory caching for Team Health calculations to improve dashboard response times (#376).
 - 2026-08-28: Integrated React Error Boundary around Code Quality Dashboard component (#380).
 - 2026-08-28: Added start_date and end_date filtering options to DORA metrics calculation API (#375).
+- 2026-09-15: Removed ECSoC and ELUSOC program labels from issues and workflows following the conclusion of the seasonal programs.
 - 2026-09-03: Added PR data CSV export endpoint for external metric analysis and reporting (#379, #499).
 - 2026-09-03: Prevented hero heading overflow on small mobile screens with responsive fluid typography (#373, #500).
 - 2026-09-01: Parallelized metrics extraction using git worktrees and ProcessPoolExecutor for high-throughput repository ingestion (#334, #497).

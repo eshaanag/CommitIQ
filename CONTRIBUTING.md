@@ -1,6 +1,6 @@
 # Contributing to CommitIQ
 
-Thank you for your interest in contributing to **CommitIQ**! We warmly welcome contributions from open-source developers, including participants in **ESOC** (Extramarks Summer of Code) and **ELUSOC**.
+Thank you for your interest in contributing to **CommitIQ**! We warmly welcome contributions from open-source developers worldwide.
 
 CommitIQ turns raw GitHub repository commit history into actionable maintainability and code health signals. This project is in active development, so we prioritize **correctness, observability, and test coverage** alongside feature development.
 

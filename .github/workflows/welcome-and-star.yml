@@ -2,9 +2,9 @@ name: Welcome Contributor
 
 # Two triggers:
 # 1. First-time PR/issue opened -> generic welcome + star ask.
-# 2. Someone gets assigned to an issue -> assignment-specific welcome with
-#    program label reminder. Fires every time an assignment happens (not just
-#    first-time contributors), since assignment is a distinct, deliberate action.
+# 2. Someone gets assigned to an issue -> assignment-specific welcome.
+#    Fires every time an assignment happens (not just first-time contributors),
+#    since assignment is a distinct, deliberate action.
 
 on:
   pull_request_target:
@@ -38,8 +38,7 @@ jobs:
                 `You're assigned! Welcome, and thanks for picking this up, @${assignee}.`,
                 ``,
                 `A couple of things before you start:`,
-                `- This project is participating in **ECSoC 2026** and **ELUSOC 2026** — once your PR is merged, make sure it has the correct program label (\`ECSoC26\` or \`ELUSOC\`) so it gets tracked for scoring.`,
-                `- Please follow the [contributing guidelines](../blob/main/CONTRIBUTING.md) and fill out the PR template fully (program, description, checklist) when you open your PR.`,
+                `- Please follow the [contributing guidelines](../blob/main/CONTRIBUTING.md) and fill out the PR template fully (description, verification, checklist) when you open your PR.`,
                 `- If you find the project useful, a ⭐ on the repo helps a lot — thanks for supporting us!`,
                 ``,
                 `Let me know if you have any questions about the codebase or the acceptance criteria.`,
@@ -53,7 +52,7 @@ jobs:
               body = [
                 `Welcome, and thanks for opening this ${isPR ? 'pull request' : 'issue'}! 🎉`,
                 ``,
-                `Heads up — this project is participating in **ECSoC** and **ELUSOC** this cycle, so quality contributions here count toward those programs. Please make sure it follows the [contribution guidelines](../blob/main/CONTRIBUTING.md) before review.`,
+                `Please make sure your contribution follows our [contributing guidelines](../blob/main/CONTRIBUTING.md) before review.`,
                 ``,
                 `If you find the project useful, a ⭐ on the repo helps a lot — thanks for supporting us!`,
               ].join('\n');
