@@ -26,3 +26,5 @@ AGENTS.md
 backend/.coverage
 backend/coverage.xml
 
+.vercel
+.env*
