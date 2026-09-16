@@ -63,8 +63,8 @@ export function CommitList({ commits, repoSlug, selectedSha, onSelect }: CommitL
 
       <div className="overflow-y-auto flex-1 max-h-[400px] pr-1 space-y-1.5 scrollbar-thin">
         {filteredCommits.length === 0 ? (
-          <div className="px-6 py-8 text-slate-500 text-xs font-medium flex flex-col items-center justify-center gap-2 text-center">
-            <GitCommit className="w-6 h-6 text-slate-600 animate-pulse" />
+          <div className="px-6 py-8 text-slate-400 text-xs font-medium flex flex-col items-center justify-center gap-2 text-center">
+            <GitCommit className="w-6 h-6 text-slate-500 animate-pulse" />
             <span>
               {authorFilter
                 ? `No commits found for author "${authorFilter}"`

@@ -22,7 +22,7 @@ export function CostMeter({ usage, loading, error }: CostMeterProps) {
 
   if (!usage) {
     return (
-      <div className="text-slate-500 text-xs py-2">No active resource tracking established.</div>
+      <div className="text-slate-400 text-xs py-2">No active resource tracking established.</div>
     )
   }
 
@@ -60,7 +60,7 @@ export function CostMeter({ usage, loading, error }: CostMeterProps) {
         />
       </div>
 
-      <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
         <span>Spent: ${usage.total_cost_usd.toFixed(4)}</span>
         <span className="font-semibold text-slate-400">{usage.budget_remaining} calls left</span>
       </div>

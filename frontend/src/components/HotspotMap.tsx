@@ -152,7 +152,7 @@ export function HotspotMap({ repoId, sha }: HotspotMapProps) {
             Loading hotspots...
           </div>
         ) : hotspots.length === 0 ? (
-          <div className="h-[240px] sm:h-[280px] flex items-center justify-center text-slate-500 font-mono text-xs">
+          <div className="h-[240px] sm:h-[280px] flex items-center justify-center text-slate-400 font-mono text-xs">
             No high-complexity churn hotspots found for this commit.
           </div>
         ) : (

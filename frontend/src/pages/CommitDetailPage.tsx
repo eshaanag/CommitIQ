@@ -100,7 +100,7 @@ export default function CommitDetailPage() {
             </span>
 
             <div className="flex items-center gap-2 ml-auto">
-              <span className="text-slate-500 font-mono text-[10px]">HEALTH METRIC:</span>
+              <span className="text-slate-400 font-mono text-[10px]">HEALTH METRIC:</span>
               <span style={{ color }} className="font-mono text-base font-extrabold select-all">
                 {snapshot.health_score.toFixed(1)}
               </span>
@@ -196,7 +196,7 @@ export default function CommitDetailPage() {
               <div className="font-head text-[32px] font-extralight text-white tracking-tight Outfit my-1">
                 {metric.value}
               </div>
-              <div className="text-slate-500 text-[10px] font-medium font-mono uppercase tracking-tight">
+              <div className="text-slate-400 text-[10px] font-medium font-mono uppercase tracking-tight">
                 {metric.unit}
               </div>
             </div>

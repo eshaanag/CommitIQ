@@ -801,3 +801,29 @@ main
 - **Testing**:
   - Added `backend/tests/test_pr_export.py` covering populated data export, empty PR list handling, state filtering, date range filtering, HTTP 200 responses with attachment headers, and HTTP 404 handling.
   - 100% test pass rate across backend and frontend suites.
+
+### Dashboard Text Contrast Accessibility Improvements (Issue #367)
+
+- **Problem**: Several secondary labels, empty states, and description paragraphs across dashboard components used `text-slate-500` against dark glassmorphic backgrounds (`#07080d` and `rgba(255, 255, 255, 0.05)`), failing WCAG 2.1 AA accessibility color contrast thresholds (contrast ratio < 4.5:1).
+- **Implementation**:
+  - Adjusted secondary description text and empty state messages from `text-slate-500` to `text-slate-400` across all dashboard pages and widgets:
+    - `DashboardPage.tsx`: Metric unit labels, risk reason details, hotspot statistics, export dropdown descriptions, and empty state message.
+    - `CodeQualityDashboard.tsx`: Churn Rate and AI Impact explanatory description paragraphs.
+    - `BusFactorTable.tsx`: Contributor metrics empty state message.
+    - `CommitQualityDashboard.tsx`: Quality gauge label, subject length units, and contributor leaderboard detail text.
+    - `CycleTimeDashboard.tsx`: Cycle time subtitle, bottlenecks empty state, and PR author text.
+    - `DeploymentTimeline.tsx`: Deployments empty state, daily activity legend, provider/environment breakdowns, and deployment row metadata.
+    - `CostMeter.tsx`: Resource tracking empty state and spent/budget footer.
+    - `CommitList.tsx`: Analyzed commits empty state message.
+    - `GraphExplorer.tsx`: Tree explorer descriptions, legend headers, node details metadata/inbound/outbound labels, and speed/timeline range controls.
+    - `ComparePage.tsx`: Benchmark export descriptions and timeline chart empty state.
+    - `CommitDetailPage.tsx`: Health metric header and metric unit labels.
+    - `CICDPipelineMonitor.tsx`: Pipeline stage names, duration breakdown summaries, pipeline list rows, job durations, alert timestamps, day labels, and runner performance table headers.
+    - `HotspotMap.tsx`: Treemap empty state message.
+    - `WeeklyDigestCard.tsx`: Contributor commit counts, snapshot multipliers, and previous trend text.
+    - `ConfirmDeleteRepoModal.tsx`: Irreversible action warning text.
+    - `AnalyzePage.tsx`: Active snapshot footer label.
+- **Testing**:
+  - Verified 126/126 frontend vitest unit and component tests passing across 37 test files.
+  - Verified ESLint with 0 errors.
+  - Verified production build (`npm run build`) builds cleanly with zero errors.

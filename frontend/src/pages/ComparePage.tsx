@@ -284,7 +284,7 @@ export default function ComparePage() {
                     <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-100">Comparison CSV</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         Tabular side-by-side metric matrix
                       </div>
                     </div>
@@ -301,7 +301,7 @@ export default function ComparePage() {
                     <FileJson className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-100">Comparison JSON</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         Full machine-readable benchmark payload
                       </div>
                     </div>
@@ -698,7 +698,7 @@ export default function ComparePage() {
 
                 <div className="h-64 w-full">
                   {timelineChartData.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-slate-500 text-xs">
+                    <div className="h-full flex items-center justify-center text-slate-400 text-xs">
                       No chronological snapshots recorded yet for trend chart.
                     </div>
                   ) : (

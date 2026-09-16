@@ -82,7 +82,7 @@ export function ConfirmDeleteRepoModal({
           This will permanently remove <span className="font-mono text-slate-200">{repoSlug}</span>{' '}
           and all of its analyzed commits, timelines, and graphs.
         </p>
-        <p className="text-slate-500 text-xs mb-6">This action cannot be undone.</p>
+        <p className="text-slate-400 text-xs mb-6">This action cannot be undone.</p>
 
         {error && (
           <div className="mb-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-rose-300 text-xs">

@@ -377,7 +377,7 @@ export default function DashboardPage() {
                     <FileText className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-100">Timeline CSV</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         {commits.length > 0
                           ? `${commits.length} commit(s) — commit_health_timeline.csv`
                           : 'No commits loaded'}
@@ -394,7 +394,7 @@ export default function DashboardPage() {
                     <FileJson className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-slate-100">Bus Factor JSON</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         {busState.data?.modules?.length
                           ? `${busState.data.modules.length} module(s) — bus_factor_index.json`
                           : 'No bus factor data'}
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                 Could not load architectural health timeline datasets.
               </div>
             ) : commits.length === 0 ? (
-              <div className="glass-panel rounded-[28px] p-6 text-slate-500">
+              <div className="glass-panel rounded-[28px] p-6 text-slate-400">
                 No analyzed commits are currently compiled for this repository workspace.
               </div>
             ) : (
@@ -654,7 +654,7 @@ export default function DashboardPage() {
                           align={metric.tooltipAlign}
                         />
                         {metric.badge && (
-                          <span className="inline-flex items-center gap-1 text-[8px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono uppercase flex-shrink-0">
+                           <span className="inline-flex items-center gap-1 text-[8px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono uppercase flex-shrink-0">
                             <span className="w-1 h-1 rounded-full bg-purple-400" />
                             {metric.badge}
                           </span>
@@ -665,7 +665,7 @@ export default function DashboardPage() {
                     <div className="font-head text-[36px] font-extralight text-white tracking-tight Outfit">
                       {metric.value}
                     </div>
-                    <div className="text-slate-500 text-[11px] font-medium mt-1">{metric.unit}</div>
+                    <div className="text-slate-400 text-[11px] font-medium mt-1">{metric.unit}</div>
                   </div>
                 ))}
               </div>
@@ -684,7 +684,7 @@ export default function DashboardPage() {
                           >
                             <div className="min-w-0">
                               <div className="text-slate-100 font-semibold">{reason.label}</div>
-                              <div className="text-slate-500 leading-relaxed mt-0.5">
+                              <div className="text-slate-400 leading-relaxed mt-0.5">
                                 {reason.detail}
                               </div>
                             </div>
@@ -724,7 +724,7 @@ export default function DashboardPage() {
                             <span className="font-mono text-slate-200 truncate min-w-0">
                               {hotspot.path}
                             </span>
-                            <span className="flex-shrink-0 text-slate-500">
+                            <span className="flex-shrink-0 text-slate-400">
                               {hotspot.recent_commit_count} commits / cx{' '}
                               {hotspot.complexity.toFixed(1)}
                             </span>

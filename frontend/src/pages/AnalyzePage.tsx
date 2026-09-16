@@ -181,7 +181,7 @@ export default function AnalyzePage() {
           </div>
 
           {progress.current_sha && (
-            <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-500 font-mono">
+            <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
               <span>ACTIVE SNAPSHOT</span>
               <span className="text-slate-400 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
                 {progress.current_sha}

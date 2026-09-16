@@ -82,7 +82,7 @@ function QualityRing({ score }: { score: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`font-head text-2xl font-bold ${color}`}>{score}</span>
-        <span className="text-[9px] text-slate-500 font-medium">quality</span>
+        <span className="text-[9px] text-slate-400 font-medium">quality</span>
       </div>
     </div>
   )
@@ -215,7 +215,7 @@ export function CommitQualityDashboard({ repoId }: CommitQualityDashboardProps) 
             </div>
             <span className="font-head text-xl font-extralight text-white">
               {metrics.avg_subject_length}
-              <span className="text-xs text-slate-500 ml-1">chars</span>
+              <span className="text-xs text-slate-400 ml-1">chars</span>
             </span>
           </div>
 
@@ -301,7 +301,7 @@ export function CommitQualityDashboard({ repoId }: CommitQualityDashboardProps) 
                     <div className="text-[11px] font-semibold text-slate-100 truncate">
                       {c.name}
                     </div>
-                    <div className="text-[9px] text-slate-500">
+                    <div className="text-[9px] text-slate-400">
                       {c.total} commits · {c.errors} errors · {c.warnings} warnings
                     </div>
                   </div>
