@@ -1,8 +1,10 @@
 """
 Cyclomatic complexity calculation and AST parsing utilities.
 """
+
 import ast
 import logging
+
 try:
     from radon.complexity import cc_visit
 except ImportError:
