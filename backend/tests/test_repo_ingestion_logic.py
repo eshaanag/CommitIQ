@@ -420,7 +420,10 @@ def test_is_code_file_excludes_documentation_files():
 
 
 def test_compute_python_complexity_valid_code():
-    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
+    from backend.features.repo_ingestion.complexity import (
+        calculate_complexity,
+        compute_python_complexity,
+    )
 
     valid_code = """
 def sample_func(x):
@@ -437,7 +440,10 @@ def sample_func(x):
 
 
 def test_compute_python_complexity_syntax_error_fallback():
-    from backend.features.repo_ingestion.complexity import compute_python_complexity, calculate_complexity
+    from backend.features.repo_ingestion.complexity import (
+        calculate_complexity,
+        compute_python_complexity,
+    )
 
     invalid_syntax_code = """
 def broken_syntax(x
@@ -460,5 +466,3 @@ def test_extract_file_metrics_from_path_syntax_error(tmp_path):
     assert metrics["avg_complexity"] == 1.0
     assert metrics["max_complexity"] == 1.0
     assert metrics["loc"] == 1
-
-
