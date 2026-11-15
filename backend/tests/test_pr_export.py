@@ -1,6 +1,6 @@
-from collections.abc import AsyncIterator
 import csv
 import io
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 
 import pytest
@@ -254,9 +254,7 @@ async def test_export_prs_filter_by_date(db_session: AsyncSessionAdapter):
     start = datetime(2026, 7, 10, 0, 0, 0, tzinfo=timezone.utc)
     end = datetime(2026, 7, 20, 0, 0, 0, tzinfo=timezone.utc)
 
-    csv_data = await export_prs_to_csv(
-        db_session, repo.id, start_date=start, end_date=end
-    )
+    csv_data = await export_prs_to_csv(db_session, repo.id, start_date=start, end_date=end)
     rows = list(csv.reader(io.StringIO(csv_data)))
     assert len(rows) == 2  # Header + pr_mid only
     assert rows[1][2] == "2"
